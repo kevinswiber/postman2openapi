@@ -443,7 +443,17 @@ fn transform_request(
                                 }
                             }
                         }
-                        if !op.responses.contains_key("200") {
+                        if !op.responses.contains_key("200")
+                            && !op.responses.contains_key("201")
+                            && !op.responses.contains_key("202")
+                            && !op.responses.contains_key("203")
+                            && !op.responses.contains_key("204")
+                            && !op.responses.contains_key("205")
+                            && !op.responses.contains_key("206")
+                            && !op.responses.contains_key("207")
+                            && !op.responses.contains_key("208")
+                            && !op.responses.contains_key("226")
+                        {
                             op.responses
                                 .insert("200".to_string(), openapi3::Response::default());
                         }
