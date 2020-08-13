@@ -39,7 +39,7 @@ fn begin(spec: postman::Spec) {
         openapi: String::from("3.0.3"),
         info: openapi3::Info {
             license: None,
-            contact: None,
+            contact: Some(openapi3::Contact::default()),
             description: description,
             terms_of_service: None,
             version: String::from("1.0.0"),
