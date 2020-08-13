@@ -63,11 +63,13 @@ fn begin(spec: postman::Spec) {
         }
     });
 
+    let mut operation_ids = BTreeMap::<String, usize>::new();
     transform(
         &spec.item,
         &mut oas,
         &mut Vec::<String>::new(),
-        &variable_map,
+        &mut variable_map,
+        &mut operation_ids,
     );
 
     println!(
@@ -81,6 +83,7 @@ fn transform(
     oas: &mut openapi3::Spec,
     hierarchy: &mut Vec<String>,
     variable_map: &BTreeMap<String, serde_json::value::Value>,
+    operation_ids: &mut BTreeMap<String, usize>,
 ) {
     for item in items {
         if let Some(i) = &item.item {
@@ -99,9 +102,17 @@ fn transform(
                 None => None,
             };
 
-            transform_folder(&i, name, description, oas, hierarchy, variable_map);
+            transform_folder(
+                &i,
+                name,
+                description,
+                oas,
+                hierarchy,
+                variable_map,
+                operation_ids,
+            );
         } else {
-            transform_request(&item, oas, hierarchy, variable_map);
+            transform_request(&item, oas, hierarchy, variable_map, operation_ids);
         }
     }
 }
@@ -113,6 +124,7 @@ fn transform_folder(
     oas: &mut openapi3::Spec,
     hierarchy: &mut Vec<String>,
     variable_map: &BTreeMap<String, serde_json::value::Value>,
+    operation_ids: &mut BTreeMap<String, usize>,
 ) {
     if let Some(t) = &mut oas.tags {
         t.push(openapi3::Tag {
@@ -122,7 +134,7 @@ fn transform_folder(
     };
 
     hierarchy.push(name.to_string());
-    transform(items, oas, hierarchy, variable_map);
+    transform(items, oas, hierarchy, variable_map, operation_ids);
     hierarchy.pop();
 }
 
@@ -131,6 +143,7 @@ fn transform_request(
     oas: &mut openapi3::Spec,
     hierarchy: &mut Vec<String>,
     variable_map: &BTreeMap<String, serde_json::value::Value>,
+    operation_ids: &mut BTreeMap<String, usize>,
 ) {
     let name = match &item.name {
         Some(n) => n,
@@ -437,8 +450,16 @@ fn transform_request(
 
                         if let Some(method) = &request.method {
                             let m = method.to_lowercase();
-                            let op_id =
-                                format!("{}{}", m.clone(), name.clone().to_case(Case::Pascal));
+                            let mut op_id = name.clone().to_case(Case::Camel);
+                            match operation_ids.get_mut(&op_id) {
+                                Some(v) => {
+                                    *v = *v + 1;
+                                    op_id = format!("{}{}", op_id, v);
+                                }
+                                None => {
+                                    operation_ids.insert(op_id.clone(), 0);
+                                }
+                            }
 
                             op.operation_id = Some(op_id);
                             match m.as_str() {
