@@ -338,7 +338,7 @@ pub struct Items {
     pub request: Option<RequestUnion>,
 
     #[serde(rename = "response")]
-    pub response: Option<Vec<Option<Response>>>,
+    pub response: Option<Vec<Option<ResponseClass>>>,
 
     #[serde(rename = "variable")]
     pub variable: Option<Vec<Variable>>,
@@ -441,9 +441,6 @@ pub struct FormParameter {
 
     #[serde(rename = "value")]
     pub value: Option<String>,
-
-    #[serde(rename = "src")]
-    pub src: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -573,7 +570,7 @@ pub struct ResponseClass {
     pub id: Option<String>,
 
     #[serde(rename = "originalRequest")]
-    pub original_request: Option<RequestUnion>,
+    pub original_request: Option<RequestClass>,
 
     /// The time taken by the request to complete. If a number, the unit is milliseconds. If the
     /// response is manually created, this can be set to `null`.
@@ -718,14 +715,13 @@ pub enum HeaderUnion {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum Response {
-    AnythingArray(Vec<Option<serde_json::Value>>),
+    //AnythingArray(Vec<Option<serde_json::Value>>),
 
-    Bool(bool),
+    //Bool(bool),
 
-    Double(f64),
+    //Double(f64),
 
-    Integer(i64),
-
+    //Integer(i64),
     ResponseClass(ResponseClass),
 
     String(String),
@@ -787,6 +783,9 @@ pub enum AuthType {
 
     #[serde(rename = "oauth2")]
     Oauth2,
+
+    #[serde(rename = "apikey")]
+    Apikey,
 }
 
 /// Returns `Noauth` for AuthType by default

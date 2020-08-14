@@ -11,6 +11,10 @@ use std::collections::BTreeMap;
 
 static VAR_REPLACE_CREDITS: usize = 20;
 
+lazy_static! {
+    static ref VARIABLE_RE: regex::Regex = regex::Regex::new(r"\{\{([^{}]*?)\}\}").unwrap();
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let filename = args.get(1).unwrap();
@@ -154,19 +158,21 @@ fn transform_request(
             if let Some(postman::Url::UrlClass(u)) = &request.url {
                 if let Some(postman::Host::StringArray(parts)) = &u.host {
                     let host = parts.join(".");
+                    let mut proto = "".to_string();
                     if let Some(protocol) = &u.protocol {
-                        if let Some(s) = &mut oas.servers {
-                            let mut server_url = format!("{}://{}", protocol, host);
-                            server_url =
-                                resolve_variables(&variable_map, &server_url, VAR_REPLACE_CREDITS);
-                            if !s.into_iter().any(|srv| srv.url == server_url) {
-                                let server = openapi3::Server {
-                                    url: server_url,
-                                    description: None,
-                                    variables: None,
-                                };
-                                s.push(server);
-                            }
+                        proto = format!("{}://", protocol.clone());
+                    }
+                    if let Some(s) = &mut oas.servers {
+                        let mut server_url = format!("{}{}", proto, host);
+                        server_url =
+                            resolve_variables(&variable_map, &server_url, VAR_REPLACE_CREDITS);
+                        if !s.into_iter().any(|srv| srv.url == server_url) {
+                            let server = openapi3::Server {
+                                url: server_url,
+                                description: None,
+                                variables: None,
+                            };
+                            s.push(server);
                         }
                     }
                 }
@@ -182,6 +188,16 @@ fn transform_request(
                             })
                             .map(|segment| {
                                 resolve_variables(&variable_map, &segment, VAR_REPLACE_CREDITS)
+                            })
+                            .map(|segment| {
+                                if let Some(cap) = VARIABLE_RE.captures(&segment) {
+                                    if cap.len() > 1 {
+                                        let capture = &cap[1].to_string();
+                                        let formatted = format!(":{}", capture);
+                                        return formatted;
+                                    }
+                                }
+                                segment
                             })
                             .map(|segment| match &segment[0..1] {
                                 ":" => format!("{{{}}}", &segment[1..]),
@@ -220,6 +236,16 @@ fn transform_request(
                                         postman::PathElement::PathClass(p) => {
                                             p.clone().value.unwrap_or_default()
                                         }
+                                    })
+                                    .map(|segment| {
+                                        if let Some(cap) = VARIABLE_RE.captures(&segment) {
+                                            if cap.len() > 1 {
+                                                let capture = &cap[1].to_string();
+                                                let formatted = format!(":{}", capture);
+                                                return formatted;
+                                            }
+                                        }
+                                        segment
                                     })
                                     .filter(|segment| segment[0..1] == ":".to_string())
                                     .map(|segment| segment[1..].to_string())
@@ -376,7 +402,7 @@ fn transform_request(
                                 let mut oas_response = openapi3::Response::default();
                                 let mut response_media_types =
                                     BTreeMap::<String, openapi3::MediaType>::new();
-                                if let Some(postman::Response::ResponseClass(res)) = r {
+                                if let Some(res) = r {
                                     // TODO: Use Postman schema that includes response name.
                                     if let Some(name) = &res.name {
                                         oas_response.description = Some(name.clone());
@@ -454,8 +480,13 @@ fn transform_request(
                             && !op.responses.contains_key("208")
                             && !op.responses.contains_key("226")
                         {
-                            op.responses
-                                .insert("200".to_string(), openapi3::Response::default());
+                            op.responses.insert(
+                                "200".to_string(),
+                                openapi3::Response {
+                                    description: Some("".to_string()),
+                                    ..openapi3::Response::default()
+                                },
+                            );
                         }
 
                         if let Some(method) = &request.method {
@@ -515,21 +546,19 @@ fn resolve_variables(
         return s;
     }
 
-    lazy_static! {
-        static ref VARIABLE_RE: regex::Regex = regex::Regex::new(r"\{\{([^{}]*?)\}\}").unwrap();
-    }
-
     if let Some(cap) = VARIABLE_RE.captures(&s) {
         if cap.len() > 1 {
             for n in 1..=cap.len() - 1 {
                 let capture = &cap[n].to_string();
-                if let Some(v) = variable_map[capture].as_str() {
-                    let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
-                    return resolve_variables(
-                        variable_map,
-                        &re.replace_all(&s, v).to_string(),
-                        sub_replace_credits - 1,
-                    );
+                if let Some(v) = variable_map.get(capture) {
+                    if let Some(v2) = v.as_str() {
+                        let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
+                        return resolve_variables(
+                            variable_map,
+                            &re.replace_all(&s, v2).to_string(),
+                            sub_replace_credits - 1,
+                        );
+                    }
                 }
             }
         }
