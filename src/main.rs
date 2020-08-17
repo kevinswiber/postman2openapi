@@ -230,55 +230,11 @@ fn transform_request(
 
                         let mut op = openapi3::Operation::default();
 
-                        op.parameters = Some(
-                            resolved_segments
-                                .into_iter()
-                                .flat_map(|segment| {
-                                    URI_TEMPLATE_VARIABLE_RE
-                                        .captures_iter(segment.as_str())
-                                        .flat_map(|capture| {
-                                            let mut results = Vec::<
-                                                openapi3::ObjectOrReference<openapi3::Parameter>,
-                                            >::new(
-                                            );
-                                            let var = capture.get(1).unwrap().as_str();
-                                            let mut param = openapi3::Parameter::default();
-                                            param.name = var.to_string();
-                                            param.location = "path".to_string();
-                                            param.required = Some(true);
-                                            let mut schema = openapi3::Schema::default();
-                                            schema.schema_type = Some("string".to_string());
-                                            if let Some(path_val) = &u.variable {
-                                                if let Some(p) =
-                                                    path_val.iter().find(|p| match &p.key {
-                                                        Some(k) => k == &var,
-                                                        _ => false,
-                                                    })
-                                                {
-                                                    if let Some(pval) = &p.value {
-                                                        if let Some(pval_val) = pval.as_str() {
-                                                            schema.example =
-                                                                Some(serde_json::Value::String(
-                                                                    resolve_variables(
-                                                                        &variable_map,
-                                                                        pval_val,
-                                                                        VAR_REPLACE_CREDITS,
-                                                                    ),
-                                                                ));
-                                                        }
-                                                    }
-                                                }
-                                            }
-
-                                            param.schema = Some(schema);
-                                            results
-                                                .push(openapi3::ObjectOrReference::Object(param));
-
-                                            results
-                                        })
-                                })
-                                .collect(),
-                        );
+                        op.parameters = Some(generate_path_parameters(
+                            &variable_map,
+                            &resolved_segments,
+                            &u.variable,
+                        ));
 
                         let mut content_type: Option<String> = None;
                         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
@@ -669,4 +625,47 @@ fn merge_schemas(original: &openapi3::Schema, new: &openapi3::Schema) -> openapi
     }
 
     cloned
+}
+
+fn generate_path_parameters(
+    variable_map: &BTreeMap<String, serde_json::value::Value>,
+    resolved_segments: &Vec<String>,
+    postman_variables: &Option<Vec<postman::Variable>>,
+) -> Vec<openapi3::ObjectOrReference<openapi3::Parameter>> {
+    resolved_segments
+        .into_iter()
+        .flat_map(|segment| {
+            URI_TEMPLATE_VARIABLE_RE
+                .captures_iter(segment.as_str())
+                .map(|capture| {
+                    let var = capture.get(1).unwrap().as_str();
+                    let mut param = openapi3::Parameter::default();
+                    param.name = var.to_string();
+                    param.location = "path".to_string();
+                    param.required = Some(true);
+                    let mut schema = openapi3::Schema::default();
+                    schema.schema_type = Some("string".to_string());
+                    if let Some(path_val) = &postman_variables {
+                        if let Some(p) = path_val.iter().find(|p| match &p.key {
+                            Some(k) => k == &var,
+                            _ => false,
+                        }) {
+                            if let Some(pval) = &p.value {
+                                if let Some(pval_val) = pval.as_str() {
+                                    schema.example =
+                                        Some(serde_json::Value::String(resolve_variables(
+                                            &variable_map,
+                                            pval_val,
+                                            VAR_REPLACE_CREDITS,
+                                        )));
+                                }
+                            }
+                        }
+                    }
+
+                    param.schema = Some(schema);
+                    openapi3::ObjectOrReference::Object(param)
+                })
+        })
+        .collect()
 }
