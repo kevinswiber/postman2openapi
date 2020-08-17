@@ -201,21 +201,6 @@ fn transform_request(
                                 ":" => format!("{{{}}}", &seg[1..]),
                                 _ => seg.to_string(),
                             }
-                            /*
-                            // TODO: We do this again later. Don't. Uggghhhh...
-                            if let Some(cap) = VARIABLE_RE.captures(&seg) {
-                                if cap.len() > 1 {
-                                    // TODO: iterate over all captures, otherwise this truncates
-                                    let capture = &cap[1].to_string();
-                                    let formatted = format!("{{{}}}", capture);
-                                    return formatted;
-                                }
-                            }
-
-                            match &seg[0..1] {
-                                ":" => format!("{{{}}}", &seg[1..]),
-                                _ => seg.to_string(),
-                            }*/
                         })
                         .collect::<Vec<String>>();
                     let segments = "/".to_string() + &resolved_segments.join("/");
