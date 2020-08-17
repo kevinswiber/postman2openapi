@@ -13,6 +13,8 @@ static VAR_REPLACE_CREDITS: usize = 20;
 
 lazy_static! {
     static ref VARIABLE_RE: regex::Regex = regex::Regex::new(r"\{\{([^{}]*?)\}\}").unwrap();
+    static ref URI_TEMPLATE_VARIABLE_RE: regex::Regex =
+        regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
 }
 
 fn main() {
@@ -61,7 +63,9 @@ fn begin(spec: postman::Spec) {
         for v in var {
             if let Some(v_name) = v.key {
                 if let Some(v_val) = v.value {
-                    variable_map.insert(v_name, v_val);
+                    if v_val != serde_json::Value::String("".to_string()) {
+                        variable_map.insert(v_name, v_val);
+                    }
                 }
             }
         }
@@ -178,34 +182,48 @@ fn transform_request(
                 }
 
                 if let Some(postman::UrlPath::UnionArray(p)) = &u.path {
-                    let segments = "/".to_string()
-                        + &p.iter()
-                            .map(|segment| match segment {
+                    let resolved_segments = &p
+                        .iter()
+                        .map(|segment| {
+                            let mut seg = match segment {
                                 postman::PathElement::PathClass(c) => {
                                     c.clone().value.unwrap_or_default()
                                 }
                                 postman::PathElement::String(c) => c.to_string(),
-                            })
-                            .map(|segment| {
-                                resolve_variables(&variable_map, &segment, VAR_REPLACE_CREDITS)
-                            })
-                            .map(|segment| {
-                                if let Some(cap) = VARIABLE_RE.captures(&segment) {
-                                    if cap.len() > 1 {
-                                        let capture = &cap[1].to_string();
-                                        let formatted = format!(":{}", capture);
-                                        return formatted;
-                                    }
+                            };
+                            seg = resolve_variables_with_replace_fn(
+                                &variable_map,
+                                &seg,
+                                VAR_REPLACE_CREDITS,
+                                |s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
+                            );
+                            match &seg[0..1] {
+                                ":" => format!("{{{}}}", &seg[1..]),
+                                _ => seg.to_string(),
+                            }
+                            /*
+                            // TODO: We do this again later. Don't. Uggghhhh...
+                            if let Some(cap) = VARIABLE_RE.captures(&seg) {
+                                if cap.len() > 1 {
+                                    // TODO: iterate over all captures, otherwise this truncates
+                                    let capture = &cap[1].to_string();
+                                    let formatted = format!("{{{}}}", capture);
+                                    return formatted;
                                 }
-                                segment
-                            })
-                            .map(|segment| match &segment[0..1] {
-                                ":" => format!("{{{}}}", &segment[1..]),
-                                _ => segment.to_string(),
-                            })
-                            .collect::<Vec<String>>()
-                            .join("/");
+                            }
 
+                            match &seg[0..1] {
+                                ":" => format!("{{{}}}", &seg[1..]),
+                                _ => seg.to_string(),
+                            }*/
+                        })
+                        .collect::<Vec<String>>();
+                    let segments = "/".to_string() + &resolved_segments.join("/");
+
+                    // TODO: Because of variables, we can actually get duplicate paths.
+                    // - /admin/{subresource}/{subresourceId}
+                    // - /admin/{subresource2}/{subresource2Id}
+                    // Throw a warning?
                     if !oas.paths.contains_key(&segments) {
                         oas.paths
                             .insert(segments.clone(), openapi3::PathItem::default());
@@ -227,63 +245,55 @@ fn transform_request(
 
                         let mut op = openapi3::Operation::default();
 
-                        if let Some(postman::UrlPath::UnionArray(paths)) = &u.path {
-                            op.parameters = Some(
-                                paths
-                                    .into_iter()
-                                    .map(|path| match path {
-                                        postman::PathElement::String(p) => p.to_string(),
-                                        postman::PathElement::PathClass(p) => {
-                                            p.clone().value.unwrap_or_default()
-                                        }
-                                    })
-                                    .map(|segment| {
-                                        if let Some(cap) = VARIABLE_RE.captures(&segment) {
-                                            if cap.len() > 1 {
-                                                let capture = &cap[1].to_string();
-                                                let formatted = format!(":{}", capture);
-                                                return formatted;
-                                            }
-                                        }
-                                        segment
-                                    })
-                                    .filter(|segment| segment[0..1] == ":".to_string())
-                                    .map(|segment| segment[1..].to_string())
-                                    .map(|var| {
-                                        let mut param = openapi3::Parameter::default();
-                                        param.name = var.clone();
-                                        param.location = "path".to_string();
-                                        param.required = Some(true);
-                                        let mut schema = openapi3::Schema::default();
-                                        schema.schema_type = Some("string".to_string());
-                                        if let Some(path_val) = &u.variable {
-                                            if let Some(p) =
-                                                path_val.iter().find(|p| match &p.key {
-                                                    Some(k) => k == &var,
-                                                    _ => false,
-                                                })
-                                            {
-                                                if let Some(pval) = &p.value {
-                                                    if let Some(pval_val) = pval.as_str() {
-                                                        schema.example =
-                                                            Some(serde_json::Value::String(
-                                                                resolve_variables(
-                                                                    &variable_map,
-                                                                    pval_val,
-                                                                    VAR_REPLACE_CREDITS,
-                                                                ),
-                                                            ));
+                        op.parameters = Some(
+                            resolved_segments
+                                .into_iter()
+                                .flat_map(|segment| {
+                                    URI_TEMPLATE_VARIABLE_RE
+                                        .captures_iter(segment.as_str())
+                                        .flat_map(|capture| {
+                                            let mut results = Vec::<
+                                                openapi3::ObjectOrReference<openapi3::Parameter>,
+                                            >::new(
+                                            );
+                                            let var = capture.get(1).unwrap().as_str();
+                                            let mut param = openapi3::Parameter::default();
+                                            param.name = var.to_string();
+                                            param.location = "path".to_string();
+                                            param.required = Some(true);
+                                            let mut schema = openapi3::Schema::default();
+                                            schema.schema_type = Some("string".to_string());
+                                            if let Some(path_val) = &u.variable {
+                                                if let Some(p) =
+                                                    path_val.iter().find(|p| match &p.key {
+                                                        Some(k) => k == &var,
+                                                        _ => false,
+                                                    })
+                                                {
+                                                    if let Some(pval) = &p.value {
+                                                        if let Some(pval_val) = pval.as_str() {
+                                                            schema.example =
+                                                                Some(serde_json::Value::String(
+                                                                    resolve_variables(
+                                                                        &variable_map,
+                                                                        pval_val,
+                                                                        VAR_REPLACE_CREDITS,
+                                                                    ),
+                                                                ));
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
 
-                                        param.schema = Some(schema);
-                                        openapi3::ObjectOrReference::Object(param)
-                                    })
-                                    .collect(),
-                            );
-                        }
+                                            param.schema = Some(schema);
+                                            results
+                                                .push(openapi3::ObjectOrReference::Object(param));
+
+                                            results
+                                        })
+                                })
+                                .collect(),
+                        );
 
                         let mut content_type: Option<String> = None;
                         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
@@ -540,6 +550,15 @@ fn resolve_variables(
     segment: &str,
     sub_replace_credits: usize,
 ) -> String {
+    return resolve_variables_with_replace_fn(variable_map, segment, sub_replace_credits, |s| s);
+}
+
+fn resolve_variables_with_replace_fn(
+    variable_map: &BTreeMap<String, serde_json::value::Value>,
+    segment: &str,
+    sub_replace_credits: usize,
+    replace_fn: fn(String) -> String,
+) -> String {
     let s = segment.to_string();
 
     if sub_replace_credits == 0 {
@@ -564,7 +583,7 @@ fn resolve_variables(
         }
     }
 
-    s
+    replace_fn(s)
 }
 
 fn generate_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
