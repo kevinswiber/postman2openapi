@@ -1,10 +1,16 @@
 [package]
-name = "rust-openapi-postman"
+name = "postman2openapi"
 version = "0.1.0"
 authors = ["Kevin Swiber <kswiber@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "postman2openapi"
+path = "src/lib.rs"
+
+[[bin]]
+name = "postman2openapi"
+path = "src/main.rs"
 
 [dependencies]
 openapi = { git = "https://github.com/softprops/openapi" }
