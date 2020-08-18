@@ -234,6 +234,21 @@ fn transform_request(
                             &u.variable,
                         );
 
+                        if let Some(qp) = &u.query {
+                            if let Some(mut query_params) =
+                                generate_query_parameters(&variable_map, qp)
+                            {
+                                match &path.parameters {
+                                    Some(params) => {
+                                        let mut cloned = params.clone();
+                                        cloned.append(&mut query_params);
+                                        path.parameters = Some(cloned);
+                                    }
+                                    None => path.parameters = Some(query_params),
+                                };
+                            }
+                        }
+
                         let mut op = openapi3::Operation::default();
                         let mut content_type: Option<String> = None;
 
@@ -700,6 +715,50 @@ fn generate_path_parameters(
                     param.schema = Some(schema);
                     openapi3::ObjectOrReference::Object(param)
                 })
+        })
+        .collect();
+
+    if params.len() > 0 {
+        Some(params)
+    } else {
+        None
+    }
+}
+
+fn generate_query_parameters(
+    variable_map: &BTreeMap<String, serde_json::value::Value>,
+    query_params: &Vec<postman::QueryParam>,
+) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
+    let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = query_params
+        .into_iter()
+        .map(|qp| {
+            let mut param = openapi3::Parameter::default();
+            let key = qp.key.clone().unwrap_or_default();
+            param.name = key.to_string();
+            param.location = "query".to_string();
+            let mut schema = openapi3::Schema::default();
+            schema.schema_type = Some("string".to_string());
+            param.description = match &qp.description {
+                Some(d) => match d {
+                    postman::DescriptionUnion::String(s) => Some(s.to_string()),
+                    postman::DescriptionUnion::Description(desc) => match &desc.content {
+                        Some(c) => Some(c.to_string()),
+                        None => None,
+                    },
+                },
+                None => None,
+            };
+
+            if let Some(pval) = &qp.value {
+                schema.example = Some(serde_json::Value::String(resolve_variables(
+                    &variable_map,
+                    pval,
+                    VAR_REPLACE_CREDITS,
+                )));
+            }
+
+            param.schema = Some(schema);
+            openapi3::ObjectOrReference::Object(param)
         })
         .collect();
 
