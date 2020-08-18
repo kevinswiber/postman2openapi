@@ -230,11 +230,11 @@ fn transform_request(
 
                         let mut op = openapi3::Operation::default();
 
-                        op.parameters = Some(generate_path_parameters(
+                        op.parameters = generate_path_parameters(
                             &variable_map,
                             &resolved_segments,
                             &u.variable,
-                        ));
+                        );
 
                         let mut content_type: Option<String> = None;
                         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
@@ -631,8 +631,8 @@ fn generate_path_parameters(
     variable_map: &BTreeMap<String, serde_json::value::Value>,
     resolved_segments: &Vec<String>,
     postman_variables: &Option<Vec<postman::Variable>>,
-) -> Vec<openapi3::ObjectOrReference<openapi3::Parameter>> {
-    resolved_segments
+) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
+    let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = resolved_segments
         .into_iter()
         .flat_map(|segment| {
             URI_TEMPLATE_VARIABLE_RE
@@ -667,5 +667,11 @@ fn generate_path_parameters(
                     openapi3::ObjectOrReference::Object(param)
                 })
         })
-        .collect()
+        .collect();
+
+    if params.len() > 0 {
+        Some(params)
+    } else {
+        None
+    }
 }
