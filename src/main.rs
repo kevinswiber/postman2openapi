@@ -234,22 +234,23 @@ fn transform_request(
                             &u.variable,
                         );
 
+                        let mut op = openapi3::Operation::default();
+
                         if let Some(qp) = &u.query {
                             if let Some(mut query_params) =
                                 generate_query_parameters(&variable_map, qp)
                             {
-                                match &path.parameters {
+                                match &op.parameters {
                                     Some(params) => {
                                         let mut cloned = params.clone();
                                         cloned.append(&mut query_params);
-                                        path.parameters = Some(cloned);
+                                        op.parameters = Some(cloned);
                                     }
-                                    None => path.parameters = Some(query_params),
+                                    None => op.parameters = Some(query_params),
                                 };
                             }
                         }
 
-                        let mut op = openapi3::Operation::default();
                         let mut content_type: Option<String> = None;
 
                         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
@@ -733,8 +734,9 @@ fn generate_query_parameters(
         .into_iter()
         .map(|qp| {
             let mut param = openapi3::Parameter::default();
-            let key = qp.key.clone().unwrap_or_default();
-            param.name = key.to_string();
+            if let Some(key) = &qp.key {
+                param.name = key.to_string();
+            }
             param.location = "query".to_string();
             let mut schema = openapi3::Schema::default();
             schema.schema_type = Some("string".to_string());
