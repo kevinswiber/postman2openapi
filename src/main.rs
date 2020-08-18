@@ -228,15 +228,15 @@ fn transform_request(
                             None => Some(name.to_string()),
                         };
 
-                        let mut op = openapi3::Operation::default();
-
-                        op.parameters = generate_path_parameters(
+                        path.parameters = generate_path_parameters(
                             &variable_map,
                             &resolved_segments,
                             &u.variable,
                         );
 
+                        let mut op = openapi3::Operation::default();
                         let mut content_type: Option<String> = None;
+
                         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
                             let content_type_header = headers
                                 .iter()
@@ -397,8 +397,29 @@ fn transform_request(
                                                     serde_json::Value::String(resolved_body);
                                             }
                                         }
-                                        let example = openapi3::MediaTypeExample::Example {
-                                            example: example_val,
+                                        let mut example_map = BTreeMap::<
+                                            String,
+                                            openapi3::ObjectOrReference<openapi3::Example>,
+                                        >::new(
+                                        );
+
+                                        let ex = openapi3::Example {
+                                            summary: None,
+                                            description: None,
+                                            value: Some(example_val),
+                                        };
+
+                                        let example_name = match &res.name {
+                                            Some(n) => n.to_string(),
+                                            None => "".to_string(),
+                                        };
+
+                                        example_map.insert(
+                                            example_name,
+                                            openapi3::ObjectOrReference::Object(ex),
+                                        );
+                                        let example = openapi3::MediaTypeExample::Examples {
+                                            examples: example_map,
                                         };
 
                                         response_content.examples = Some(example);
@@ -650,6 +671,19 @@ fn generate_path_parameters(
                             Some(k) => k == &var,
                             _ => false,
                         }) {
+                            param.description = match &p.description {
+                                Some(d) => match d {
+                                    postman::DescriptionUnion::String(s) => Some(s.to_string()),
+                                    postman::DescriptionUnion::Description(desc) => {
+                                        match &desc.content {
+                                            Some(c) => Some(c.to_string()),
+                                            None => None,
+                                        }
+                                    }
+                                },
+                                None => None,
+                            };
+
                             if let Some(pval) = &p.value {
                                 if let Some(pval_val) = pval.as_str() {
                                     schema.example =
