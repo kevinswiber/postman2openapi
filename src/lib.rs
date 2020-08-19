@@ -267,6 +267,35 @@ impl<'a> Transpiler<'a> {
                         if let Some(name) = &res.name {
                             oas_response.description = Some(name.clone());
                         }
+                        if let Some(postman::Headers::UnionArray(headers)) = &res.header {
+                            let mut oas_headers = BTreeMap::<
+                                String,
+                                openapi3::ObjectOrReference<openapi3::Header>,
+                            >::new();
+                            for h in headers {
+                                if let postman::HeaderElement::Header(hdr) = h {
+                                    if hdr.value.len() == 0
+                                        || hdr.key.to_lowercase() == "content-type".to_string()
+                                    {
+                                        continue;
+                                    }
+                                    let mut oas_header = openapi3::Header::default();
+                                    let mut header_schema = openapi3::Schema::default();
+                                    header_schema.schema_type = Some("string".to_string());
+                                    header_schema.example =
+                                        Some(serde_json::Value::String(hdr.value.to_string()));
+                                    oas_header.schema = Some(header_schema);
+
+                                    oas_headers.insert(
+                                        hdr.key.clone(),
+                                        openapi3::ObjectOrReference::Object(oas_header),
+                                    );
+                                }
+                            }
+                            if oas_headers.len() > 0 {
+                                oas_response.headers = Some(oas_headers);
+                            }
+                        }
                         let mut response_content = openapi3::MediaType::default();
                         if let Some(raw) = &res.body {
                             let mut response_content_type: Option<String> = None;
