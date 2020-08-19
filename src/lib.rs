@@ -24,10 +24,14 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 pub fn from_path(filename: &str) -> Result<String> {
     match std::fs::File::open(filename) {
         Ok(r) => match serde_json::from_reader::<_, postman::Spec>(r) {
-            Ok(spec) => match Transpiler::transpile(spec) {
-                Ok(oas) => Ok(oas),
-                Err(err) => Err(Error::from(err)),
-            },
+            Ok(spec) => {
+                let oas = Transpiler::transpile(spec);
+
+                match openapi::to_yaml(&oas) {
+                    Ok(yaml) => Ok(yaml),
+                    Err(err) => Err(Error::from(err)),
+                }
+            }
             Err(err) => Err(Error::from(err)),
         },
         Err(err) => Err(Error::from(err)),
@@ -45,7 +49,7 @@ struct TranspileState<'a> {
 }
 
 impl<'a> Transpiler<'a> {
-    pub fn transpile(spec: postman::Spec) -> Result<String> {
+    pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
         let description = extract_description(&spec.info.description);
 
         let mut oas = openapi3::Spec {
@@ -92,10 +96,7 @@ impl<'a> Transpiler<'a> {
 
         transpiler.transform(&mut state, &spec.item);
 
-        match openapi::to_yaml(&openapi::OpenApi::V3_0(oas)) {
-            Ok(yaml) => Ok(yaml),
-            Err(err) => Err(Error::from(err)),
-        }
+        openapi::OpenApi::V3_0(oas)
     }
 
     fn transform(&self, state: &mut TranspileState, items: &Vec<postman::Items>) {
@@ -197,9 +198,13 @@ impl<'a> Transpiler<'a> {
                 seg = self.resolve_variables_with_replace_fn(&seg, VAR_REPLACE_CREDITS, |s| {
                     VARIABLE_RE.replace_all(&s, "{$1}").to_string()
                 });
-                match &seg[0..1] {
-                    ":" => format!("{{{}}}", &seg[1..]),
-                    _ => seg.to_string(),
+                if seg.len() > 0 {
+                    match &seg[0..1] {
+                        ":" => format!("{{{}}}", &seg[1..]),
+                        _ => seg.to_string(),
+                    }
+                } else {
+                    seg.to_string()
                 }
             })
             .collect::<Vec<String>>();
@@ -268,7 +273,6 @@ impl<'a> Transpiler<'a> {
                     let mut oas_response = openapi3::Response::default();
                     let mut response_media_types = BTreeMap::<String, openapi3::MediaType>::new();
                     if let Some(res) = r {
-                        // TODO: Use Postman schema that includes response name.
                         if let Some(name) = &res.name {
                             oas_response.description = Some(name.clone());
                         }
@@ -278,7 +282,6 @@ impl<'a> Transpiler<'a> {
                             let resolved_body = self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
                             let example_val;
 
-                            //set content type based on options or inference.
                             match serde_json::from_str(&resolved_body) {
                                 Ok(v) => match v {
                                     serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
