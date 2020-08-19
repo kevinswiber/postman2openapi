@@ -6,8 +6,8 @@ extern crate serde_derive;
 pub mod error;
 pub mod postman;
 
+use anyhow::{Error, Result};
 use convert_case::{Case, Casing};
-pub use error::Error;
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
 
@@ -19,22 +19,13 @@ lazy_static! {
         regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
 }
 
-pub type Result<T> = std::result::Result<T, error::Error>;
-
 pub fn from_path(filename: &str) -> Result<String> {
-    match std::fs::File::open(filename) {
-        Ok(r) => match serde_json::from_reader::<_, postman::Spec>(r) {
-            Ok(spec) => {
-                let oas = Transpiler::transpile(spec);
-
-                match openapi::to_yaml(&oas) {
-                    Ok(yaml) => Ok(yaml),
-                    Err(err) => Err(Error::from(err)),
-                }
-            }
-            Err(err) => Err(Error::from(err)),
-        },
-        Err(err) => Err(Error::from(err)),
+    let collection = std::fs::read_to_string(filename)?;
+    let spec: postman::Spec = serde_json::from_str(&collection)?;
+    let oas = Transpiler::transpile(spec);
+    match openapi::to_yaml(&oas) {
+        Ok(yaml) => Ok(yaml),
+        Err(err) => Err(Error::from(error::OpenApiError::from(err))),
     }
 }
 

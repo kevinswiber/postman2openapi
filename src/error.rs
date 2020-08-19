@@ -1,32 +1,34 @@
-use failure::Fail;
-use openapi::Error as OpenApiError;
+use thiserror::Error;
+
+use semver::{SemVerError, Version};
 use serde_json::Error as JsonError;
+use serde_yaml::Error as YamlError;
 use std::io::Error as IoError;
 
-#[derive(Fail, Debug)]
-pub enum Error {
-    #[fail(display = "{}", _0)]
+#[derive(Error, Debug)]
+pub enum OpenApiError {
+    #[error("{0}")]
     Io(IoError),
-    #[fail(display = "{}", _0)]
-    OpenApi(OpenApiError),
-    #[fail(display = "{}", _0)]
+    #[error("{0}")]
+    Yaml(YamlError),
+    #[error("{0}")]
     Serialize(JsonError),
+    #[error("{0}")]
+    SemVerError(SemVerError),
+    #[error("Unsupported spec file version ({0})")]
+    UnsupportedSpecFileVersion(Version),
 }
 
-impl From<IoError> for Error {
-    fn from(e: IoError) -> Self {
-        Error::Io(e)
-    }
-}
-
-impl From<OpenApiError> for Error {
-    fn from(e: OpenApiError) -> Self {
-        Error::OpenApi(e)
-    }
-}
-
-impl From<JsonError> for Error {
-    fn from(e: JsonError) -> Self {
-        Error::Serialize(e)
+impl From<openapi::Error> for OpenApiError {
+    fn from(e: openapi::Error) -> Self {
+        match e {
+            openapi::Error::Io(err) => OpenApiError::Io(err),
+            openapi::Error::Yaml(err) => OpenApiError::Yaml(err),
+            openapi::Error::Serialize(err) => OpenApiError::Serialize(err),
+            openapi::Error::SemVerError(err) => OpenApiError::SemVerError(err),
+            openapi::Error::UnsupportedSpecFileVersion(err) => {
+                OpenApiError::UnsupportedSpecFileVersion(err)
+            }
+        }
     }
 }
