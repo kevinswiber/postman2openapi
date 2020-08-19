@@ -1,0 +1,134 @@
+{
+	"info": {
+		"_postman_id": "bb4eaba5-dc18-42e1-8d78-8acf16208017",
+		"name": "Users API - documentation",
+		"description": "This is a sample OpenAPI definition for a Users API.\n\nContact Support:\n Name: Kevin Swiber\n Email: kswiber@gmail.com",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Returns a list of users."
+					},
+					"response": [
+						{
+							"name": "A list of users.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/users",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users"
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n \"page\": 1,\n \"per_page\": 10,\n \"total\": 30,\n \"total_pages\": 3,\n \"data\": [\n  {\n   \"id\": 12345,\n   \"email\": \"blah@example.com\",\n   \"first_name\": \"George\",\n   \"last_name\": \"Burns\",\n   \"avatar\": \"https://george.burns/avatar\"\n  }\n ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get a Single User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/:userId",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								":userId"
+							],
+							"variable": [
+								{
+									"id": "23523928-bd5b-4128-ac91-4393b93ca655",
+									"key": "userId",
+									"value": "-52523638",
+									"type": "string",
+									"description": "(Required) The ID of the user."
+								}
+							]
+						},
+						"description": "Returns a single user."
+					},
+					"response": [
+						{
+							"name": "A single user.",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/users/:userId",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"users",
+										":userId"
+									],
+									"variable": [
+										{
+											"key": "userId"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n \"id\": 12345,\n \"email\": \"blah@example.com\",\n \"first_name\": \"George\",\n \"last_name\": \"Burns\",\n \"avatar\": \"https://george.burns/avatar\"\n}"
+						}
+					]
+				}
+			],
+			"description": "User management operations.",
+			"protocolProfileBehavior": {}
+		}
+	],
+	"variable": [
+		{
+			"id": "baseUrl",
+			"key": "baseUrl",
+			"value": "https://reqres.in/api",
+			"type": "string"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
