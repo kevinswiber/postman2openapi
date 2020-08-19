@@ -181,6 +181,7 @@ name = "postman2openapi"
 version = "0.1.0"
 dependencies = [
  "convert_case",
+ "failure",
  "lazy_static",
  "openapi",
  "regex",

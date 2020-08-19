@@ -3,9 +3,11 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 
+pub mod error;
 pub mod postman;
 
 use convert_case::{Case, Casing};
+pub use error::Error;
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
 
@@ -15,6 +17,21 @@ lazy_static! {
     static ref VARIABLE_RE: regex::Regex = regex::Regex::new(r"\{\{([^{}]*?)\}\}").unwrap();
     static ref URI_TEMPLATE_VARIABLE_RE: regex::Regex =
         regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
+}
+
+pub type Result<T> = std::result::Result<T, error::Error>;
+
+pub fn from_path(filename: &str) -> Result<String> {
+    match std::fs::File::open(filename) {
+        Ok(r) => match serde_json::from_reader::<_, postman::Spec>(r) {
+            Ok(spec) => match Transpiler::transpile(spec) {
+                Ok(oas) => Ok(oas),
+                Err(err) => Err(Error::from(err)),
+            },
+            Err(err) => Err(Error::from(err)),
+        },
+        Err(err) => Err(Error::from(err)),
+    }
 }
 
 pub struct Transpiler<'a> {
@@ -28,17 +45,8 @@ struct TranspileState<'a> {
 }
 
 impl<'a> Transpiler<'a> {
-    pub fn transpile(spec: postman::Spec) -> openapi::Result<String> {
-        let description = match &spec.info.description {
-            Some(d) => match d {
-                postman::DescriptionUnion::String(s) => Some(s.to_string()),
-                postman::DescriptionUnion::Description(desc) => match &desc.content {
-                    Some(c) => Some(c.to_string()),
-                    None => None,
-                },
-            },
-            None => None,
-        };
+    pub fn transpile(spec: postman::Spec) -> Result<String> {
+        let description = extract_description(&spec.info.description);
 
         let mut oas = openapi3::Spec {
             openapi: String::from("3.0.3"),
@@ -84,7 +92,10 @@ impl<'a> Transpiler<'a> {
 
         transpiler.transform(&mut state, &spec.item);
 
-        openapi::to_yaml(&openapi::OpenApi::V3_0(oas))
+        match openapi::to_yaml(&openapi::OpenApi::V3_0(oas)) {
+            Ok(yaml) => Ok(yaml),
+            Err(err) => Err(Error::from(err)),
+        }
     }
 
     fn transform(&self, state: &mut TranspileState, items: &Vec<postman::Items>) {
@@ -94,16 +105,7 @@ impl<'a> Transpiler<'a> {
                     Some(n) => n,
                     None => "<folder>",
                 };
-                let description = match &item.description {
-                    Some(d) => match d {
-                        postman::DescriptionUnion::String(s) => Some(s.to_string()),
-                        postman::DescriptionUnion::Description(desc) => match &desc.content {
-                            Some(c) => Some(c.to_string()),
-                            None => None,
-                        },
-                    },
-                    None => None,
-                };
+                let description = extract_description(&item.description);
 
                 self.transform_folder(state, &i, name, description);
             } else {
@@ -140,371 +142,344 @@ impl<'a> Transpiler<'a> {
             if let postman::RequestUnion::RequestClass(request) = r {
                 if let Some(postman::Url::UrlClass(u)) = &request.url {
                     if let Some(postman::Host::StringArray(parts)) = &u.host {
-                        let host = parts.join(".");
-                        let mut proto = "".to_string();
-                        if let Some(protocol) = &u.protocol {
-                            proto = format!("{}://", protocol.clone());
-                        }
-                        if let Some(s) = &mut state.oas.servers {
-                            let mut server_url = format!("{}{}", proto, host);
-                            server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
-                            if !s.into_iter().any(|srv| srv.url == server_url) {
-                                let server = openapi3::Server {
-                                    url: server_url,
-                                    description: None,
-                                    variables: None,
-                                };
-                                s.push(server);
-                            }
-                        }
+                        self.transform_server(state, u, parts);
                     }
 
                     if let Some(postman::UrlPath::UnionArray(p)) = &u.path {
-                        let resolved_segments = &p
-                            .iter()
-                            .map(|segment| {
-                                let mut seg = match segment {
-                                    postman::PathElement::PathClass(c) => {
-                                        c.clone().value.unwrap_or_default()
-                                    }
-                                    postman::PathElement::String(c) => c.to_string(),
-                                };
-                                seg = self.resolve_variables_with_replace_fn(
-                                    &seg,
-                                    VAR_REPLACE_CREDITS,
-                                    |s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
-                                );
-                                match &seg[0..1] {
-                                    ":" => format!("{{{}}}", &seg[1..]),
-                                    _ => seg.to_string(),
-                                }
-                            })
-                            .collect::<Vec<String>>();
-                        let segments = "/".to_string() + &resolved_segments.join("/");
-
-                        // TODO: Because of variables, we can actually get duplicate paths.
-                        // - /admin/{subresource}/{subresourceId}
-                        // - /admin/{subresource2}/{subresource2Id}
-                        // Throw a warning?
-                        if !state.oas.paths.contains_key(&segments) {
-                            state
-                                .oas
-                                .paths
-                                .insert(segments.clone(), openapi3::PathItem::default());
-                        }
-
-                        if let Some(path) = state.oas.paths.get_mut(&segments) {
-                            let description = match &request.description {
-                                Some(d) => match d {
-                                    postman::DescriptionUnion::String(s) => Some(s.to_string()),
-                                    postman::DescriptionUnion::Description(desc) => {
-                                        match &desc.content {
-                                            Some(c) => Some(c.to_string()),
-                                            None => Some(name.to_string()),
-                                        }
-                                    }
-                                },
-                                None => Some(name.to_string()),
-                            };
-
-                            path.parameters =
-                                self.generate_path_parameters(&resolved_segments, &u.variable);
-
-                            let mut op = openapi3::Operation::default();
-
-                            if let Some(qp) = &u.query {
-                                if let Some(mut query_params) = self.generate_query_parameters(qp) {
-                                    match &op.parameters {
-                                        Some(params) => {
-                                            let mut cloned = params.clone();
-                                            cloned.append(&mut query_params);
-                                            op.parameters = Some(cloned);
-                                        }
-                                        None => op.parameters = Some(query_params),
-                                    };
-                                }
-                            }
-
-                            let mut content_type: Option<String> = None;
-
-                            if let Some(postman::HeaderUnion::HeaderArray(headers)) =
-                                &request.header
-                            {
-                                let content_type_header = headers
-                                    .iter()
-                                    .find(|h| h.key.to_lowercase() == "content-type");
-                                if let Some(t) = content_type_header {
-                                    let content_type_parts: Vec<&str> =
-                                        t.value.split(';').collect();
-                                    content_type = Some(content_type_parts[0].to_string());
-                                }
-                            }
-
-                            if let Some(body) = &request.body {
-                                let mut request_body = openapi3::RequestBody::default();
-                                let mut content = openapi3::MediaType::default();
-
-                                if let Some(mode) = &body.mode {
-                                    match mode {
-                                        postman::Mode::Raw => {
-                                            content_type =
-                                                Some("application/octet-stream".to_string());
-                                            if let Some(raw) = &body.raw {
-                                                let resolved_body = self
-                                                    .resolve_variables(&raw, VAR_REPLACE_CREDITS);
-                                                let example_val;
-
-                                                //set content type based on options or inference.
-                                                match serde_json::from_str(&resolved_body) {
-                                                    Ok(v) => match v {
-                                                        serde_json::Value::Object(_)
-                                                        | serde_json::Value::Array(_) => {
-                                                            content_type = Some(
-                                                                "application/json".to_string(),
-                                                            );
-                                                            if let Some(schema) =
-                                                                self.generate_schema(&v)
-                                                            {
-                                                                content.schema = Some(
-                                                                openapi3::ObjectOrReference::Object(
-                                                                    schema,
-                                                                ),
-                                                            );
-                                                            }
-                                                            example_val = v;
-                                                        }
-                                                        _ => {
-                                                            example_val = serde_json::Value::String(
-                                                                resolved_body,
-                                                            );
-                                                        }
-                                                    },
-                                                    _ => {
-                                                        // TODO: Check if XML, HTML, JavaScript
-                                                        content_type =
-                                                            Some("text/plain".to_string());
-                                                        example_val = serde_json::Value::String(
-                                                            resolved_body,
-                                                        );
-                                                    }
-                                                }
-
-                                                let example = openapi3::MediaTypeExample::Example {
-                                                    example: example_val,
-                                                };
-                                                content.examples = Some(example);
-                                            }
-                                        }
-                                        postman::Mode::Urlencoded => {
-                                            content_type =
-                                                Some("application/form-urlencoded".to_string());
-                                            if let Some(urlencoded) = &body.urlencoded {
-                                                let mut oas_data = serde_json::Map::new();
-                                                for i in urlencoded {
-                                                    if let Some(v) = &i.value {
-                                                        let value = serde_json::Value::String(
-                                                            v.to_string(),
-                                                        );
-                                                        oas_data.insert(i.key.clone(), value);
-                                                    }
-                                                }
-                                                let oas_obj = serde_json::Value::Object(oas_data);
-                                                if let Some(schema) = self.generate_schema(&oas_obj)
-                                                {
-                                                    content.schema = Some(
-                                                        openapi3::ObjectOrReference::Object(schema),
-                                                    );
-                                                }
-                                                let example = openapi3::MediaTypeExample::Example {
-                                                    example: oas_obj,
-                                                };
-                                                content.examples = Some(example);
-                                            }
-                                        }
-                                        _ => {
-                                            content_type =
-                                                Some("application/octet-stream".to_string())
-                                        }
-                                    }
-                                }
-
-                                if content_type.is_none() {
-                                    content_type = Some("application/octet-stream".to_string())
-                                }
-
-                                request_body.content =
-                                    BTreeMap::<String, openapi3::MediaType>::new();
-                                request_body
-                                    .content
-                                    .insert(content_type.unwrap().to_string(), content);
-                                op.request_body =
-                                    Some(openapi3::ObjectOrReference::Object(request_body));
-                            }
-
-                            op.summary = Some(name.to_string());
-                            op.description = description;
-
-                            if state.hierarchy.len() > 0 {
-                                op.tags = Some(state.hierarchy.clone());
-                            }
-
-                            if let Some(responses) = &item.response {
-                                for r in responses.iter() {
-                                    let mut oas_response = openapi3::Response::default();
-                                    let mut response_media_types =
-                                        BTreeMap::<String, openapi3::MediaType>::new();
-                                    if let Some(res) = r {
-                                        // TODO: Use Postman schema that includes response name.
-                                        if let Some(name) = &res.name {
-                                            oas_response.description = Some(name.clone());
-                                        }
-                                        let mut response_content = openapi3::MediaType::default();
-                                        if let Some(raw) = &res.body {
-                                            let mut response_content_type: Option<String> = None;
-                                            let resolved_body =
-                                                self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
-                                            let example_val;
-
-                                            //set content type based on options or inference.
-                                            match serde_json::from_str(&resolved_body) {
-                                                Ok(v) => match v {
-                                                    serde_json::Value::Object(_)
-                                                    | serde_json::Value::Array(_) => {
-                                                        response_content_type =
-                                                            Some("application/json".to_string());
-                                                        if let Some(schema) =
-                                                            self.generate_schema(&v)
-                                                        {
-                                                            response_content.schema = Some(
-                                                                openapi3::ObjectOrReference::Object(
-                                                                    schema,
-                                                                ),
-                                                            );
-                                                        }
-                                                        example_val = v;
-                                                    }
-                                                    _ => {
-                                                        example_val = serde_json::Value::String(
-                                                            resolved_body,
-                                                        );
-                                                    }
-                                                },
-                                                _ => {
-                                                    // TODO: Check if XML, HTML, JavaScript
-                                                    response_content_type =
-                                                        Some("text/plain".to_string());
-                                                    example_val =
-                                                        serde_json::Value::String(resolved_body);
-                                                }
-                                            }
-                                            let mut example_map = BTreeMap::<
-                                                String,
-                                                openapi3::ObjectOrReference<openapi3::Example>,
-                                            >::new(
-                                            );
-
-                                            let ex = openapi3::Example {
-                                                summary: None,
-                                                description: None,
-                                                value: Some(example_val),
-                                            };
-
-                                            let example_name = match &res.name {
-                                                Some(n) => n.to_string(),
-                                                None => "".to_string(),
-                                            };
-
-                                            example_map.insert(
-                                                example_name,
-                                                openapi3::ObjectOrReference::Object(ex),
-                                            );
-                                            let example = openapi3::MediaTypeExample::Examples {
-                                                examples: example_map,
-                                            };
-
-                                            response_content.examples = Some(example);
-
-                                            if response_content_type.is_none() {
-                                                response_content_type =
-                                                    Some("application/octet-stream".to_string());
-                                            }
-
-                                            response_media_types.insert(
-                                                response_content_type.unwrap().to_string(),
-                                                response_content,
-                                            );
-                                        }
-                                        oas_response.content = Some(response_media_types);
-                                        if let Some(code) = &res.code {
-                                            op.responses.insert(code.to_string(), oas_response);
-                                        }
-                                    }
-                                }
-                            }
-                            if !op.responses.contains_key("200")
-                                && !op.responses.contains_key("201")
-                                && !op.responses.contains_key("202")
-                                && !op.responses.contains_key("203")
-                                && !op.responses.contains_key("204")
-                                && !op.responses.contains_key("205")
-                                && !op.responses.contains_key("206")
-                                && !op.responses.contains_key("207")
-                                && !op.responses.contains_key("208")
-                                && !op.responses.contains_key("226")
-                            {
-                                op.responses.insert(
-                                    "200".to_string(),
-                                    openapi3::Response {
-                                        description: Some("".to_string()),
-                                        ..openapi3::Response::default()
-                                    },
-                                );
-                            }
-
-                            if let Some(method) = &request.method {
-                                let m = method.to_lowercase();
-                                let mut op_id = name.clone().to_case(Case::Camel);
-                                match state.operation_ids.get_mut(&op_id) {
-                                    Some(v) => {
-                                        *v = *v + 1;
-                                        op_id = format!("{}{}", op_id, v);
-                                    }
-                                    None => {
-                                        state.operation_ids.insert(op_id.clone(), 0);
-                                    }
-                                }
-
-                                op.operation_id = Some(op_id);
-                                match m.as_str() {
-                                    "get" => {
-                                        path.get = Some(op);
-                                    }
-                                    "post" => {
-                                        path.post = Some(op);
-                                    }
-                                    "put" => {
-                                        path.put = Some(op);
-                                    }
-                                    "delete" => {
-                                        path.delete = Some(op);
-                                    }
-                                    "patch" => {
-                                        path.patch = Some(op);
-                                    }
-                                    "options" => {
-                                        path.options = Some(op);
-                                    }
-                                    "trace" => {
-                                        path.trace = Some(op);
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
+                        self.transform_paths(state, item, request, name, u, p)
                     }
                 }
             }
         }
+    }
+
+    fn transform_server(
+        &self,
+        state: &mut TranspileState,
+        url: &postman::UrlClass,
+        parts: &Vec<String>,
+    ) {
+        let host = parts.join(".");
+        let mut proto = "".to_string();
+        if let Some(protocol) = &url.protocol {
+            proto = format!("{}://", protocol.clone());
+        }
+        if let Some(s) = &mut state.oas.servers {
+            let mut server_url = format!("{}{}", proto, host);
+            server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
+            if !s.into_iter().any(|srv| srv.url == server_url) {
+                let server = openapi3::Server {
+                    url: server_url,
+                    description: None,
+                    variables: None,
+                };
+                s.push(server);
+            }
+        }
+    }
+
+    fn transform_paths(
+        &self,
+        state: &mut TranspileState,
+        item: &postman::Items,
+        request: &postman::RequestClass,
+        request_name: &str,
+        url: &postman::UrlClass,
+        paths: &Vec<postman::PathElement>,
+    ) {
+        let resolved_segments = paths
+            .iter()
+            .map(|segment| {
+                let mut seg = match segment {
+                    postman::PathElement::PathClass(c) => c.clone().value.unwrap_or_default(),
+                    postman::PathElement::String(c) => c.to_string(),
+                };
+                seg = self.resolve_variables_with_replace_fn(&seg, VAR_REPLACE_CREDITS, |s| {
+                    VARIABLE_RE.replace_all(&s, "{$1}").to_string()
+                });
+                match &seg[0..1] {
+                    ":" => format!("{{{}}}", &seg[1..]),
+                    _ => seg.to_string(),
+                }
+            })
+            .collect::<Vec<String>>();
+        let segments = "/".to_string() + &resolved_segments.join("/");
+
+        // TODO: Because of variables, we can actually get duplicate paths.
+        // - /admin/{subresource}/{subresourceId}
+        // - /admin/{subresource2}/{subresource2Id}
+        // Throw a warning?
+        if !state.oas.paths.contains_key(&segments) {
+            state
+                .oas
+                .paths
+                .insert(segments.clone(), openapi3::PathItem::default());
+        }
+
+        if let Some(path) = state.oas.paths.get_mut(&segments) {
+            // description must exist on a path
+            let description = match extract_description(&request.description) {
+                Some(desc) => Some(desc),
+                None => Some(request_name.to_string()),
+            };
+
+            path.parameters = self.generate_path_parameters(&resolved_segments, &url.variable);
+
+            let mut op = openapi3::Operation::default();
+
+            if let Some(qp) = &url.query {
+                if let Some(mut query_params) = self.generate_query_parameters(qp) {
+                    match &op.parameters {
+                        Some(params) => {
+                            let mut cloned = params.clone();
+                            cloned.append(&mut query_params);
+                            op.parameters = Some(cloned);
+                        }
+                        None => op.parameters = Some(query_params),
+                    };
+                }
+            }
+
+            let mut content_type: Option<String> = None;
+
+            if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
+                let content_type_header = headers
+                    .iter()
+                    .find(|h| h.key.to_lowercase() == "content-type");
+                if let Some(t) = content_type_header {
+                    let content_type_parts: Vec<&str> = t.value.split(';').collect();
+                    content_type = Some(content_type_parts[0].to_string());
+                }
+            }
+
+            if let Some(body) = &request.body {
+                self.extract_request_body(body, &mut op, content_type);
+            }
+
+            op.summary = Some(request_name.to_string());
+            op.description = description;
+
+            if state.hierarchy.len() > 0 {
+                op.tags = Some(state.hierarchy.clone());
+            }
+
+            if let Some(responses) = &item.response {
+                for r in responses.iter() {
+                    let mut oas_response = openapi3::Response::default();
+                    let mut response_media_types = BTreeMap::<String, openapi3::MediaType>::new();
+                    if let Some(res) = r {
+                        // TODO: Use Postman schema that includes response name.
+                        if let Some(name) = &res.name {
+                            oas_response.description = Some(name.clone());
+                        }
+                        let mut response_content = openapi3::MediaType::default();
+                        if let Some(raw) = &res.body {
+                            let mut response_content_type: Option<String> = None;
+                            let resolved_body = self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
+                            let example_val;
+
+                            //set content type based on options or inference.
+                            match serde_json::from_str(&resolved_body) {
+                                Ok(v) => match v {
+                                    serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                                        response_content_type =
+                                            Some("application/json".to_string());
+                                        if let Some(schema) = self.generate_schema(&v) {
+                                            response_content.schema =
+                                                Some(openapi3::ObjectOrReference::Object(schema));
+                                        }
+                                        example_val = v;
+                                    }
+                                    _ => {
+                                        example_val = serde_json::Value::String(resolved_body);
+                                    }
+                                },
+                                _ => {
+                                    // TODO: Check if XML, HTML, JavaScript
+                                    response_content_type = Some("text/plain".to_string());
+                                    example_val = serde_json::Value::String(resolved_body);
+                                }
+                            }
+                            let mut example_map = BTreeMap::<
+                                String,
+                                openapi3::ObjectOrReference<openapi3::Example>,
+                            >::new();
+
+                            let ex = openapi3::Example {
+                                summary: None,
+                                description: None,
+                                value: Some(example_val),
+                            };
+
+                            let example_name = match &res.name {
+                                Some(n) => n.to_string(),
+                                None => "".to_string(),
+                            };
+
+                            example_map
+                                .insert(example_name, openapi3::ObjectOrReference::Object(ex));
+                            let example = openapi3::MediaTypeExample::Examples {
+                                examples: example_map,
+                            };
+
+                            response_content.examples = Some(example);
+
+                            if response_content_type.is_none() {
+                                response_content_type =
+                                    Some("application/octet-stream".to_string());
+                            }
+
+                            response_media_types.insert(
+                                response_content_type.unwrap().to_string(),
+                                response_content,
+                            );
+                        }
+                        oas_response.content = Some(response_media_types);
+                        if let Some(code) = &res.code {
+                            op.responses.insert(code.to_string(), oas_response);
+                        }
+                    }
+                }
+            }
+            if !op.responses.contains_key("200")
+                && !op.responses.contains_key("201")
+                && !op.responses.contains_key("202")
+                && !op.responses.contains_key("203")
+                && !op.responses.contains_key("204")
+                && !op.responses.contains_key("205")
+                && !op.responses.contains_key("206")
+                && !op.responses.contains_key("207")
+                && !op.responses.contains_key("208")
+                && !op.responses.contains_key("226")
+            {
+                op.responses.insert(
+                    "200".to_string(),
+                    openapi3::Response {
+                        description: Some("".to_string()),
+                        ..openapi3::Response::default()
+                    },
+                );
+            }
+
+            if let Some(method) = &request.method {
+                let m = method.to_lowercase();
+                let mut op_id = request_name.clone().to_case(Case::Camel);
+                match state.operation_ids.get_mut(&op_id) {
+                    Some(v) => {
+                        *v = *v + 1;
+                        op_id = format!("{}{}", op_id, v);
+                    }
+                    None => {
+                        state.operation_ids.insert(op_id.clone(), 0);
+                    }
+                }
+
+                op.operation_id = Some(op_id);
+                match m.as_str() {
+                    "get" => {
+                        path.get = Some(op);
+                    }
+                    "post" => {
+                        path.post = Some(op);
+                    }
+                    "put" => {
+                        path.put = Some(op);
+                    }
+                    "delete" => {
+                        path.delete = Some(op);
+                    }
+                    "patch" => {
+                        path.patch = Some(op);
+                    }
+                    "options" => {
+                        path.options = Some(op);
+                    }
+                    "trace" => {
+                        path.trace = Some(op);
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    fn extract_request_body(
+        &self,
+        body: &postman::Body,
+        op: &mut openapi3::Operation,
+        ct: Option<String>,
+    ) {
+        let mut content_type = ct;
+        let mut request_body = openapi3::RequestBody::default();
+        let mut content = openapi3::MediaType::default();
+
+        if let Some(mode) = &body.mode {
+            match mode {
+                postman::Mode::Raw => {
+                    content_type = Some("application/octet-stream".to_string());
+                    if let Some(raw) = &body.raw {
+                        let resolved_body = self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
+                        let example_val;
+
+                        //set content type based on options or inference.
+                        match serde_json::from_str(&resolved_body) {
+                            Ok(v) => match v {
+                                serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                                    content_type = Some("application/json".to_string());
+                                    if let Some(schema) = self.generate_schema(&v) {
+                                        content.schema =
+                                            Some(openapi3::ObjectOrReference::Object(schema));
+                                    }
+                                    example_val = v;
+                                }
+                                _ => {
+                                    example_val = serde_json::Value::String(resolved_body);
+                                }
+                            },
+                            _ => {
+                                // TODO: Check if XML, HTML, JavaScript
+                                content_type = Some("text/plain".to_string());
+                                example_val = serde_json::Value::String(resolved_body);
+                            }
+                        }
+
+                        let example = openapi3::MediaTypeExample::Example {
+                            example: example_val,
+                        };
+                        content.examples = Some(example);
+                    }
+                }
+                postman::Mode::Urlencoded => {
+                    content_type = Some("application/form-urlencoded".to_string());
+                    if let Some(urlencoded) = &body.urlencoded {
+                        let mut oas_data = serde_json::Map::new();
+                        for i in urlencoded {
+                            if let Some(v) = &i.value {
+                                let value = serde_json::Value::String(v.to_string());
+                                oas_data.insert(i.key.clone(), value);
+                            }
+                        }
+                        let oas_obj = serde_json::Value::Object(oas_data);
+                        if let Some(schema) = self.generate_schema(&oas_obj) {
+                            content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                        }
+                        let example = openapi3::MediaTypeExample::Example { example: oas_obj };
+                        content.examples = Some(example);
+                    }
+                }
+                _ => content_type = Some("application/octet-stream".to_string()),
+            }
+        }
+
+        if content_type.is_none() {
+            content_type = Some("application/octet-stream".to_string())
+        }
+
+        request_body.content = BTreeMap::<String, openapi3::MediaType>::new();
+        request_body
+            .content
+            .insert(content_type.unwrap().to_string(), content);
+        op.request_body = Some(openapi3::ObjectOrReference::Object(request_body));
     }
 
     fn resolve_variables(&self, segment: &str, sub_replace_credits: usize) -> String {
@@ -670,18 +645,7 @@ impl<'a> Transpiler<'a> {
                                 Some(k) => k == &var,
                                 _ => false,
                             }) {
-                                param.description = match &p.description {
-                                    Some(d) => match d {
-                                        postman::DescriptionUnion::String(s) => Some(s.to_string()),
-                                        postman::DescriptionUnion::Description(desc) => {
-                                            match &desc.content {
-                                                Some(c) => Some(c.to_string()),
-                                                None => None,
-                                            }
-                                        }
-                                    },
-                                    None => None,
-                                };
+                                param.description = extract_description(&p.description);
 
                                 if let Some(pval) = &p.value {
                                     if let Some(pval_val) = pval.as_str() {
@@ -720,16 +684,7 @@ impl<'a> Transpiler<'a> {
                 param.location = "query".to_string();
                 let mut schema = openapi3::Schema::default();
                 schema.schema_type = Some("string".to_string());
-                param.description = match &qp.description {
-                    Some(d) => match d {
-                        postman::DescriptionUnion::String(s) => Some(s.to_string()),
-                        postman::DescriptionUnion::Description(desc) => match &desc.content {
-                            Some(c) => Some(c.to_string()),
-                            None => None,
-                        },
-                    },
-                    None => None,
-                };
+                param.description = extract_description(&qp.description);
 
                 if let Some(pval) = &qp.value {
                     schema.example = Some(serde_json::Value::String(
@@ -747,5 +702,18 @@ impl<'a> Transpiler<'a> {
         } else {
             None
         }
+    }
+}
+
+fn extract_description(description: &Option<postman::DescriptionUnion>) -> Option<String> {
+    match description {
+        Some(d) => match d {
+            postman::DescriptionUnion::String(s) => Some(s.to_string()),
+            postman::DescriptionUnion::Description(desc) => match &desc.content {
+                Some(c) => Some(c.to_string()),
+                None => None,
+            },
+        },
+        None => None,
     }
 }

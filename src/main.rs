@@ -1,17 +1,9 @@
-use postman2openapi::{postman, Transpiler};
-
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let filename = args.get(1).unwrap();
-    match std::fs::File::open(filename) {
-        Ok(r) => match serde_json::from_reader::<_, postman::Spec>(r) {
-            Ok(spec) => {
-                if let Ok(yaml) = Transpiler::transpile(spec) {
-                    println!("{}", yaml);
-                }
-            }
-            Err(err) => eprintln!("{}", err),
-        },
+
+    match postman2openapi::from_path(filename) {
+        Ok(oas) => println!("{}", oas),
         Err(err) => eprintln!("{}", err),
     }
 }
