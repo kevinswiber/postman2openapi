@@ -21,6 +21,12 @@ pub struct Transpiler<'a> {
     variable_map: &'a BTreeMap<String, serde_json::value::Value>,
 }
 
+struct TranspileState<'a> {
+    oas: &'a mut openapi3::Spec,
+    operation_ids: &'a mut BTreeMap<String, usize>,
+    hierarchy: &'a mut Vec<String>,
+}
+
 impl<'a> Transpiler<'a> {
     pub fn transpile(spec: postman::Spec) -> openapi::Result<String> {
         let description = match &spec.info.description {
@@ -64,24 +70,24 @@ impl<'a> Transpiler<'a> {
             }
         });
 
+        let mut operation_ids = BTreeMap::<String, usize>::new();
+        let mut hierarchy = Vec::<String>::new();
+        let mut state = TranspileState {
+            oas: &mut oas,
+            operation_ids: &mut operation_ids,
+            hierarchy: &mut hierarchy,
+        };
+
         let transpiler = Transpiler {
             variable_map: &mut variable_map,
         };
 
-        let mut operation_ids = BTreeMap::<String, usize>::new();
-        let mut hierarchy = Vec::<String>::new();
-        transpiler.transform(&spec.item, &mut oas, &mut operation_ids, &mut hierarchy);
+        transpiler.transform(&mut state, &spec.item);
 
         openapi::to_yaml(&openapi::OpenApi::V3_0(oas))
     }
 
-    fn transform(
-        &'a self,
-        items: &'a Vec<postman::Items>,
-        oas: &'a mut openapi3::Spec,
-        operation_ids: &'a mut BTreeMap<String, usize>,
-        hierarchy: &'a mut Vec<String>,
-    ) {
+    fn transform(&self, state: &mut TranspileState, items: &Vec<postman::Items>) {
         for item in items {
             if let Some(i) = &item.item {
                 let name = match &item.name {
@@ -99,41 +105,33 @@ impl<'a> Transpiler<'a> {
                     None => None,
                 };
 
-                self.transform_folder(&i, oas, operation_ids, hierarchy, name, description);
+                self.transform_folder(state, &i, name, description);
             } else {
-                self.transform_request(&item, oas, operation_ids, hierarchy);
+                self.transform_request(state, &item);
             }
         }
     }
 
     fn transform_folder(
-        &'a self,
-        items: &'a Vec<postman::Items>,
-        oas: &'a mut openapi3::Spec,
-        operation_ids: &'a mut BTreeMap<String, usize>,
-        hierarchy: &'a mut Vec<String>,
+        &self,
+        state: &mut TranspileState,
+        items: &Vec<postman::Items>,
         name: &str,
         description: Option<String>,
     ) {
-        if let Some(t) = &mut oas.tags {
+        if let Some(t) = &mut state.oas.tags {
             t.push(openapi3::Tag {
                 name: name.to_string(),
                 description: description,
             });
         };
 
-        hierarchy.push(name.to_string());
-        self.transform(items, oas, operation_ids, hierarchy);
-        hierarchy.pop();
+        state.hierarchy.push(name.to_string());
+        self.transform(state, items);
+        state.hierarchy.pop();
     }
 
-    fn transform_request(
-        &self,
-        item: &'a postman::Items,
-        oas: &'a mut openapi3::Spec,
-        operation_ids: &'a mut BTreeMap<String, usize>,
-        hierarchy: &'a mut Vec<String>,
-    ) {
+    fn transform_request(&self, state: &mut TranspileState, item: &postman::Items) {
         let name = match &item.name {
             Some(n) => n,
             None => "<request>",
@@ -147,7 +145,7 @@ impl<'a> Transpiler<'a> {
                         if let Some(protocol) = &u.protocol {
                             proto = format!("{}://", protocol.clone());
                         }
-                        if let Some(s) = &mut oas.servers {
+                        if let Some(s) = &mut state.oas.servers {
                             let mut server_url = format!("{}{}", proto, host);
                             server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
                             if !s.into_iter().any(|srv| srv.url == server_url) {
@@ -188,12 +186,14 @@ impl<'a> Transpiler<'a> {
                         // - /admin/{subresource}/{subresourceId}
                         // - /admin/{subresource2}/{subresource2Id}
                         // Throw a warning?
-                        if !oas.paths.contains_key(&segments) {
-                            oas.paths
+                        if !state.oas.paths.contains_key(&segments) {
+                            state
+                                .oas
+                                .paths
                                 .insert(segments.clone(), openapi3::PathItem::default());
                         }
 
-                        if let Some(path) = oas.paths.get_mut(&segments) {
+                        if let Some(path) = state.oas.paths.get_mut(&segments) {
                             let description = match &request.description {
                                 Some(d) => match d {
                                     postman::DescriptionUnion::String(s) => Some(s.to_string()),
@@ -344,8 +344,8 @@ impl<'a> Transpiler<'a> {
                             op.summary = Some(name.to_string());
                             op.description = description;
 
-                            if hierarchy.len() > 0 {
-                                op.tags = Some(hierarchy.clone());
+                            if state.hierarchy.len() > 0 {
+                                op.tags = Some(state.hierarchy.clone());
                             }
 
                             if let Some(responses) = &item.response {
@@ -464,13 +464,13 @@ impl<'a> Transpiler<'a> {
                             if let Some(method) = &request.method {
                                 let m = method.to_lowercase();
                                 let mut op_id = name.clone().to_case(Case::Camel);
-                                match operation_ids.get_mut(&op_id) {
+                                match state.operation_ids.get_mut(&op_id) {
                                     Some(v) => {
                                         *v = *v + 1;
                                         op_id = format!("{}{}", op_id, v);
                                     }
                                     None => {
-                                        operation_ids.insert(op_id.clone(), 0);
+                                        state.operation_ids.insert(op_id.clone(), 0);
                                     }
                                 }
 
