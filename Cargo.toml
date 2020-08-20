@@ -13,7 +13,6 @@ name = "postman2openapi"
 path = "src/main.rs"
 
 [dependencies]
-# openapi = { git = "https://github.com/softprops/openapi" }
 convert_case = "0.4.0"
 anyhow = "1.0"
 thiserror = "1.0"
