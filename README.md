@@ -2,6 +2,8 @@
 
 Convert Postman collections to OpenAPI definitions.
 
+[![Build status](https://github.com/kevinswiber/postman2openapi/workflows/ci/badge.svg)](https://github.com/kevinswiber/postman2openapi/actions)
+
 ## Installation
 
 Installation is only available via Cargo at this time.  [Installing Rust and Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
