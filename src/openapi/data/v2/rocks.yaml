@@ -1,0 +1,33 @@
+swagger: "2.0"
+info:
+  description: "My service rocks."
+  version: "1.0.0"
+  title: SOA Resource
+  termsOfService: https://github.com/mdsol/resource_rocks
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+
+paths:
+  /v1/resource:
+    get:
+      description: "A filtered collection of resource "
+      operationId: getResource
+      parameters:
+        - $ref: "#/parameters/per_page"
+
+      responses:
+        "404":
+          description: Resource  not found
+
+parameters:
+  per_page:
+    in: query
+    name: per_page
+    description: The number of results per page
+    required: false
+    type: integer
+    default: 25

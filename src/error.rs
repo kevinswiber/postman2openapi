@@ -5,6 +5,8 @@ use serde_json::Error as JsonError;
 use serde_yaml::Error as YamlError;
 use std::io::Error as IoError;
 
+use super::openapi;
+
 #[derive(Error, Debug)]
 pub enum OpenApiError {
     #[error("{0}")]

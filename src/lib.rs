@@ -4,6 +4,7 @@ extern crate lazy_static;
 extern crate serde_derive;
 
 pub mod error;
+pub mod openapi;
 pub mod postman;
 
 use anyhow::{Error, Result};
