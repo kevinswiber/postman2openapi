@@ -19,12 +19,36 @@ lazy_static! {
         regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
 }
 
-pub fn from_path(filename: &str) -> Result<String> {
+pub fn from_path(filename: &str, format: TargetFormat) -> Result<String> {
     let collection = std::fs::read_to_string(filename)?;
-    let postman_spec: postman::Spec = serde_json::from_str(&collection)?;
+    from_str(&collection, format)
+}
+
+pub fn from_str(collection: &str, format: TargetFormat) -> Result<String> {
+    let postman_spec: postman::Spec = serde_json::from_str(collection)?;
     let oas_spec = Transpiler::transpile(postman_spec);
-    let oas_definition = openapi::to_yaml(&oas_spec)?;
+    let oas_definition = match format {
+        TargetFormat::Json => openapi::to_json(&oas_spec),
+        TargetFormat::Yaml => openapi::to_yaml(&oas_spec),
+    }?;
     Ok(oas_definition)
+}
+
+#[derive(PartialEq, Debug)]
+pub enum TargetFormat {
+    Json,
+    Yaml,
+}
+
+impl std::str::FromStr for TargetFormat {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "json" => Ok(TargetFormat::Json),
+            "yaml" => Ok(TargetFormat::Yaml),
+            _ => Err("invalid format"),
+        }
+    }
 }
 
 pub struct Transpiler<'a> {
