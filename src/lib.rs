@@ -48,7 +48,7 @@ impl<'a> Transpiler<'a> {
             info: openapi3::Info {
                 license: None,
                 contact: Some(openapi3::Contact::default()),
-                description: description,
+                description,
                 terms_of_service: None,
                 version: String::from("1.0.0"),
                 title: spec.info.name,
@@ -61,7 +61,7 @@ impl<'a> Transpiler<'a> {
         };
 
         let mut variable_map = BTreeMap::<String, serde_json::value::Value>::new();
-        &spec.variable.map(|var| {
+        if let Some(var) = spec.variable {
             for v in var {
                 if let Some(v_name) = v.key {
                     if let Some(v_val) = v.value {
@@ -71,7 +71,7 @@ impl<'a> Transpiler<'a> {
                     }
                 }
             }
-        });
+        };
 
         let mut operation_ids = BTreeMap::<String, usize>::new();
         let mut hierarchy = Vec::<String>::new();
@@ -90,7 +90,7 @@ impl<'a> Transpiler<'a> {
         openapi::OpenApi::V3_0(oas)
     }
 
-    fn transform(&self, state: &mut TranspileState, items: &Vec<postman::Items>) {
+    fn transform(&self, state: &mut TranspileState, items: &[postman::Items]) {
         for item in items {
             if let Some(i) = &item.item {
                 let name = match &item.name {
@@ -109,14 +109,14 @@ impl<'a> Transpiler<'a> {
     fn transform_folder(
         &self,
         state: &mut TranspileState,
-        items: &Vec<postman::Items>,
+        items: &[postman::Items],
         name: &str,
         description: Option<String>,
     ) {
         if let Some(t) = &mut state.oas.tags {
             t.push(openapi3::Tag {
                 name: name.to_string(),
-                description: description,
+                description,
             });
         };
 
@@ -149,7 +149,7 @@ impl<'a> Transpiler<'a> {
         &self,
         state: &mut TranspileState,
         url: &postman::UrlClass,
-        parts: &Vec<String>,
+        parts: &[String],
     ) {
         let host = parts.join(".");
         let mut proto = "".to_string();
@@ -159,7 +159,7 @@ impl<'a> Transpiler<'a> {
         if let Some(s) = &mut state.oas.servers {
             let mut server_url = format!("{}{}", proto, host);
             server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
-            if !s.into_iter().any(|srv| srv.url == server_url) {
+            if !s.iter_mut().any(|srv| srv.url == server_url) {
                 let server = openapi3::Server {
                     url: server_url,
                     description: None,
@@ -177,7 +177,7 @@ impl<'a> Transpiler<'a> {
         request: &postman::RequestClass,
         request_name: &str,
         url: &postman::UrlClass,
-        paths: &Vec<postman::PathElement>,
+        paths: &[postman::PathElement],
     ) {
         let resolved_segments = paths
             .iter()
@@ -189,13 +189,13 @@ impl<'a> Transpiler<'a> {
                 seg = self.resolve_variables_with_replace_fn(&seg, VAR_REPLACE_CREDITS, |s| {
                     VARIABLE_RE.replace_all(&s, "{$1}").to_string()
                 });
-                if seg.len() > 0 {
+                if !seg.is_empty() {
                     match &seg[0..1] {
                         ":" => format!("{{{}}}", &seg[1..]),
                         _ => seg.to_string(),
                     }
                 } else {
-                    seg.to_string()
+                    seg
                 }
             })
             .collect::<Vec<String>>();
@@ -255,7 +255,7 @@ impl<'a> Transpiler<'a> {
             op.summary = Some(request_name.to_string());
             op.description = description;
 
-            if state.hierarchy.len() > 0 {
+            if !state.hierarchy.is_empty() {
                 op.tags = Some(state.hierarchy.clone());
             }
 
@@ -274,8 +274,8 @@ impl<'a> Transpiler<'a> {
                             >::new();
                             for h in headers {
                                 if let postman::HeaderElement::Header(hdr) = h {
-                                    if hdr.value.len() == 0
-                                        || hdr.key.to_lowercase() == "content-type".to_string()
+                                    if hdr.value.is_empty()
+                                        || hdr.key.to_lowercase() == "content-type"
                                     {
                                         continue;
                                     }
@@ -292,7 +292,7 @@ impl<'a> Transpiler<'a> {
                                     );
                                 }
                             }
-                            if oas_headers.len() > 0 {
+                            if !oas_headers.is_empty() {
                                 oas_response.headers = Some(oas_headers);
                             }
                         }
@@ -386,10 +386,10 @@ impl<'a> Transpiler<'a> {
 
             if let Some(method) = &request.method {
                 let m = method.to_lowercase();
-                let mut op_id = request_name.clone().to_case(Case::Camel);
+                let mut op_id = request_name.to_case(Case::Camel);
                 match state.operation_ids.get_mut(&op_id) {
                     Some(v) => {
-                        *v = *v + 1;
+                        *v += 1;
                         op_id = format!("{}{}", op_id, v);
                     }
                     None => {
@@ -499,14 +499,12 @@ impl<'a> Transpiler<'a> {
         }
 
         request_body.content = BTreeMap::<String, openapi3::MediaType>::new();
-        request_body
-            .content
-            .insert(content_type.unwrap().to_string(), content);
+        request_body.content.insert(content_type.unwrap(), content);
         op.request_body = Some(openapi3::ObjectOrReference::Object(request_body));
     }
 
     fn resolve_variables(&self, segment: &str, sub_replace_credits: usize) -> String {
-        return self.resolve_variables_with_replace_fn(segment, sub_replace_credits, |s| s);
+        self.resolve_variables_with_replace_fn(segment, sub_replace_credits, |s| s)
     }
 
     fn resolve_variables_with_replace_fn(
@@ -523,7 +521,7 @@ impl<'a> Transpiler<'a> {
 
         if let Some(cap) = VARIABLE_RE.captures(&s) {
             if cap.len() > 1 {
-                for n in 1..=cap.len() - 1 {
+                for n in 1..cap.len() {
                     let capture = &cap[n].to_string();
                     if let Some(v) = self.variable_map.get(capture) {
                         if let Some(v2) = v.as_str() {
@@ -562,8 +560,8 @@ impl<'a> Transpiler<'a> {
                 schema.schema_type = Some("array".to_string());
                 if let Some(i) = &a.get(0) {
                     if let Some(item_schema) = self.generate_schema(i) {
-                        let mut mut_schema = item_schema.clone();
-                        for n in 1..=a.len() - 1 {
+                        let mut mut_schema = item_schema;
+                        for n in 1..a.len() {
                             if let Some(i2) = &a.get(n) {
                                 if let Some(i2_inner) = self.generate_schema(i2) {
                                     mut_schema = self.merge_schemas(&mut_schema, &i2_inner);
@@ -610,7 +608,7 @@ impl<'a> Transpiler<'a> {
         let mut cloned = original.clone();
 
         if cloned.nullable.is_none() && new.nullable.is_some() {
-            cloned.nullable = new.nullable.clone();
+            cloned.nullable = new.nullable;
         }
 
         if let Some(cloned_nullable) = cloned.nullable {
@@ -625,20 +623,17 @@ impl<'a> Transpiler<'a> {
             cloned.schema_type = new.schema_type.clone();
         }
         if let Some(t) = &cloned.schema_type {
-            match t.as_str() {
-                "object" => {
-                    if let Some(properties) = &mut cloned.properties {
-                        if let Some(new_properties) = &new.properties {
-                            for (key, val) in properties.iter_mut() {
-                                if let Some(v) = &new_properties.get(key) {
-                                    let prop_clone = v.clone();
-                                    *val = self.merge_schemas(&val, &prop_clone);
-                                }
+            if let "object" = t.as_str() {
+                if let Some(properties) = &mut cloned.properties {
+                    if let Some(new_properties) = &new.properties {
+                        for (key, val) in properties.iter_mut() {
+                            if let Some(v) = &new_properties.get(key) {
+                                let prop = v;
+                                *val = self.merge_schemas(&val, &prop);
                             }
                         }
                     }
                 }
-                _ => {}
             }
         }
 
@@ -647,11 +642,11 @@ impl<'a> Transpiler<'a> {
 
     fn generate_path_parameters(
         &self,
-        resolved_segments: &Vec<String>,
+        resolved_segments: &[String],
         postman_variables: &Option<Vec<postman::Variable>>,
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
         let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = resolved_segments
-            .into_iter()
+            .iter()
             .flat_map(|segment| {
                 URI_TEMPLATE_VARIABLE_RE
                     .captures_iter(segment.as_str())
@@ -665,7 +660,7 @@ impl<'a> Transpiler<'a> {
                         schema.schema_type = Some("string".to_string());
                         if let Some(path_val) = &postman_variables {
                             if let Some(p) = path_val.iter().find(|p| match &p.key {
-                                Some(k) => k == &var,
+                                Some(k) => k == var,
                                 _ => false,
                             }) {
                                 param.description = extract_description(&p.description);
@@ -686,7 +681,7 @@ impl<'a> Transpiler<'a> {
             })
             .collect();
 
-        if params.len() > 0 {
+        if !params.is_empty() {
             Some(params)
         } else {
             None
@@ -695,10 +690,10 @@ impl<'a> Transpiler<'a> {
 
     fn generate_query_parameters(
         &self,
-        query_params: &Vec<postman::QueryParam>,
+        query_params: &[postman::QueryParam],
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
         let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = query_params
-            .into_iter()
+            .iter()
             .map(|qp| {
                 let mut param = openapi3::Parameter::default();
                 if let Some(key) = &qp.key {
@@ -720,7 +715,7 @@ impl<'a> Transpiler<'a> {
             })
             .collect();
 
-        if params.len() > 0 {
+        if !params.is_empty() {
             Some(params)
         } else {
             None
