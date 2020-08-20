@@ -5,7 +5,7 @@ mod integration_tests {
             #[test]
             fn $name() {
                 let filename = get_fixture($filename);
-                match postman2openapi::from_path(&filename) {
+                match postman2openapi::from_path(&filename, postman2openapi::TargetFormat::Yaml) {
                     Ok(_oas) => assert!(true),
                     Err(_err) => assert!(false),
                 }
