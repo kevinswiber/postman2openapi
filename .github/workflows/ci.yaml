@@ -1,6 +1,6 @@
 on: push
 
-name: Continuous integration
+name: ci 
 
 jobs:
   ci:
