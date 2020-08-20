@@ -1,7 +1,5 @@
 //! Schema specification for [OpenAPI 3.0.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
-use semver;
-use serde_json;
 use std::collections::{BTreeMap, HashMap};
 use url::Url;
 
@@ -20,7 +18,7 @@ impl Spec {
         if required_version.matches(&sem_ver) {
             Ok(sem_ver)
         } else {
-            Err(Error::UnsupportedSpecFileVersion(sem_ver))?
+            Err(Error::UnsupportedSpecFileVersion(sem_ver))
         }
     }
 }
@@ -877,7 +875,7 @@ pub enum SecurityScheme {
         bearer_format: String,
     },
     #[serde(rename = "oauth2")]
-    OAuth2 { flows: Flows },
+    OAuth2 { flows: Box<Flows> },
     #[serde(rename = "openIdConnect")]
     OpenIdConnect {
         #[serde(rename = "openIdConnectUrl")]

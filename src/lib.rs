@@ -85,7 +85,7 @@ impl<'a> Transpiler<'a> {
 
         transpiler.transform(&mut state, &spec.item);
 
-        openapi::OpenApi::V3_0(oas)
+        openapi::OpenApi::V3_0(Box::new(oas))
     }
 
     fn transform(&self, state: &mut TranspileState, items: &[postman::Items]) {

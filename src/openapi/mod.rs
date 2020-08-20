@@ -41,7 +41,7 @@ pub enum OpenApi {
     /// [specification](https://github.com/OAI/OpenAPI-Specification/blob/0dd79f6/versions/3.0.1.md)
     /// for more information.
     #[allow(non_camel_case_types)]
-    V3_0(v3_0::Spec),
+    V3_0(Box<v3_0::Spec>),
 }
 
 /// deserialize an open api spec from a path
