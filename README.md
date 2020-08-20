@@ -13,7 +13,28 @@ cargo install --git https://github.com/kevinswiber/postman2openapi
 ## Usage
 
 ```
+USAGE:
+    postman2openapi [OPTIONS] [input-file]
+
+ARGS:
+    <input-file>    The Postman collection to convert; data may also come from stdin
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+OPTIONS:
+    -o, --output <format>    The output format [default: yaml]  [possible values: yaml, json]
+```
+
+### Examples
+
+```
 postman2openapi collection.json > openapi.yaml
+```
+
+```
+cat collection.json | postman2openapi -o json
 ```
 
 ## License

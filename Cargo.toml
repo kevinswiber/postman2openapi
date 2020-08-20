@@ -13,14 +13,16 @@ name = "postman2openapi"
 path = "src/main.rs"
 
 [dependencies]
-convert_case = "0.4.0"
 anyhow = "1.0"
-thiserror = "1.0"
+atty = "0.2"
+clap = "3.0.0-beta.1"
+convert_case = "0.4.0"
+lazy_static = "1.4.0"
+regex = "1"
 semver = "0.10.0"
-serde_yaml = "0.8"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = { version = "1.0", features = ["raw_value"]}
-regex = "1"
+serde_yaml = "0.8"
+thiserror = "1.0"
 url = { version = "2.1.1", features = ["serde"] }
-lazy_static = "1.4.0"
