@@ -73,7 +73,6 @@ pub fn to_json(spec: &OpenApi) -> Result<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq;
     use std::{
         fs::{self, read_to_string, File},
         io::Write,

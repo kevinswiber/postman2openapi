@@ -24,6 +24,3 @@ serde_json = { version = "1.0", features = ["raw_value"]}
 regex = "1"
 url = { version = "2.1.1", features = ["serde"] }
 lazy_static = "1.4.0"
-
-[dev-dependencies]
-pretty_assertions = "0.6.1"
