@@ -1,22 +1,130 @@
-name: ci
+name: ci 
 
-on:
-  push:
-    branches: [ main ]
+on: 
   pull_request:
-    branches: [ main ]
-
-env:
-  CARGO_TERM_COLOR: always
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '00 00 * * *'
 
 jobs:
-  build:
+  test:
+    name: test
+    env:
+      # For some builds, we use cross to test on 32-bit and big-endian
+      # systems.
+      CARGO: cargo
+      # When CARGO is set to CROSS, this is set to `--target matrix.target`.
+      TARGET_FLAGS:
+      # When CARGO is set to CROSS, TARGET_DIR includes matrix.target.
+      TARGET_DIR: ./target
+      # Emit backtraces on panics.
+      RUST_BACKTRACE: 1
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        build:
+          - stable
+          - beta
+          - nightly
+          - nightly-musl
+          - nightly-mips
+          - nightly-32
+          - macos
+          - win-msvc
+          - win-gnu
+          - msrv
+        include:
+          - build: msrv
+            os: ubuntu-18.04
+            rust: 1.45.2
+          - build: stable
+            os: ubuntu-18.04
+            rust: stable
+          - build: beta
+            os: ubuntu-18.04
+            rust: beta
+          - build: nightly
+            os: ubuntu-18.04
+            rust: nightly
+          - build: nightly-musl
+            os: ubuntu-18.04
+            rust: nightly
+            target: x86_64-unknown-linux-musl
+          - build: nightly-32
+            os: ubuntu-18.04
+            rust: nightly
+            target: i686-unknown-linux-gnu
+          - build: nightly-mips
+            os: ubuntu-18.04
+            rust: nightly
+            target: mips64-unknown-linux-gnuabi64
+          - build: macos
+            os: macos-latest
+            rust: nightly
+          - build: win-msvc
+            os: windows-2019
+            rust: nightly
+          - build: win-gnu
+            os: windows-2019
+            rust: nightly-x86_64-gnu
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          override: true
+          components: rustfmt, clippy
+
+      - name: Use Cross
+        if: matrix.target != ''
+        run: |
+          # FIXME: to work around bugs in latest cross release, install master.
+          # See: https://github.com/rust-embedded/cross/issues/357
+          cargo install --git https://github.com/rust-embedded/cross
+          echo "::set-env name=CARGO::cross"
+          echo "::set-env name=TARGET_FLAGS::--target ${{ matrix.target }}"
+          echo "::set-env name=TARGET_DIR::./target/${{ matrix.target }}"
+
+      - name: Show command used for Cargo
+        run: |
+          echo "cargo command is: ${{ env.CARGO }}"
+          echo "target flag is: ${{ env.TARGET_FLAGS }}"
+
+
+      - name: Build postman2openapi and all crates
+        run: ${{ env.CARGO }} build --verbose --all ${{ env.TARGET_FLAGS }}
+
+      - name: Run tests
+        run: ${{ env.CARGO }} test --verbose --all ${{ env.TARGET_FLAGS }}
+
+
+  rustfmt-clippy:
+    name: rustfmt
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+          profile: minimal
+          components: rustfmt
+      - name: Check formatting
+        run: |
+          cargo fmt --all -- --check
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: -- -D warnings
