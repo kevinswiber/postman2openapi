@@ -3,10 +3,10 @@ extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
 
-pub mod error;
+pub mod openapi;
 pub mod postman;
 
-use anyhow::{Error, Result};
+use anyhow::Result;
 use convert_case::{Case, Casing};
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
@@ -21,12 +21,10 @@ lazy_static! {
 
 pub fn from_path(filename: &str) -> Result<String> {
     let collection = std::fs::read_to_string(filename)?;
-    let spec: postman::Spec = serde_json::from_str(&collection)?;
-    let oas = Transpiler::transpile(spec);
-    match openapi::to_yaml(&oas) {
-        Ok(yaml) => Ok(yaml),
-        Err(err) => Err(Error::from(error::OpenApiError::from(err))),
-    }
+    let postman_spec: postman::Spec = serde_json::from_str(&collection)?;
+    let oas_spec = Transpiler::transpile(postman_spec);
+    let oas_definition = openapi::to_yaml(&oas_spec)?;
+    Ok(oas_definition)
 }
 
 pub struct Transpiler<'a> {
@@ -87,7 +85,7 @@ impl<'a> Transpiler<'a> {
 
         transpiler.transform(&mut state, &spec.item);
 
-        openapi::OpenApi::V3_0(oas)
+        openapi::OpenApi::V3_0(Box::new(oas))
     }
 
     fn transform(&self, state: &mut TranspileState, items: &[postman::Items]) {
