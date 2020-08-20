@@ -1,23 +1,23 @@
 //! Error types
 
-use failure::Fail;
 use semver::{SemVerError, Version};
 use serde_json::Error as JsonError;
 use serde_yaml::Error as YamlError;
 use std::io::Error as IoError;
+use thiserror::Error;
 
 /// errors that openapi functions may return
-#[derive(Fail, Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    #[fail(display = "{}", _0)]
+    #[error("{0}")]
     Io(IoError),
-    #[fail(display = "{}", _0)]
+    #[error("{0}")]
     Yaml(YamlError),
-    #[fail(display = "{}", _0)]
+    #[error("{0}")]
     Serialize(JsonError),
-    #[fail(display = "{}", _0)]
+    #[error("{0}")]
     SemVerError(SemVerError),
-    #[fail(display = "Unsupported spec file version ({})", _0)]
+    #[error("Unsupported spec file version ({0})")]
     UnsupportedSpecFileVersion(Version),
 }
 
