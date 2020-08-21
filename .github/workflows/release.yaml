@@ -169,7 +169,7 @@ jobs:
         outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
         staging="postman2openapi-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
 
-        cp {README.md,COPYING,UNLICENSE,LICENSE-MIT} "$staging/"
+        cp {README.md,LICENSE} "$staging/"
 
         if [ "${{ matrix.os }}" = "windows-2019" ]; then
           cp "target/${{ matrix.target }}/release/postman2openapi.exe" "$staging/"
