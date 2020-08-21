@@ -168,6 +168,7 @@ jobs:
       run: |
         outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
         staging="postman2openapi-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
+        mkdir "$staging"/
 
         cp {README.md,LICENSE} "$staging/"
 
