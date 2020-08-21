@@ -19,6 +19,10 @@ mod integration_tests {
     test_fixture!(it_parses_twitter_api_collection, "twitter-api.postman.json");
     test_fixture!(it_parses_fastly_api_collection, "fastly.postman.json");
     test_fixture!(it_parses_users_api_collection, "users.postman.json");
+    test_fixture!(
+        it_parses_gotomeeting_api_collection,
+        "gotomeeting.postman.json"
+    );
 
     fn get_fixture(filename: &str) -> String {
         let filename: std::path::PathBuf =
