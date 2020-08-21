@@ -27,26 +27,26 @@ pub struct Auth {
     /// The attributes for [AWS
     /// Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html).
     #[serde(rename = "awsv4")]
-    pub awsv4: Option<Vec<AuthAttribute>>,
+    pub awsv4: Option<AuthAttributeUnion>,
 
     /// The attributes for [Basic
     /// Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
     #[serde(rename = "basic")]
-    pub basic: Option<Vec<AuthAttribute>>,
+    pub basic: Option<AuthAttributeUnion>,
 
     /// The helper attributes for [Bearer Token
     /// Authentication](https://tools.ietf.org/html/rfc6750)
     #[serde(rename = "bearer")]
-    pub bearer: Option<Vec<AuthAttribute>>,
+    pub bearer: Option<AuthAttributeUnion>,
 
     /// The attributes for [Digest
     /// Authentication](https://en.wikipedia.org/wiki/Digest_access_authentication).
     #[serde(rename = "digest")]
-    pub digest: Option<Vec<AuthAttribute>>,
+    pub digest: Option<AuthAttributeUnion>,
 
     /// The attributes for [Hawk Authentication](https://github.com/hueniverse/hawk)
     #[serde(rename = "hawk")]
-    pub hawk: Option<Vec<AuthAttribute>>,
+    pub hawk: Option<AuthAttributeUnion>,
 
     #[serde(rename = "noauth")]
     pub noauth: Option<serde_json::Value>,
@@ -54,15 +54,15 @@ pub struct Auth {
     /// The attributes for [NTLM
     /// Authentication](https://msdn.microsoft.com/en-us/library/cc237488.aspx)
     #[serde(rename = "ntlm")]
-    pub ntlm: Option<Vec<AuthAttribute>>,
+    pub ntlm: Option<AuthAttributeUnion>,
 
     /// The attributes for [OAuth2](https://oauth.net/1/)
     #[serde(rename = "oauth1")]
-    pub oauth1: Option<Vec<AuthAttribute>>,
+    pub oauth1: Option<AuthAttributeUnion>,
 
     /// Helper attributes for [OAuth2](https://oauth.net/2/)
     #[serde(rename = "oauth2")]
-    pub oauth2: Option<Vec<AuthAttribute>>,
+    pub oauth2: Option<AuthAttributeUnion>,
 
     #[serde(rename = "type")]
     pub auth_type: AuthType,
@@ -80,6 +80,13 @@ pub struct AuthAttribute {
 
     #[serde(rename = "value")]
     pub value: Option<serde_json::Value>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum AuthAttributeUnion {
+    AuthAttribute20(Option<serde_json::Value>),
+    AuthAttribute21(Vec<AuthAttribute>),
 }
 
 /// Postman allows you to configure scripts to run when specific events occur. These scripts

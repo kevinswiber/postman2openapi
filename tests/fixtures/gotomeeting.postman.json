@@ -1,0 +1,2404 @@
+{
+  "info": {
+    "_postman_id": "bd0a41af-745c-4b53-91c2-66724289db2d",
+    "name": "GoToWebinar v2 - 06 08 2020",
+    "description": "# GoToWebinar API Overview\nUse the G2W API to:\n* Schedule webinars of one or more sessions\n* Tailor your webinars with panelists, polls, questions and surveys\n* Accept registrations\n* Manage registrants and, once the webinar starts, attendees\n* View data about historical and future webinars, registrants and attendees\n\nRefer to GoToWebinar product documentation to review the webinar types and product functionality.\n\nReview call bodies and example call bodies in the API Reference for alternative usage.\n\n## Basic GoToWebinar Data Flow\nGoToWebinar API calls create registrants and webinars. When a webinar is started, any registrants who attend are created as attendees in the system, and the webinar is created as one or more sessions. A session is created with any start of a webinar, thus starting and stopping a webinar breaks it into multiple sessions.\n\n## H2 Creating Webinars Using the API\nUsing the POST Webinar API call, you can create single session, sequence (registrants attend all sessions), and series (registrants choose a session) webinars. These are further distinguished by an experienceType of classic, broadcast, or new in version 2, simulated live (Simulive). \n\nSingle sessions and series are managed using a \"times\" array with a startTime and an endTime for each webinar. Sequence webinars use a recurrenceStart with a startTime and endTime, and a recurrencePattern (daily, weekly, monthly), and a recurrenceEnd of the last date of the sequence.\n\nSimulated Live Webinars through the API\nSimulated live webinars can be either scheduled or on-demand. Set the experienceType as SIMULIVE and specify the recordingAssetKey. The recordingAssetKey is the unique identifier for the simulated live recording that will be created. The simulive webinar settings, poll and surveys will be copied from the webinar that is recorded. To make the simulated live webinar on-demand - available at any time via link to your users - set the isOndemand flag to TRUE. \n\nThe recordingAssetKey is obtained either from your GoToWebinar Video Library or using the search assets call. Simulive does not support sequence webinars.\n\n## New in Version 2\nIn Version 1, there were separate calls for historical and upcoming webinars. There was no call to identify webinars currently in session. In version 2, the calls are:\n* GET Webinars - This call now allows you to pass in begin and end dates to a single call to retrieve past or future webinars.\n* GET All In-session Webinars - This call returns all currently running webinars. \n* POST Assets - A new call to obtain an identifier for an asset, such as a webinar recording.\n\n## Getting Started\n1. Create a GoToDeveloper account.\n2. Create a GoToDeveloper client connected to GoToWebinar.\n3. Obtain a GoToWebinar product account. Trial versions will work, but last only 30 days. We recommend a full-featured account, preferably with an Admin role.\n4. Authenticate your accounts and client using the GET Access Token call.\n\n© 2020 LogMeIn, Inc. All Rights Reserved.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Attendees",
+      "item": [
+        {
+          "name": "Attendee by registrant ID 1",
+          "_postman_id": "5e30c467-d71f-4889-81b7-60f088172529",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/attendees/{{registrantKey}}",
+            "description": "Attendees are registrants who have joined a webinar. This call retrieves registration details for a specific  attendee of a specific webinar session.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tregistrantKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for registrant\t</td>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's first name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's last name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's email\t</td>\t</tr>\n<tr>\t<td>\tregistrationDate\t</td>\t<td>\tiso time format\t</td>\t<td>\tattendee's registration date and time\t</td>\t</tr>\n<tr>\t<td>\tstatus\t</td>\t<td>\tstatus value\t</td>\t<td>\tCan be: Waiting, Approved, Denied\t</td>\t</tr>\n<tr>\t<td>\tjoinUrl\t</td>\t<td>\tstring\t</td>\t<td>\tURL attendee used to join webinar with the sessionKey appended\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone value\t</td>\t<td>\tregistrant time zone\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Session attendees 1",
+          "_postman_id": "dca2236f-dded-4445-8bf9-6c5ff37dabe4",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/attendees",
+            "description": "Retrieve all attendees of a given webinar session. A webinar will have multiple sessions if the webinar was stopped and started for any reason during the webinar. The response data is returned for each attendee.\n\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tregistrantKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for registrant\t</td>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's first name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's last name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's email\t</td>\t</tr>\n<tr>\t<td>\tattendanceTimeInSeconds\t</td>\t<td>\tinteger\t</td>\t<td>\tattendee time in webinar session\t</td>\t</tr>\n<tr>\t<td>\tsessionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tunique session ID\t</td>\t</tr>\n<tr>\t<td>\tattendance\t</td>\t<td>\ttext\t</td>\t<td>\ttext header for attendance times\t</td>\t</tr>\n<tr>\t<td>\tjoinTime\t</td>\t<td>\tiso time format\t</td>\t<td>\ttime registrant joined session\t</td>\t</tr>\n<tr>\t<td>\tleaveTime\t</td>\t<td>\tiso time format\t</td>\t<td>\ttime registrant left session\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\ttext heading of output details\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger (0-120)\t</td>\t<td>\tquantity of output in lines/page\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\ttotal number of line items\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\ttotal number of pages\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Attendee questions 1",
+          "_postman_id": "43bc3756-f11f-464d-bd6b-9398f9e1049e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/attendees/{{registrantKey}}/questions",
+            "description": "Get questions asked by an attendee during a webinar session. If a question was not answered, an empty \"Answer\" array is returned.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of question\t</td>\t</tr>\n<tr>\t<td>\taskedBy\t</td>\t<td>\tstring\t</td>\t<td>\temail of attendee asking the question\t</td>\t</tr>\n<tr>\t<td>\taskerKey\t</td>\t<td>\tstring\t</td>\t<td>\tregistrantKey attendee asking the question\t</td>\t</tr>\n<tr>\t<td>\tdateAsked\t</td>\t<td>  iso date format\t</td>\t<td>\tUTC time at which question was asked\t</td>\t</tr>\n<tr>\t<td>\tanswers: [\t</td>\t<td>\ttext\t</td>\t<td>\theader for question answer data\t</td>\t</tr>\n<tr>\t<td>\tanswer\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of answer\t</td>\t</tr>\n<tr>\t<td>\tansweredBy\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID of answerer\t</td>\t</tr>\n<tr>\t<td>\tanswerRole\t</td>\t<td>\tstring\t</td>\t<td>\tEither INTERNAL_ORGANIZER or EXTERNAL_ORGANIZER\t</td>\t</tr>\n<tr>\t<td>\tanswerTime\t</td>\t<td>\tiso date format\t</td>\t<td>\tUTC time of ansswer posting\t</td>\t</tr>\n<tr>\t<td>\tanswererEmail\t</td>\t<td>\tvalid email\t</td>\t<td>\tEmail of person answering\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Attendee survey answers",
+          "_postman_id": "e3a5b580-5371-4b2d-9eb8-32a0b89c7fe1",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/attendees/{{registrantKey}}/surveys",
+            "description": "Retrieve survey answers from a particular attendee during a webinar session. \n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tanswer\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of answer\t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of question\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Attendee poll answers",
+          "_postman_id": "c4ad9d81-4af6-436d-b3a9-15fcd2867003",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/attendees/{{registrantKey}}/polls",
+            "description": "Get poll answers from a particular attendee of a specific webinar session. \n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tanswer\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of answer\t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tcontent of question\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "b9d87276-bd91-42e6-8871-01b49bad3711",
+      "description": "Attendees are either:\n1. Registrants who attend a webinar session, or\n2. People who attend a webinar without first registering.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "da99446d-04b5-491b-b252-c7be1a5d9b64",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "aec58c60-b8a7-4b49-bcc9-9f919ae80287",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Co-Organizers",
+      "item": [
+        {
+          "name": "Create co-organizers 1",
+          "_postman_id": "32876169-bc31-4995-a8bf-87d0fec0fc4b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"external\": true,\n    \"givenName\": \"string\",\n    \"surname\": \"string\"\n    \"email\": \"string\"\n  }\n]"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/coorganizers",
+            "description": "Creates a co-organizer for the specified webinar. Co-organizers may be Internal (they have a GoToWebinar account) or External (they do not). For Internal coorganizers, set 'external' to 'false' and include the 'organizerKey' parameter. For External, set 'external' to 'true' and pass the parameters 'givenName', 'surname', and 'email'. An invite informing either Internal or External co-organizers of this update will be sent to their email. \n\nThe Body tab contains a call to create an external co-organizer. The Example contains an internal organizer Create body.\n\nA successful call returns 204 No Content.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\texternal\t</td>\t<td>\tBoolean\t</td>\t<td>\tsets whether co-organizer has a webinar account (external = FALSE) or not (external = TRUE)\t</td>\t</tr>\n<tr>\t<td>\tjoinLink\t</td>\t<td>\tstring\t</td>\t<td>\tjoin URL\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tco-organizer's email\t</td>\t</tr>\n<tr>\t<td>\tmemberKey\t</td>\t<td>\tstring\t</td>\t<td>\tco-organizer's unique ID\t</td>\t</tr>\n<tr>\t<td>\tsurname\t</td>\t<td>\tstring\t</td>\t<td>\tco-organizer's last name\t</td>\t</tr>\n<tr>\t<td>\tgivenName\t</td>\t<td>\tstring\t</td>\t<td>\tco-organizer's first name\t</td>\t</tr>\n</table>"
+          },
+          "response": [
+            {
+              "id": "cebcdcc2-5242-415b-84f9-775a6c54a6d5",
+              "name": "Create co-organizers - internal",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/x-www-form-urlencoded"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "[\n  {\n    \"external\": true,\n    \"givenName\": \"string\",\n    \"surname\": \"string\"\n    \"email\": \"string\"\n  }\n]"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/coorganizers"
+              },
+              "_postman_previewlanguage": null,
+              "header": null,
+              "cookie": [],
+              "responseTime": null,
+              "body": "[\n  {\n    \"external\": false,\n    \"organizerKey\": \"{{coorganizerKey}}\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Co-organizers 1",
+          "_postman_id": "df8de709-d475-4083-8ee3-fa55c6e49209",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/coorganizers",
+            "description": "Returns the co-organizers for the specified webinar. The original organizer who created the webinar is filtered out of the list. If the webinar has no co-organizers, an empty array is returned. Co-organizers that do not have a GoToWebinar account are returned as external co-organizers. For those organizers no surname is returned.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\texternal\t</td>\t<td>\tBoolean\t</td>\t<td>\tshows whether co-organizer has a webinar account or not</td>\t</tr>\n<tr>\t<td>\tjoinLink\t</td>\t<td>\tstring\t</td>\t<td>\tjoin URL with organizerKey appended\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tattendee's email\t</td>\t</tr>\n<tr>\t<td>\tmemberKey\t</td>\t<td>\tstring\t</td>\t<td>\tattendee's organizerKey\t</td>\t</tr>\n<tr>\t<td>\tsurname\t</td>\t<td>\tstring\t</td>\t<td>\tattendee's last name\t</td>\t</tr>\n<tr>\t<td>\tgivenName\t</td>\t<td>\tstring\t</td>\t<td>\tattendee's first name\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Resend co-organizer invitation 1",
+          "_postman_id": "8d83ffc9-4cbf-475f-b92f-68e70aed6fca",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/coorganizers/{{coorganizerkey}}/resendInvitation?external=TRUE",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars",
+                "{{webinarKey}}",
+                "coorganizers",
+                "{{coorganizerkey}}",
+                "resendInvitation"
+              ],
+              "query": [
+                {
+                  "key": "external",
+                  "value": "TRUE"
+                }
+              ]
+            },
+            "description": "Resends an invitation email to the specified co-organizer. For external co-organizers - they are not on your GoToWebinar account - add the Parameter \"external\" = TRUE.\n\nA successful call returns a 204 No Content.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\texternal\t</td>\t<td>\tBoolean\t</td>\t<td>\tBy default only co-organizers with a GoToWebinar account will receive the resent invitation email. If you want to use this call for external co-organizers set this parameter to 'true'.\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Co-organizer 1",
+          "_postman_id": "b4e85b4b-e936-49c1-82fb-89d1807bc931",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": []
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/coorganizers/{{coorganizerkey}}",
+            "description": "Deletes an internal co-organizer specified by the coorganizerKey (memberKey).\n\nA successful call returns a 204 No Content response."
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "8d108903-5568-4ba8-9fc3-02f542e9b1b2"
+    },
+    {
+      "name": "Panelists",
+      "item": [
+        {
+          "name": "Webinar panelists 1",
+          "_postman_id": "38670718-365e-4de9-a108-491e826c642f",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/panelists",
+            "description": "Retrieves all the panelists for a specific webinar.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tpanelistID\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for panelist\t</td>\t</tr>\n<tr>\t<td>\tfirstname\t</td>\t<td>\tstring\t</td>\t<td>\tpanelist's first name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\tstring\t</td>\t<td>\tpanelist's last name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tpanelist's email\t</td>\t</tr>\n<tr>\t<td>\tjoinLink\t</td>\t<td>\tstring\t</td>\t<td>\tURL for panelist to join webinar\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Create panelists",
+          "_postman_id": "ed778669-c86c-441a-8a51-bf18f0fa809b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n    {\n        \"name\": \"First Last\",\n        \"email\": \"email@address.com\"\n        \n    },\n        {\n        \"name\": \"First Last\",\n        \"email\": \"address@email.com\"\n    }\n]"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/panelists",
+            "description": "Create panelists for a specified webinar. Can be sent as an array with multiple panelists defined. May be internal (have a GoToWebinar account) or external (not on GoToWebinar account).\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\tstring\t</td>\t<td>\tFull name of panelist\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tPanelist's email\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete webinar panelist",
+          "_postman_id": "a7aa268a-1b59-43b8-8e3b-424ca80e5a08",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/panelists/{{panelistKey}}",
+            "description": "Removes a webinar panelist."
+          },
+          "response": []
+        },
+        {
+          "name": "Resend panelist invitation",
+          "_postman_id": "7d708213-40f5-400f-941d-60c260d20845",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n    {\n        \"name\": \"First Last\",\n        \"email\": \"email@address.com\"\n    },\n        {\n        \"name\": \"First Last\",\n        \"email\": \"address@email.com\"\n    }\n]"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/panelists/{{panelistKey}}/resendInvitation",
+            "description": "Resends an invitation email to the specified panelist.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\tstring\t</td>\t<td>\tFull name of panelist\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tPanelist's email\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "993e8226-9a12-466a-bf88-442f938e5596"
+    },
+    {
+      "name": "Registrants",
+      "item": [
+        {
+          "name": "Create registrant - simple (V1)",
+          "_postman_id": "59e56ad6-16fd-4d6b-aaec-9adaa0672ded",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "ZPz6LotiNYn1Cem9vRyeD6XxPEB9",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Lucas\",\n  \"lastName\": \"Earle\",\n  \"email\": \"lucasEarle@Bebop.com\",\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants?resendConfirmation={{resendConfirmation}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars",
+                "{{webinarKey}}",
+                "registrants"
+              ],
+              "query": [
+                {
+                  "key": "resendConfirmation",
+                  "value": "{{resendConfirmation}}"
+                }
+              ]
+            },
+            "description": "Register an attendee for a scheduled webinar. \n\nThe response contains the registrantKey and join URL for the registrant. An email will be sent to the registrant unless the organizer turns off the confirmation email setting from the GoToWebinar website. Use the API call 'Get registration fields' to get a list of all fields, if they are required, and their possible values. \n\nThere are two 'Create Registrant' calls. The first accepts only firstName, lastName, and email. If you have custom fields or want to capture additional information this version won't work for you. The second version allows you to pass all required and optional fields, including custom fields defined when creating the webinar. \n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\ttext\t</td>\t<td>\tfirst name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\ttext\t</td>\t<td>\tlast name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tattendee email\t</td>\t</tr>\n<tr>\t<td>\tsource\t</td>\t<td>\tstring\t</td>\t<td>\twhere did the registrant learn of the event\t</td>\t</tr>\n<tr>\t<td>\taddress\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's address\t</td>\t</tr>\n<tr>\t<td>\tcity\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's city\t</td>\t</tr>\n<tr>\t<td>\tstate\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's state\t</td>\t</tr>\n<tr>\t<td>\tzipCode\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's zip code\t</td>\t</tr>\n<tr>\t<td>\tcountry\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's country\t</td>\t</tr>\n<tr>\t<td>\tphone\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's phone number\t</td>\t</tr>\n<tr>\t<td>\torganization\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's organizational affiliation\t</td>\t</tr>\n<tr>\t<td>\tjobTitle\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's job title\t</td>\t</tr>\n<tr>\t<td>\tquestionsAndComments\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tindustry\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's industry\t</td>\t</tr>\n<tr>\t<td>\tnumberOfEmployees\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's company's number of employees\t</td>\t</tr>\n<tr>\t<td>\tpurchasingTimeFrame\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchashing timeframe\t</td>\t</tr>\n<tr>\t<td>\tpurchasingRole\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchasing role\t</td>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\tinteger\t</td>\t<td>\theader for response srea\t</td>\t</tr>\n<tr>\t<td>\tquestionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tquestion number\t</td>\t</tr>\n<tr>\t<td>\tresponseText\t</td>\t<td>\tinteger\t</td>\t<td>\ttext of the answer\t</td>\t</tr>\n<tr>\t<td>\tanswerKey\t</td>\t<td>\tinteger\t</td>\t<td>\tanswer number\t</td>\t</tr>\n</table>\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tjoinURL\t</td>\t<td>\tstring\t</td>\t<td>\tlink to launch webinar\t</td>\t</tr>\n<tr>\t<td>\tasset\t</td>\t<td>\tBoolean\t</td>\t<td>\tTrue = / False = ???\t</td>\t</tr>\n<tr>\t<td>\tregistrantKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID of this registrant for this webinar\t</td>\t</tr>\n<tr>\t<td>\tstatus\t</td>\t<td>\tstring\t</td>\t<td>\tWaiting, Approved, or Denied\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Create registrant - detailed (V2) 1",
+          "_postman_id": "26d26273-3f92-4b66-b393-a9f5e631d51b",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "ZPz6LotiNYn1Cem9vRyeD6XxPEB9",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/vnd.citrix.g2wapi-v1.1+json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firstName\": \"Moon\",\n    \"lastName\": \"Pie\",\n    \"email\": \"MoonPie3@de4.com\",\n    \"city\": \"A City\",\n    \"state\": \"California\",\n    \"zipCode\": \"000001112\",\n    \"country\": \"NZ\",\n    \"phone\": \"8009001000\",\n    \"organization\": \"string\",\n    \"jobTitle\": \"sweeper\",\n    \"questionsAndComments\": \"text\",\n    \"industry\": \"medical\",\n    \"source\":\"MTV\",\n    \"numberOfEmployees\": \"10\"\n}",
+              "options": {
+                "raw": {}
+              }
+            },
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants?resendConfirmation={{resendConfirmation}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars",
+                "{{webinarKey}}",
+                "registrants"
+              ],
+              "query": [
+                {
+                  "key": "resendConfirmation",
+                  "value": "{{resendConfirmation}}",
+                  "description": "Indicates whether the confirmation email should be resent when a registrant is re-registered. The default value is false."
+                }
+              ]
+            },
+            "description": "Register an attendee for a scheduled webinar. The response contains the registrantKey, join URL and enrollment status for the registrant. An email is sent to the registrant unless the organizer turns off the confirmation email setting from the GoToWebinar website. \n\nPlease note that you must provide all required fields including custom fields defined during the webinar creation. Use the API call 'Get registration fields' to get a list of all fields, if they are required, and their possible values.\n\nThere are two 'Create Registrant' calls. The first accepts only firstName, lastName, and email. If you have custom fields or want to capture additional information this version won't work for you. The second version allows you to pass all required and optional fields, including custom fields defined when creating the webinar. To use the second version you must pass the header value 'Accept: application/vnd.citrix.g2wapi-v1.1+json' instead of 'Accept: application/json'. Leaving this header out results in the first version of the API call.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\ttext\t</td>\t<td>\tfirst name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\ttext\t</td>\t<td>\tlast name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tattendee email\t</td>\t</tr>\n<tr>\t<td>\tsource\t</td>\t<td>\tstring\t</td>\t<td>\twhere did the registrant learn of the event\t</td>\t</tr>\n<tr>\t<td>\taddress\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's address\t</td>\t</tr>\n<tr>\t<td>\tcity\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's city\t</td>\t</tr>\n<tr>\t<td>\tstate\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's state\t</td>\t</tr>\n<tr>\t<td>\tzipCode\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's zip code\t</td>\t</tr>\n<tr>\t<td>\tcountry\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's country\t</td>\t</tr>\n<tr>\t<td>\tphone\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's phone number\t</td>\t</tr>\n<tr>\t<td>\torganization\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's organizational affiliation\t</td>\t</tr>\n<tr>\t<td>\tjobTitle\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's job title\t</td>\t</tr>\n<tr>\t<td>\tquestionsAndComments\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tindustry\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's industry\t</td>\t</tr>\n<tr>\t<td>\tnumberOfEmployees\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's company's number of employees\t</td>\t</tr>\n<tr>\t<td>\tpurchasingTimeFrame\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchashing timeframe\t</td>\t</tr>\n<tr>\t<td>\tpurchasingRole\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchasing role\t</td>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\tinteger\t</td>\t<td>\theader for response srea\t</td>\t</tr>\n<tr>\t<td>\tquestionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tquestion number\t</td>\t</tr>\n<tr>\t<td>\tresponseText\t</td>\t<td>\tinteger\t</td>\t<td>\ttext of the answer\t</td>\t</tr>\n<tr>\t<td>\tanswerKey\t</td>\t<td>\tinteger\t</td>\t<td>\tanswer number\t</td>\t</tr>\n</table>\n\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tjoinURL\t</td>\t<td>\tstring\t</td>\t<td>\tlink to launch webinar\t</td>\t</tr>\n<tr>\t<td>\tasset\t</td>\t<td>\tBoolean\t</td>\t<td>\tTrue = / False = ???\t</td>\t</tr>\n<tr>\t<td>\tregistrantKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID of this registrant for this webinar\t</td>\t</tr>\n<tr>\t<td>\tstatus\t</td>\t<td>\tstring\t</td>\t<td>\tWaiting, Approved, or Denied\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Registrant 1",
+          "_postman_id": "5aae73a1-af8e-4e84-ac59-fe4f65103610",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "ZPz6LotiNYn1Cem9vRyeD6XxPEB9",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants/{{registrantKey}}",
+            "description": "Retrieve complete registration details for specified registrants of a specific webinar. The data returned will be limited by the registration fields you include on your Registration form. Registrants can have one of the following states; \n* WAITING - registrant registered and is awaiting approval (where organizer has required approval), \n* APPROVED - registrant registered and is approved, and \n* DENIED - registrant registered and was denied\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\ttext\t</td>\t<td>\tfirst name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\ttext\t</td>\t<td>\tlast name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tattendee email\t</td>\t</tr>\n<tr>\t<td>\tsource\t</td>\t<td>\tstring\t</td>\t<td>\twhere did the registrant learn of the event\t</td>\t</tr>\n<tr>\t<td>\taddress\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's address\t</td>\t</tr>\n<tr>\t<td>\tcity\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's city\t</td>\t</tr>\n<tr>\t<td>\tstate\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's state\t</td>\t</tr>\n<tr>\t<td>\tzipCode\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's zip code\t</td>\t</tr>\n<tr>\t<td>\tcountry\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's country\t</td>\t</tr>\n<tr>\t<td>\tphone\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's phone number\t</td>\t</tr>\n<tr>\t<td>\torganization\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's organizational affiliation\t</td>\t</tr>\n<tr>\t<td>\tjobTitle\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's job title\t</td>\t</tr>\n<tr>\t<td>\tquestionsAndComments\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tindustry\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's industry\t</td>\t</tr>\n<tr>\t<td>\tnumberOfEmployees\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's company's number of employees\t</td>\t</tr>\n<tr>\t<td>\tpurchasingTimeFrame\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchashing timeframe\t</td>\t</tr>\n<tr>\t<td>\tpurchasingRole\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchasing role\t</td>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\tinteger\t</td>\t<td>\theader for response srea\t</td>\t</tr>\n<tr>\t<td>\tquestionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tquestion number\t</td>\t</tr>\n<tr>\t<td>\tresponseText\t</td>\t<td>\tinteger\t</td>\t<td>\ttext of the answer\t</td>\t</tr>\n<tr>\t<td>\tanswerKey\t</td>\t<td>\tinteger\t</td>\t<td>\tanswer number\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Registrants 1",
+          "_postman_id": "bc71b073-454c-4479-ba73-889030bdd108",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants",
+            "description": "Retrieve registration details for specified registrants of a specific webinar. The data returned will be limited by the Registration fields you include on your Registration form. Registrant details may not include all fields captured when creating the registrant (use the Get Registrant call for complete details). Registrants can have one of the following states; \n* WAITING - registrant registered and is awaiting approval (where organizer has required approval), \n* APPROVED - registrant registered and is approved, and \n* DENIED - registrant registered and was denied\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\ttext\t</td>\t<td>\tfirst name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\ttext\t</td>\t<td>\tlast name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tattendee email\t</td>\t</tr>\n<tr>\t<td>\tsource\t</td>\t<td>\tstring\t</td>\t<td>\twhere did the registrant learn of the event\t</td>\t</tr>\n<tr>\t<td>\taddress\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's address\t</td>\t</tr>\n<tr>\t<td>\tcity\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's city\t</td>\t</tr>\n<tr>\t<td>\tstate\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's state\t</td>\t</tr>\n<tr>\t<td>\tzipCode\t</td>\t<td>\tiso time format\t</td>\t<td>\tregistrant's zip code\t</td>\t</tr>\n<tr>\t<td>\tcountry\t</td>\t<td>\tiso time format\t</td>\t<td>\tIregistrant's country\t</td>\t</tr>\n<tr>\t<td>\tphone\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's phone number\t</td>\t</tr>\n<tr>\t<td>\torganization\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's organizational affiliation\t</td>\t</tr>\n<tr>\t<td>\tjobTitle\t</td>\t<td>\ttext\t</td>\t<td>\tregistrant's job title\t</td>\t</tr>\n<tr>\t<td>\tquestionsAndComments\t</td>\t<td>\tinteger\t</td>\t<td>\t???</td>\t</tr>\n<tr>\t<td>\tindustry\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's industry\t</td>\t</tr>\n<tr>\t<td>\tnumberOfEmployees\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's company's number of employees\t</td>\t</tr>\n<tr>\t<td>\tpurchasingTimeFrame\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchashing timeframe\t</td>\t</tr>\n<tr>\t<td>\tpurchasingRole\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant's purchasing role\t</td>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\tinteger\t</td>\t<td>\theader for response srea\t</td>\t</tr>\n<tr>\t<td>\tquestionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tquestion number\t</td>\t</tr>\n<tr>\t<td>\tresponseText\t</td>\t<td>\tinteger\t</td>\t<td>\ttext of the answer\t</td>\t</tr>\n<tr>\t<td>\tanswerKey\t</td>\t<td>\tinteger\t</td>\t<td>\tanswer number\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Registration fields",
+          "_postman_id": "c8fa1179-2af8-49d4-9306-ec15d73c76c3",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "2F49qGJaRiEIwRTA31RSJ8T4fvge",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants/fields",
+            "description": "Retrieve required, optional registration, and custom questions for a specified webinar. The information returned here is created in the GoToWebinar admin interface after a webinar has been scheduled. You cannot update the information using the APIs.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tquestions\t</td>\t<td>\ttext\t</td>\t<td>\theader for questions section\t</td>\t</tr>\n<tr>\t<td>\tquestionKey\t</td>\t<td>\tinteger\t</td>\t<td>\tquestion number\t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tquestion text\t</td>\t</tr>\n<tr>\t<td>\trequired\t</td>\t<td>\tBoolean\t</td>\t<td>\tshows whether the question is required or not\t</td>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\ttype value\t</td>\t<td>\tquestion type, may be \"multiple choice\" or \"short answer\"\t</td>\t</tr>\n<tr>\t<td>\tmaxSize\t</td>\t<td>\tinteger\t</td>\t<td>\tDefaults to 128 characters\t</td>\t</tr>\n<tr>\t<td>\tanswers\t</td>\t<td>\ttext\t</td>\t<td>\theader for answers section\t</td>\t</tr>\n<tr>\t<td>\tanswer\t</td>\t<td>\tstring\t</td>\t<td>\tanswer text\t</td>\t</tr>\n<tr>\t<td>\tanswerKey\t</td>\t<td>\tinteger\t</td>\t<td>\tanswer number\t</td>\t</tr>\n<tr>\t<td>\tfields\t</td>\t<td>\ttext\t</td>\t<td>\theader for registration fields section \t</td>\t</tr>\n<tr>\t<td>\tfirstName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's first name\t</td>\t</tr>\n<tr>\t<td>\tlastName\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's last name\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\tregistrant's email\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Registrant 1",
+          "_postman_id": "24d5236f-ac2a-452c-a1ad-9e56b21f52b6",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "5QJny31peTQAl1AckSmsGG6pUm6U",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/registrants/{{registrantKey}}",
+            "description": "Removes a webinar registrant from current registrations for the specified webinar. The webinar may be scheduled in the future, or have occured in the past.\n\nA successful call returns 204 No Content."
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "8092001e-eea1-4071-98a7-572e0bb36deb"
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Webinar sessions 1",
+          "_postman_id": "f0bf368b-a21e-40d3-9a56-388a9b4af2f8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions",
+            "description": "Retrieves details for all past sessions of a specific webinar. Note that a webinar can have multiple sessions if it is started and stopped more than once.\n\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tsessionInfoResources\t</td>\t<td>\ttext\t</td>\t<td>\theader for sessions\t</td>\t</tr>\n<tr>\t<td>\tsessionKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique session ID\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique webinar ID\t</td>\t</tr>\n<tr>\t<td>\twebinarName\t</td>\t<td>\tstring\t</td>\t<td>\ttitle of the webinar\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tiso time format\t</td>\t<td>\tsession start time and date\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tiso time format\t</td>\t<td>\ttime and date webinar session ended\t</td>\t</tr>\n<tr>\t<td>\tregistrantsAttended\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of attendees in session\t</td>\t</tr>\n<tr>\t<td>\tregistrantCount\t</td>\t<td>\tinteger\t</td>\t<td>\ttotal number of registrants\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for account\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for organizer who created webinar\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\tname of organizer who created webinar\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique ID for organizer who starts webinar\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\tname of organizer who starts webinar\t</td>\t</tr>\n<tr>\t<td>\ttotalPollCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of polls completed\t</td>\t</tr>\n<tr>\t<td>\ttimezone\t</td>\t<td>\tattendee's time zome\t</td>\t<td>\tstandard time zone \t</td>\t</tr>\n<tr>\t<td>\tbuildNumber\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\twebinarType\t</td>\t<td>\tinteger\t</td>\t<td>\t0, 1, or 2; 0 = single session; 1 = series; 2 = sequence ??? \t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\tstring\t</td>\t<td>  Classic, Broadcast, or Simulive\t</td>\t</tr>\n<tr>\t<td>\tnumRegLinkClicks\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tnumOpenedInvitations\t</td>\t<td>\tinteger\t</td>\t<td>\ttotal invitations opened\t</td>\t</tr>\n<tr>\t<td>\tincludeCertificate\t</td>\t<td>\tBoolean\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tstring\t</td>\t<td>\t??? but NOT the webinarKey\t</td>\t</tr>\n<tr>\t<td>\tattendance\t</td>\t<td>\ttext\t</td>\t<td>\theader for attendance section\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\ttext heading of output details\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger\t</td>\t<td>\t(0-120) quantity of output in lines\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of line items reported\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\tPages of output\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of ??? reported\t</td>\t</tr>\n\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar session 1",
+          "_postman_id": "77602d88-4422-489c-bca6-872bd35e899e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}",
+            "description": "Retrieves attendance details for specific webinar sessions that have ended. If attendees attended the session ('registrantsAttended'), specific attendance details, such as attendenceTime for a registrant, will also be retrieved. \n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tembedded\t</td>\t<td>\ttext\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tsessionInfoResources\t</td>\t<td>\ttext\t</td>\t<td>\theader for session resources\t</td>\t</tr>\n<tr>\t<td>\tsessionKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique session ID\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique webinar ID\t</td>\t</tr>\n<tr>\t<td>\twebinarName\t</td>\t<td>\tstring\t</td>\t<td>\twebinar title\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tinteger\t</td>\t<td>\tstart time in iso format\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\ttext\t</td>\t<td>\tend time in iso format\t</td>\t</tr>\n<tr>\t<td>\tregistrantsAttended\t</td>\t<td>\tiso time format\t</td>\t<td>\tnumber of registrant's attending\t</td>\t</tr>\n<tr>\t<td>\tregistrantCount\t</td>\t<td>\tiso time format\t</td>\t<td>\tnumber of registrants\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount number\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\torganizer ID\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\torganizer name\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tstarting organizer\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\tstarting organizer name\t</td>\t</tr>\n<tr>\t<td>\ttotalPollCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of poll responses\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone values\t</td>\t<td>\ttime zone name\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\twebinar type\t</td>\t<td>\tSimulive, classic\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tunique webinar ID\t</td>\t<td>\twebinar ID number\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Organizer sessions",
+          "_postman_id": "83ebd136-f975-468b-a475-6bfbd49b036c",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/sessions?{{historyStart}}=&{{historyEnd}}= ",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "sessions"
+              ],
+              "query": [
+                {
+                  "key": "{{historyStart}}",
+                  "value": ""
+                },
+                {
+                  "key": "{{historyEnd}}",
+                  "value": " "
+                }
+              ]
+            },
+            "description": "Retrieve all completed sessions of all the webinars of a given organizer.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tembedded\t</td>\t<td>\ttext\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tsessionInfoResources\t</td>\t<td>\ttext\t</td>\t<td>\theader for session resources\t</td>\t</tr>\n<tr>\t<td>\tsessionKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique session ID\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique webinar ID\t</td>\t</tr>\n<tr>\t<td>\twebinarName\t</td>\t<td>\tstring\t</td>\t<td>\twebinar title\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tinteger\t</td>\t<td>\tstart time in iso format\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\ttext\t</td>\t<td>\tend time in iso format\t</td>\t</tr>\n<tr>\t<td>\tregistrantsAttended\t</td>\t<td>\tiso time format\t</td>\t<td>\tnumber of registrant's attending\t</td>\t</tr>\n<tr>\t<td>\tregistrantCount\t</td>\t<td>\tiso time format\t</td>\t<td>\tnumber of registrants\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount number\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\torganizer ID\t</td>\t</tr>\n<tr>\t<td>\tcreatingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\torganizer name\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tstarting organizer\t</td>\t</tr>\n<tr>\t<td>\tstartingOrganizerName\t</td>\t<td>\tstring\t</td>\t<td>\tstarting organizer name\t</td>\t</tr>\n<tr>\t<td>\ttotalPollCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of poll responses\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone values\t</td>\t<td>\ttime zone name\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\twebinar type\t</td>\t<td>\tSimulive, classic\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tunique webinar ID\t</td>\t<td>\twebinar ID number\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Session surveys",
+          "_postman_id": "cfe5eece-ea31-479e-b014-02d7d7e20845",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/surveys",
+            "description": "Retrieve surveys for a past webinar session.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\ttext\t</td>\t<td>\theader for response srea\t</td>\t</tr>\n<tr>\t<td>\ttext\t</td>\t<td>\tstring\t</td>\t<td>\tanswer text\t</td>\t</tr>\n<tr>\t<td>\tpercentage\t</td>\t<td>\tinteger\t</td>\t<td>\tpercentage of responses\t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tquestion text\t</td>\t</tr>\n<tr>\t<td>\tnumberOfResponses\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of questions\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Session polls",
+          "_postman_id": "cbb68fd6-5f76-4017-9d10-050c7272031e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/polls",
+            "description": "Retrieve all collated attendee questions and answers for polls from a specific webinar session.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tresponses\t</td>\t<td>\ttext\t</td>\t<td>\theader for response section\t</td>\t</tr>\n<tr>\t<td>\ttext\t</td>\t<td>\tstring\t</td>\t<td>\tresponse text\t</td>\t</tr>\n<tr>\t<td>\tpercentage\t</td>\t<td>\tinteger\t</td>\t<td>\tpercentage of participation \t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tquestion text\t</td>\t</tr>\n<tr>\t<td>\tnumberOfResponses\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of responses\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Session questions",
+          "_postman_id": "b382d44c-4385-4a83-b376-070b84a9b000",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/questions",
+            "description": "Retrieve questions and answers for a past webinar session. \n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tanswers\t</td>\t<td>\ttext\t</td>\t<td>\theader for answer section\t</td>\t</tr>\n<tr>\t<td>\tanswer\t</td>\t<td>\tstring\t</td>\t<td>\tanswer text\t</td>\t</tr>\n<tr>\t<td>\tansweredBy\t</td>\t<td>\tinteger\t</td>\t<td>\tname of respondent\t</td>\t</tr>\n<tr>\t<td>\tquestion\t</td>\t<td>\tstring\t</td>\t<td>\tquestion text\t</td>\t</tr>\n<tr>\t<td>\taskedBy\t</td>\t<td>\tinteger\t</td>\t<td>\tname of questioner\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Session performance",
+          "_postman_id": "23c171c0-e8d4-41cf-bf86-c62ad356938e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/sessions/{{sessionKey}}/performance",
+            "description": "Get performance details for a session.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tattendance\t</td>\t<td>\ttext\t</td>\t<td>\theader for attendance section\t</td>\t</tr>\n<tr>\t<td>\tregistrantCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of registrants\t</td>\t</tr>\n<tr>\t<td>\tpercentageAttendance\t</td>\t<td>\tinteger\t</td>\t<td>\tattendance percentage\t</td>\t</tr>\n<tr>\t<td>\taverageInterestRating\t</td>\t<td>\tinteger\t</td>\t<td>\tinterest rating given by attendees\t</td>\t</tr>\n<tr>\t<td>\taverageAttentiveness\t</td>\t<td>\tinteger\t</td>\t<td>\tattentiveness measure\t</td>\t</tr>\n<tr>\t<td>\taverageAttendanceTimeSeconds\t</td>\t<td>\tinteger\t</td>\t<td>\taverage attendance for all attendees\t</td>\t</tr>\n<tr>\t<td>\tpollsAndSurveys\t</td>\t<td>\ttext\t</td>\t<td>\theader for polls & surveys section\t</td>\t</tr>\n<tr>\t<td>\tpollCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of polls\t</td>\t</tr>\n<tr>\t<td>\tsurveyCount\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of surveys\t</td>\t</tr>\n<tr>\t<td>\tquestionsAsked\t</td>\t<td>\ttext\t</td>\t<td>\tnumber of questions asked\t</td>\t</tr>\n<tr>\t<td>\tpercentagePollsCompleted\t</td>\t<td>\tinteger\t</td>\t<td>\tpercentage of polls completed\t</td>\t</tr>\n<tr>\t<td>\tpercentageSurveysCompleted\t</td>\t<td>\tinteger\t</td>\t<td>\tpercentage of surveys completed\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "6afea58f-b459-414c-b5c3-9043431e61f6"
+    },
+    {
+      "name": "Webinars",
+      "item": [
+        {
+          "name": "Create webinar 1",
+          "_postman_id": "64b71f55-2998-4f1d-aa15-664e4b92260f",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "Vd3LEarqYwAhlwF89hqJnTUyxTAh",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\"subject\": \"New Sequence Classic Webinar\",\n\"timezone\": \"America/Los_Angeles\",\n \"times\": [\n \t{\n \t\t\"startTime\": \"2019-05-10T16:00:00Z\",\n \t\t\"endTime\": \"2019-05-10T17:00:00Z\"\n \t\t\n \t}\n]\n}"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars",
+            "description": "Creates a single session webinar, a sequence of webinars or a series of webinars depending on the type field in the body: \n<ul>\n<li>\"single_session\" creates a single webinar session</li>\n<li>\"sequence\" creates a webinar with multiple meeting times where attendees are expected to be the same for all sessions</li>\n<li>\"series\" creates a webinar with multiple meetings times where attendees choose only one to attend</li>\n</ul>\nThe default, if no type is declared, is <b>single_session</b>. \n\nA <b>sequence</b> webinar requires a \"recurrenceStart\" object consisting of a \"startTime\" and \"endTime\" key for the first webinar of the sequence, a \"recurrencePattern\" of \"daily\", \"weekly\", \"monthly\", and a \"recurrenceEnd\" which is the last date of the sequence (for example, 2019-12-01). Simulive does not support sequence webinars.\n\nA <b>series</b> webinar requires a \"times\" array with a discrete \"startTime\" and \"endTime\" for each webinar in the series. \n\nThe call requires a webinar subject and description. The \"isPasswordProtected\" sets whether the webinar requires a password for attendees to join. If set to True, the organizer must go to Registration Settings at My Webinars (https://global.gotowebinar.com/webinars.tmpl) and add the password to the webinar, and send the password to the registrants. \n\nThe response provides a numeric webinarKey in string format for the new webinar. Once a webinar has been created with this method, you can accept registrations. \n\nTo create a scheduled simulive webinar set the \"experienceType\" as \"SIMULIVE\" along with the \"recordingAssetKey\". The \"recordingAssetKey\" is the unique identifier for the recording asset with which the simulive webinar should be created from. In case the asset was created as an online recording the simulive webinar settings, poll and surveys would be copied from the webinar whose session was recorded. The \"recordingAssetKey\" can be obtained using the new search recordingassets call. \n\nTo create an on demand webinar set \"isOndemand\" to true along with the \"experienceType\" and the \"recordingAssetKey\". Simulive does not support sequence webinars.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar subject\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar description\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\tHeading for array of start and end times\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tEarliest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tLatest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone value\t</td>\t<td>\tOrganizer's time zone \t</td>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\ttype value\t</td>\t<td>\tMust be single_session, series, or sequence\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether webinar access requires a password\t</td>\t</tr>\n<tr>\t<td>\trecordingAssetKey\t</td>\t<td>\tstring\t</td>\t<td>\tUnique identifier for the webinar recording\t</td>\t</tr>\n<tr>\t<td>\tisOnDemand\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether the webinar will be posted on demand\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td> type value </td>\t<td>\tClassic or Simulive\t</td>\t</tr>\n</table>"
+          },
+          "response": [
+            {
+              "id": "6d413449-a83f-4699-ad74-d40a0e385740",
+              "name": "Create BROADCAST Webinar Series with VoIP Audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"New BROADCAST Series Webinar w VoIP audio\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"VOIP\"\n    },\n    \"type\": \"series\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"locale\": \"en_US\"\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234,\n    \"recurrenceKey\": 1234512345123451234\n}"
+            },
+            {
+              "id": "c56cc4b0-60e2-48ad-ba29-5cfff91b7811",
+              "name": "Create CLASSIC Sequence Webinars w Private Audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"CLASSIC Sequence Webinars w Private Audio\",\n    \"description\": \"Registrant limit is 3000, attendee limit is 1000\",\n    \"experienceType\": \"CLASSIC\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"PRIVATE\",\n        \"privateInfo\": {\n            \"organizer\": \"Telephone number and PIN\",\n            \"attendee\": \"Telephone number and PIN\",\n            \"panelist\": \"Telephone number and PIN\"\n        }\n    },\n    \"type\": \"sequence\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"isPasswordProtected\": \"true\",\n    \"locale\": \"en_US\",\n    \"isOndemand\": true\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 23 Apr 2019 14:51:09 GMT"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Access-Control-Allow-Headers",
+                  "value": "origin, x-requested-with, authorization, accept, content-type"
+                },
+                {
+                  "key": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, PUT, DELETE"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Access-Control-Max-Age",
+                  "value": "3628800"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                }
+              ],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234\n}"
+            },
+            {
+              "id": "e76fbb47-d499-4149-a3bd-093823096797",
+              "name": "Create SIMULIVE Sequence Webinar w HYBRID audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"On-Demand Simulive Webinar\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"HYBRID\",\n        \"privateInfo\": {\n            \"organizer\": \"organizer call-in number, PIN\",\n            \"attendee\": \"attendee call-in number, PIN\",\n            \"panelist\": \"panelist call-in number, PIN\"\n        }\n    },\n    \"isOndemand\": true,\n    \"type\": \"sequence\"\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create webinar 1 Copy",
+          "_postman_id": "d0bd48c9-7796-4cce-8d57-4d9b4123d6cd",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "ZPz6LotiNYn1Cem9vRyeD6XxPEB9",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"subject\": \"CLASSIC Sequence Webinars w Private Audio\",\n    \"description\": \"Registrant limit is 3000, attendee limit is 1000\",\n    \"experienceType\": \"CLASSIC\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-05-16T09:00:00Z\",\n            \"endTime\": \"2019-05-16T10:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-05-14T09:00:00Z\",\n            \"endTime\": \"2019-05-14T10:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-05-15T09:00:00Z\",\n            \"endTime\": \"2019-05-15T10:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"PRIVATE\",\n        \"privateInfo\": {\n            \"organizer\": \"18006660001 - 2345\",\n            \"attendee\": \"Telephone number and PIN\",\n            \"panelist\": \"Telephone number and PIN\"\n        }\n    },\n    \"type\": \"sequence\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"isPasswordProtected\": \"true\",\n    \"locale\": \"en_US\"\n}"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars",
+            "description": "Creates a single session webinar, a sequence of webinars or a series of webinars depending on the type field in the body: \n<ul>\n<li>\"single_session\" creates a single webinar session</li>\n<li>\"sequence\" creates a webinar with multiple meeting times where attendees are expected to be the same for all sessions</li>\n<li>\"series\" creates a webinar with multiple meetings times where attendees choose only one to attend</li>\n</ul>\nThe default, if no type is declared, is <b>single_session</b>. \n\nA <b>sequence</b> webinar requires a \"recurrenceStart\" object consisting of a \"startTime\" and \"endTime\" key for the first webinar of the sequence, a \"recurrencePattern\" of \"daily\", \"weekly\", \"monthly\", and a \"recurrenceEnd\" which is the last date of the sequence (for example, 2019-12-01). Simulive does not support sequence webinars.\n\nA <b>series</b> webinar requires a \"times\" array with a discrete \"startTime\" and \"endTime\" for each webinar in the series. \n\nThe call requires a webinar subject and description. The \"isPasswordProtected\" sets whether the webinar requires a password for attendees to join. If set to True, the organizer must go to Registration Settings at My Webinars (https://global.gotowebinar.com/webinars.tmpl) and add the password to the webinar, and send the password to the registrants. \n\nThe response provides a numeric webinarKey in string format for the new webinar. Once a webinar has been created with this method, you can accept registrations. \n\nTo create a scheduled simulive webinar set the \"experienceType\" as \"SIMULIVE\" along with the \"recordingAssetKey\". The \"recordingAssetKey\" is the unique identifier for the recording asset with which the simulive webinar should be created from. In case the asset was created as an online recording the simulive webinar settings, poll and surveys would be copied from the webinar whose session was recorded. The \"recordingAssetKey\" can be obtained using the new search recordingassets call. \n\nTo create an on demand webinar set \"isOndemand\" to true along with the \"experienceType\" and the \"recordingAssetKey\". Simulive does not support sequence webinars.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar subject\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar description\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\tHeading for array of start and end times\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tEarliest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tLatest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone value\t</td>\t<td>\tOrganizer's time zone \t</td>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\ttype value\t</td>\t<td>\tMust be single_session, series, or sequence\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether webinar access requires a password\t</td>\t</tr>\n<tr>\t<td>\trecordingAssetKey\t</td>\t<td>\tstring\t</td>\t<td>\tUnique identifier for the webinar recording\t</td>\t</tr>\n<tr>\t<td>\tisOnDemand\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether the webinar will be posted on demand\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td> type value </td>\t<td>\tClassic or Simulive\t</td>\t</tr>\n</table>"
+          },
+          "response": [
+            {
+              "id": "148f5db5-de63-46d8-8997-e3c93fa6bd61",
+              "name": "Create CLASSIC Sequence Webinars w Private Audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"CLASSIC Sequence Webinars w Private Audio\",\n    \"description\": \"Registrant limit is 3000, attendee limit is 1000\",\n    \"experienceType\": \"CLASSIC\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"PRIVATE\",\n        \"privateInfo\": {\n            \"organizer\": \"Telephone number and PIN\",\n            \"attendee\": \"Telephone number and PIN\",\n            \"panelist\": \"Telephone number and PIN\"\n        }\n    },\n    \"type\": \"sequence\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"isPasswordProtected\": \"true\",\n    \"locale\": \"en_US\",\n    \"isOndemand\": true\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Server",
+                  "value": "nginx"
+                },
+                {
+                  "key": "Date",
+                  "value": "Tue, 23 Apr 2019 14:51:09 GMT"
+                },
+                {
+                  "key": "Content-Length",
+                  "value": "48"
+                },
+                {
+                  "key": "Connection",
+                  "value": "keep-alive"
+                },
+                {
+                  "key": "Access-Control-Allow-Headers",
+                  "value": "origin, x-requested-with, authorization, accept, content-type"
+                },
+                {
+                  "key": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, PUT, DELETE"
+                },
+                {
+                  "key": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "key": "Access-Control-Max-Age",
+                  "value": "3628800"
+                },
+                {
+                  "key": "X-Powered-By",
+                  "value": "Express"
+                }
+              ],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234\n}"
+            },
+            {
+              "id": "2ab670d9-51d3-4341-8212-3220e9300797",
+              "name": "Create SIMULIVE Sequence Webinar w HYBRID audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"On-Demand Simulive Webinar\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"HYBRID\",\n        \"privateInfo\": {\n            \"organizer\": \"organizer call-in number, PIN\",\n            \"attendee\": \"attendee call-in number, PIN\",\n            \"panelist\": \"panelist call-in number, PIN\"\n        }\n    },\n    \"isOndemand\": true,\n    \"type\": \"sequence\"\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234\n}"
+            },
+            {
+              "id": "bb4cc719-bdcc-4aaa-8a6b-739660a8690d",
+              "name": "Create BROADCAST Webinar Series with VoIP Audio",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"subject\": \"New BROADCAST Series Webinar w VoIP audio\",\n    \"times\": [\n        {\n            \"startTime\": \"2019-12-02T19:00:00Z\",\n            \"endTime\": \"2019-12-02T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-09T19:00:00Z\",\n            \"endTime\": \"2019-12-09T20:00:00Z\"\n        },\n        {\n            \"startTime\": \"2019-12-16T19:00:00Z\",\n            \"endTime\": \"2019-12-16T20:00:00Z\"\n        }\n    ],\n    \"audio\": {\n        \"type\": \"VOIP\"\n    },\n    \"type\": \"series\",\n    \"timezone\": \"America/Los_Angeles\",\n    \"locale\": \"en_US\"\n}"
+                },
+                "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [],
+              "cookie": [],
+              "responseTime": null,
+              "body": "{\n    \"webinarKey\": 1234512345123451234,\n    \"recurrenceKey\": 1234512345123451234\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update webinar",
+          "_postman_id": "b72e525b-a046-471d-906f-c0e3940fe68f",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hHmcoCBvIQRCax2KrevGW7BDAH5t",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject\": \"string\",\n  \"description\": \"string\",\n  \"times\": [\n    {\n      \"startTime\": \"2019-10-03T16:00:00Z\",\n      \"endTime\": \"2019-10-03T17:00:00Z\"\n    }\n  ],\n  \"timeZone\": \"string\",\n  \"type\": \"single_session\",\n  \"isPasswordProtected\": false,\n  \"recordingAssetKey\": \"string\",\n  \"isOndemand\": false,\n  \"experienceType\": \"CLASSIC\"\n}"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}",
+            "description": "Updates a webinar. The call requires at least one of the parameters in the request body. The request completely replaces the existing session, series, or sequence and so must include the full definition of each as for the Create call. Set notifyParticipants=true to send update emails to registrants.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar subject\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\tWebinar description\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\tHeading for array of start and end times\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tEarliest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO time format\t</td>\t<td>\tLatest starting time for retreived webinars\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone value\t</td>\t<td>\tOrganizer's time zone \t</td>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\ttype value\t</td>\t<td>\tMust be single_session, series, or sequence\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether webinar access requires a password\t</td>\t</tr>\n<tr>\t<td>\trecordingAssetKey\t</td>\t<td>\tstring\t</td>\t<td>\tUnique identifier for the webinar recording\t</td>\t</tr>\n<tr>\t<td>\tisOnDemand\t</td>\t<td>\tBoolean\t</td>\t<td>\tSets whether the webinar will be posted on demand\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td> type value </td>\t<td>\tClassic or Simulive\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Update audio information",
+          "_postman_id": "567e1ce3-4ace-497b-8db1-1d8831b38673",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "value": "application/x-www-form-urlencoded",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "THESE ARE EXAMPLES ONLY USE ONE AND REMOVE EVERYTHING ELSE OUTSIDE OF THE { }\r\n\r\nPRIVATE:\r\n{\r\n    \"type\": \"Private\",\r\n    \"privateInfo\": {\r\n        \"attendee\": \"Info for attendee\",\r\n        \"organizer\": \"Info for organizer\",\r\n        \"panelist\": \"Info for panelist\"\r\n}\r\n\r\nPSTN ONLY:\r\n{\r\n    \"type\": \"PSTN\",\r\n    \"pstnInfo\": {\r\n    \"tollFreeCountries\": [\r\n      \"US\", \"DE\"\r\n    ],\r\n    \"tollCountries\": [\r\n      \"AT\", \"US\"\r\n    ]\r\n  }\r\n  \r\nVOIP ONLY:\r\n{\r\n    \"type\": \"VOIP\"\r\n}"
+            },
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/audio",
+            "description": "Updates the audio/conferencing settings for a specific webinar. Note, the example Body of this call contains examples of Private (using third-party, private conference calling software), PSTN (using phone lines), and VoIP (using the Internet and a browser for a web-based session) call bodies.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\tstring\t</td>\t<td>\tConnection type for webinar audio: Private, PSTN, or VOIP\t</td>\t</tr>\n<tr>\t<td>\tprivateInfo\t</td>\t<td>\ttext\t</td>\t<td>\ttext header for Private type webinars\t</td>\t</tr>\n<tr>\t<td>\tattendee\t</td>\t<td>\tstring\t</td>\t<td>\tConnection information for Private attendees\t</td>\t</tr>\n<tr>\t<td>\torganizer\t</td>\t<td>\tstring\t</td>\t<td>\tConnection information for Private organizers\t</td>\t</tr>\n<tr>\t<td>\tpanelist\t</td>\t<td>\tstring\t</td>\t<td>\tConnection information for Private panelists\t</td>\t</tr>\n<tr>\t<td>\tpstnInfo\t</td>\t<td>\ttext\t</td>\t<td>\ttext header for PSTN type webinars\t</td>\t</tr>\n<tr>\t<td>\ttollFreeCountries\t</td>\t<td>\tstring\t</td>\t<td>\tPSTN only - listing of toll-free countries where this webinar can be accessed\t</td>\t</tr>\n<tr>\t<td>\ttollCountries\t</td>\t<td>\tstring\t</td>\t<td>\tPSTN only - listing of toll countries where this webinar can be accessed\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar",
+          "_postman_id": "7bc82d92-6d99-4d47-aae1-cadb934e1adb",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "vGt9cBKTcdSwZp5GoKTqtaxZOr9h",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}?size=20&page=0&startDate={{scheduledStart}}&endDate={{scheduleEnd}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars",
+                "{{webinarKey}}"
+              ],
+              "query": [
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "Number of lines per page of output"
+                },
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "The displayed page number. The first page is 0."
+                },
+                {
+                  "key": "startDate",
+                  "value": "{{scheduledStart}}"
+                },
+                {
+                  "key": "endDate",
+                  "value": "{{scheduleEnd}}"
+                }
+              ]
+            },
+            "description": "Returns a specified scheduled webinar scheduled for a specified organizer.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tembedded\t</td>\t<td>\ttext\t</td>\t<td>\theading denoting XXX, and can be embedded, XXX\t</td>\t</tr>\n<tr>\t<td>\twebinars\t</td>\t<td>\ttext\t</td>\t<td>\theading for data by specified webinar\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying a specific webinar in the system\t</td>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\tstring\t</td>\t<td>\twebinar title\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tstring\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\ttitle of the webinar\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\tdescription of webinar\t</td>\t</tr>\n<tr>\t<td>\torganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying the specific organizer\t</td>\t</tr>\n<tr>\t<td>\torganizerEmail\t</td>\t<td>\tstring\t</td>\t<td>\torganizer's email\t</td>\t</tr>\n<tr>\t<td>\torganizerName\t</td>\t<td>\tstring\t</td>\t<td>\torganizer's name\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount identifier\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\theading of the webinar times array\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled start time of the webinar\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled end time for the webinar\t</td>\t</tr>\n<tr>\t<td>\tregistrationUrl\t</td>\t<td>\tstring\t</td>\t<td>\tURL where someone can register for the webinar\t</td>\t</tr>\n<tr>\t<td>\tinSession\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is running; FALSE - session is not live \t</td>\t</tr>\n<tr>\t<td>\timpromptu\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is launched and available; FALSE - this is a scheduled webinar\t</td>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\tsession type value\t</td>\t<td>\tvalid webinar type value\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone table\t</td>\t<td>\tvalid time zone value\t</td>\t</tr>\n<tr>\t<td>\tnumberOfRegistrants\t</td>\t<td>\tinteger\t</td>\t<td>\tregistrant count for webinar\t</td>\t</tr>\n<tr>\t<td>\tpendingRegistrants\t</td>\t<td>\tinteger\t</td>\t<td>\tunapproved registrant count\t</td>\t</tr>\n<tr>\t<td>\tdeniedRegistrants\t</td>\t<td>\tinteger\t</td>\t<td>\tdenied registrant count\t</td>\t</tr>\n<tr>\t<td>\tregistrationLimit\t</td>\t<td>\tinteger\t</td>\t<td>\ttotal permitted registrations\t</td>\t</tr>\n<tr>\t<td>\tlocale\t</td>\t<td>\tlocale table\t</td>\t<td>\tvalid locale\t</td>\t</tr>\n<tr>\t<td>\treplyTo\t</td>\t<td>\ttext\t</td>\t<td>\theader for organizer info\t</td>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\tstring\t</td>\t<td>\torganizer name (full)\t</td>\t</tr>\n<tr>\t<td>\temail\t</td>\t<td>\tstring\t</td>\t<td>\torganizer email\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\torganizer account\t</td>\t</tr>\n<tr>\t<td>\trecurrencePeriod\t</td>\t<td>\tstring\t</td>\t<td>\tvalid recurrence period of None, Weekly, Monthly, etc.\t</td>\t</tr>\n<tr>\t<td>\tisOndemand\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the webinar can be viewed as a recording; FALSE - the webinar is live only\t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\tstring\t</td>\t<td>\tClassic, Simulive\t</td>\t</tr>\n<tr>\t<td>\thasDisclaimer\t</td>\t<td>\tstring\t</td>\t<td>\tTRUE - has a custom registration disclaimer; FALSE - no disclaimer\t</td>\t</tr>\n<tr>\t<td>\tbroadcast\t</td>\t<td>\tBoolean\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected: false\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is launched and available; FALSE - this is a scheduled webinar\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinars by account",
+          "_postman_id": "ca1922d0-a212-45d1-85d4-aafbb7fea33e",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "xIFW8NrofqFAFS3P7b8AH0vddZ4A",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/accounts/{{accountKey}}/webinars?page=0&size=20&fromTime={{historyStart}}&toTime={{historyEnd}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "accounts",
+                "{{accountKey}}",
+                "webinars"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0",
+                  "description": "number of pages; 0 is default and sets no limit"
+                },
+                {
+                  "key": "size",
+                  "value": "20",
+                  "description": "length of page output"
+                },
+                {
+                  "key": "fromTime",
+                  "value": "{{historyStart}}"
+                },
+                {
+                  "key": "toTime",
+                  "value": "{{historyEnd}}"
+                }
+              ]
+            },
+            "description": "Retrieves the list of webinars for all organizers on an account within a given date range. Page and size parameters are optional. Default page is 0 and default size is 20.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\t_embedded\t</td>\t<td>\ttext\t</td>\t<td>\theading denoting XXX, and can be embedded, XXX\t</td>\t</tr>\n<tr>\t<td>\twebinars\t</td>\t<td>\ttext\t</td>\t<td>\theading for data by specified webinar\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying a specific webinar in the system\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tstring\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\torganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying the specific organizer\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount identifier\t</td>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\ttitle of the webinar\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\ttext description of the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\theading of the webinar times array\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled start time of the webinar\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled end time for the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone table\t</td>\t<td>\tvalid time zone value\t</td>\t</tr>\n<tr>\t<td>\tlocale\t</td>\t<td>\tlocale table\t</td>\t<td>\tvalid locale\t</td>\t</tr>\n<tr>\t<td>\tapprovalType\t</td>\t<td>\tstring\t</td>\t<td>\tEither auto or manual ???\t</td>\t</tr>\n<tr>\t<td>\tregistrationUrl\t</td>\t<td>\tstring\t</td>\t<td>\tURL where someone can register for the webinar\t</td>\t</tr>\n<tr>\t<td>\timpromptu\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is launched and available; FALSE - this is a scheduled webinar\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE requires password to access the webinar; FALSE sets no password requirement'\t</td>\t</tr>\n<tr>\t<td>\trecurrenceType\t</td>\t<td>\tstring\t</td>\t<td>\tMay be 'immediate' - start at anytime; 'scheduled' - one webinar event is booked for the future; 'recurring' - multiple webinar sessions related to the specified webinar event \t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\tstring\t</td>\t<td>\tJoin type of 'classic,' 'webcast' or 'simulive'\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\ttext heading of output details\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger\t</td>\t<td>\t(0-120) quantity of output in lines\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of line items reported\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\tPages of output\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of ??? reported\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinars by organizer",
+          "_postman_id": "8e96ca5c-2126-4ef7-9377-55e281689382",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "vGt9cBKTcdSwZp5GoKTqtaxZOr9h",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars?fromTime={{fromTime}}&toTime={{toTime}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars"
+              ],
+              "query": [
+                {
+                  "key": "fromTime",
+                  "value": "{{fromTime}}"
+                },
+                {
+                  "key": "toTime",
+                  "value": "{{toTime}}"
+                }
+              ]
+            },
+            "description": "Returns webinars scheduled for the future for a specified organizer.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\t_embedded\t</td>\t<td>\ttext\t</td>\t<td>\theading denoting XXX, and can be embedded, XXX\t</td>\t</tr>\n<tr>\t<td>\twebinars\t</td>\t<td>\ttext\t</td>\t<td>\theading for data by specified webinar\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying a specific webinar in the system\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tstring\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\torganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying the specific organizer\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount identifier\t</td>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\ttitle of the webinar\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\ttext description of the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\theading of the webinar times array\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled start time of the webinar\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled end time for the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone table\t</td>\t<td>\tvalid time zone value\t</td>\t</tr>\n<tr>\t<td>\tlocale\t</td>\t<td>\tlocale table\t</td>\t<td>\tvalid locale\t</td>\t</tr>\n<tr>\t<td>\tapprovalType\t</td>\t<td>\tstring\t</td>\t<td>\tEither auto or manual ???\t</td>\t</tr>\n<tr>\t<td>\tregistrationUrl\t</td>\t<td>\tstring\t</td>\t<td>\tURL where someone can register for the webinar\t</td>\t</tr>\n<tr>\t<td>\timpromptu\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is launched and available; FALSE - this is a scheduled webinar\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE requires password to access the webinar; FALSE sets no password requirement'\t</td>\t</tr>\n<tr>\t<td>\trecurrenceType\t</td>\t<td>\tstring\t</td>\t<td>\tMay be 'immediate' - start at anytime; 'scheduled' - one webinar event is booked for the future; 'recurring' - multiple webinar sessions related to the specified webinar event \t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\tstring\t</td>\t<td>\tJoin type of 'classic,' 'webcast' or 'simulive'\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\ttext heading of output details\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger\t</td>\t<td>\t(0-120) quantity of output in lines\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of line items reported\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\tPages of output\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of ??? reported\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar meeting times",
+          "_postman_id": "37ca08de-51c1-4ff6-a3b9-2cb57b98ce6d",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/meetingtimes",
+            "description": "Retrieves the meeting times for a webinar.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled start time of the webinar\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled end time for the webinar\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Historical webinars",
+          "_postman_id": "7fea53aa-af0e-40cc-8aaf-8e7167410bb8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/historicalWebinars?{{historyStart}}=&{{historyEnd}}=",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "historicalWebinars"
+              ],
+              "query": [
+                {
+                  "key": "{{historyStart}}",
+                  "value": ""
+                },
+                {
+                  "key": "{{historyEnd}}",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Returns details for completed webinars for the specified organizer and completed webinars of other organizers where the specified organizer is a co-organizer.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\t_embedded\t</td>\t<td>\ttext\t</td>\t<td>\theading denoting XXX, and can be embedded, XXX\t</td>\t</tr>\n<tr>\t<td>\twebinars\t</td>\t<td>\ttext\t</td>\t<td>\theading for data by specified webinar\t</td>\t</tr>\n<tr>\t<td>\twebinarKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying a specific webinar in the system\t</td>\t</tr>\n<tr>\t<td>\twebinarID\t</td>\t<td>\tstring\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\torganizerKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique string identifying the specific organizer\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount identifier\t</td>\t</tr>\n<tr>\t<td>\tsubject\t</td>\t<td>\tstring\t</td>\t<td>\ttitle of the webinar\t</td>\t</tr>\n<tr>\t<td>\tdescription\t</td>\t<td>\tstring\t</td>\t<td>\ttext description of the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimes\t</td>\t<td>\ttext\t</td>\t<td>\theading of the webinar times array\t</td>\t</tr>\n<tr>\t<td>\tstartTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled start time of the webinar\t</td>\t</tr>\n<tr>\t<td>\tendTime\t</td>\t<td>\tISO 8601 time format\t</td>\t<td>\tscheduled end time for the webinar\t</td>\t</tr>\n<tr>\t<td>\ttimeZone\t</td>\t<td>\ttime zone table\t</td>\t<td>\tvalid time zone value\t</td>\t</tr>\n<tr>\t<td>\tlocale\t</td>\t<td>\tlocale table\t</td>\t<td>\tvalid locale\t</td>\t</tr>\n<tr>\t<td>\tapprovalType\t</td>\t<td>\tstring\t</td>\t<td>\tEither auto or manual ???\t</td>\t</tr>\n<tr>\t<td>\tregistrationUrl\t</td>\t<td>\tstring\t</td>\t<td>\tURL where someone can register for the webinar\t</td>\t</tr>\n<tr>\t<td>\timpromptu\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE - the session is launched and available; FALSE - this is a scheduled webinar\t</td>\t</tr>\n<tr>\t<td>\tisPasswordProtected\t</td>\t<td>\tBoolean\t</td>\t<td>\tTRUE requires password to access the webinar; FALSE sets no password requirement'\t</td>\t</tr>\n<tr>\t<td>\trecurrenceType\t</td>\t<td>\tstring\t</td>\t<td>\tMay be 'immediate' - start at anytime; 'scheduled' - one webinar event is booked for the future; 'recurring' - multiple webinar sessions related to the specified webinar event \t</td>\t</tr>\n<tr>\t<td>\texperienceType\t</td>\t<td>\tstring\t</td>\t<td>\tJoin type of 'classic,' 'webcast' or 'simulive'\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\ttext heading of output details\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger\t</td>\t<td>\t(0-120) quantity of output in lines\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of line items reported\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\tPages of output\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\tNumber of ??? reported\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Audio information 1",
+          "_postman_id": "33c53b75-ebe6-460d-adde-762e1c42bbb8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "hENAGmQ11cJAgLUJYFXco1dnxfzq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/audio",
+            "description": "Retrieves the audio/conferencing information for a specific webinar.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\ttype\t</td>\t<td>\tConnection type\t</td>\t<td>\tPSTN, VoIP, Private or Hybrid\t</td>\t</tr>\n<tr>\t<td>\tconfCallNumbers\t</td>\t<td>\ttext\t</td>\t<td>\ttext header for conference call numbers</td>\t</tr>\n<tr>\t<td>\ttollFreeCountries\t</td>\t<td>\tstring\t</td>\t<td>\tlisting of toll-free countries where this webinar can be accessed\t</td>\t</tr>\n<tr>\t<td>\ttollCountries\t</td>\t<td>\tstring\t</td>\t<td>\tlisting of toll countries where this webinar can be accessed\t</td>\t</tr>\n<tr>\t<td>\tprivateinfo\t</td>\t<td>\tstring\t</td>\t<td>\ttext header for private conf call data\t</td>\t</tr>\n<tr>\t<td>\tattendee\t</td>\t<td>\tstring\t</td>\t<td>\tjoin info for attendees\t</td>\t</tr>\n<tr>\t<td>\torganizer\t</td>\t<td>\tstring\t</td>\t<td>\tjoin info for organizer\t</td>\t</tr>\n<tr>\t<td>\tpanelist\t</td>\t<td>\tstring\t</td>\t<td>\tjoin info for panelist\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar session performance",
+          "_postman_id": "8ce56501-825e-4b5a-8776-94f0822a05ac",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/performance",
+            "description": "Gets performance details for all sessions of a specific webinar."
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar session attendance",
+          "_postman_id": "3295795f-b538-446e-8cae-d050c916e73a",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "Vd3LEarqYwAhlwF89hqJnTUyxTAh",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}/attendees",
+            "description": "Returns all attendees for all sessions of the specified webinar.\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\t_embedded\t</td>\t<td>\ttext\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tattendeeParticipationResponses\t</td>\t<td>\ttext\t</td>\t<td>\theader for attendee responses\t</td>\t</tr>\n<tr>\t<td>\tregistrantKey: 0,\t</td>\t<td>\tstring\t</td>\t<td>\tunique registrant identifier\t</td>\t</tr>\n<tr>\t<td>\tsessionKey: 0,\t</td>\t<td>\tstring\t</td>\t<td>\tunique session ID\t</td>\t</tr>\n<tr>\t<td>\temail: \"string\",\t</td>\t<td>\tstring\t</td>\t<td>\tattendee email\t</td>\t</tr>\n<tr>\t<td>\tattendanceTimeInSeconds: 0,\t</td>\t<td>\tinteger\t</td>\t<td>\tcumulative attendance time in specified session in seconds\t</td>\t</tr>\n<tr>\t<td>\tattendance: [\t</td>\t<td>\ttext\t</td>\t<td>\theader for attendance data\t</td>\t</tr>\n<tr>\t<td>\tjoinTime: \"2018-12-17T19:00:00Z\",\t</td>\t<td>\tiso time format\t</td>\t<td>\tjoin time and date\t</td>\t</tr>\n<tr>\t<td>\tleaveTime: \"2018-12-17T19:00:00Z\"\t</td>\t<td>\tiso time format\t</td>\t<td>\tleave time and date\t</td>\t</tr>\n<tr>\t<td>\tfirstName: \"string\",\t</td>\t<td>\tstring\t</td>\t<td>\tfirst name\t</td>\t</tr>\n<tr>\t<td>\tlastName: \"string\"\t</td>\t<td>\tstring\t</td>\t<td>\tlast name\t</td>\t</tr>\n<tr>\t<td>\tpage: {\t</td>\t<td>\ttext\t</td>\t<td>\theader for report output data\t</td>\t</tr>\n<tr>\t<td>\tsize: 0,\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\ttotalElements: 0,\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of report items\t</td>\t</tr>\n<tr>\t<td>\ttotalPages: 0,\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of report pages\t</td>\t</tr>\n<tr>\t<td>\tnumber: 0\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        },
+        {
+          "name": "Scheduled webinars",
+          "_postman_id": "b65e8ee4-a41b-4575-96c3-cf7d92feadc9",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "Dz6XkQOWSBYaBT7fbooIo2GYm2kA",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/organizers/{{organizerKey}}/upcomingWebinars",
+            "description": "Returns webinars scheduled for the future for the specified organizer and webinars of other organizers where the specified organizer is a co-organizer."
+          },
+          "response": []
+        },
+        {
+          "name": "Webinar",
+          "_postman_id": "b8fe6b97-8538-4304-b271-86a3a9dbe186",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "0fjDYEzOm8jsALpU5T12S1deebj6",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"sendCancellationEmails\": true\r\n}"
+            },
+            "url": {
+              "raw": "{{baseURL}}/organizers/{{organizerKey}}/webinars/{{webinarKey}}?sendCancellationEmails={{sendCancellationEmails}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "organizers",
+                "{{organizerKey}}",
+                "webinars",
+                "{{webinarKey}}"
+              ],
+              "query": [
+                {
+                  "key": "sendCancellationEmails",
+                  "value": "{{sendCancellationEmails}}"
+                }
+              ]
+            },
+            "description": "Cancels a specific webinar. If the webinar is a series or sequence, this call deletes all scheduled sessions. To send cancellation emails to registrants set sendCancellationEmails=true in the request. When the cancellation emails are sent, the default generated message is used in the cancellation email body."
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "e7bd8841-661d-48d7-9db2-23aa84b8e7a4"
+    },
+    {
+      "name": "Recordings",
+      "item": [
+        {
+          "name": "Find recording assets",
+          "_postman_id": "86ddd582-b8eb-4a46-a35f-a930fa098217",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "MxvKKMNLnJNm5d1su59bnmAzYDoq",
+                "tokenType": "Bearer",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "type": "text",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"accountKey\": \"string\",\n  \"name\": \"string\",\n  \"sortField\": \"CREATETIME\",\n  \"sortOrder\": \"DESC\"\n}"
+            },
+            "url": "{{baseURL}}/RecordingAssets/searchAssets",
+            "description": "Operations available for assets of a given organizer.\n\n<h3>\tRequest Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\ttext\t</td>\t<td>\taccount ID\t</td>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\ttext\t</td>\t<td>\theader for assets section\t</td>\t</tr>\n<tr>\t<td>\tsortField\t</td>\t<td>\tsort field value\t</td>\t<td>\tfile name\t</td>\t</tr>\n<tr>\t<td>\tsortOrder\t</td>\t<td>\tsort order value\t</td>\t<td>\tMaybe DESC for descending, or ASCN for ascending sorts\t</td>\t</tr>\n</table>\t\t\t\t\t\t\t\t\t\t\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tembedded\t</td>\t<td>\ttext\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\trecordingAssets\t</td>\t<td>\ttext\t</td>\t<td>\theader for assets section\t</td>\t</tr>\n<tr>\t<td>\tname\t</td>\t<td>\tstring\t</td>\t<td>\tfile name\t</td>\t</tr>\n<tr>\t<td>\trecordingAssetKey\t</td>\t<td>\tstring\t</td>\t<td>\tunique recording ID\t</td>\t</tr>\n<tr>\t<td>\tproductName\t</td>\t<td>\tstring\t</td>\t<td>\twebinar title\t</td>\t</tr>\n<tr>\t<td>\tcreateTime\t</td>\t<td>\tiso time format\t</td>\t<td>\ttime created\t</td>\t</tr>\n<tr>\t<td>\tcreatorKey\t</td>\t<td>\tstring\t</td>\t<td>\trecording organizer ID\t</td>\t</tr>\n<tr>\t<td>\taccountKey\t</td>\t<td>\tstring\t</td>\t<td>\taccount ID\t</td>\t</tr>\n<tr>\t<td>\ttotalReferenceCount\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\tpage\t</td>\t<td>\ttext\t</td>\t<td>\theader for report output data\t</td>\t</tr>\n<tr>\t<td>\tsize\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n<tr>\t<td>\ttotalElements\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of report items\t</td>\t</tr>\n<tr>\t<td>\ttotalPages\t</td>\t<td>\tinteger\t</td>\t<td>\tnumber of report pages\t</td>\t</tr>\n<tr>\t<td>\tnumber\t</td>\t<td>\tinteger\t</td>\t<td>\t???\t</td>\t</tr>\n</table>"
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "3b407068-ee32-4672-8233-ec4b34856870"
+    },
+    {
+      "name": "Webhook",
+      "item": [
+        {
+          "name": "Create secret key",
+          "_postman_id": "32da5b4c-129d-446d-8b60-369dfa3a23ab",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{baseURL}}/webhooks/secretkey"
+          },
+          "response": []
+        },
+        {
+          "name": "Create webhooks",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "id": "c59156c8-e8a9-44f1-8236-ec3aac2cbe73",
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "_postman_id": "85e33959-e2d6-4322-b3e8-ef52fa4333b1",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t{\r\n\t \"callbackUrl\":\"https://en6rn426ynnfv.x.pipedream.net\",\r\n\t \"eventName\":\"registrant.added\",\r\n\t \"eventVersion\":\"1.0.0\",\r\n\t \"product\":\"g2w\"\r\n\t}\r\n]"
+            },
+            "url": "{{baseURL}}/webhooks"
+          },
+          "response": []
+        },
+        {
+          "name": "Update webhooks",
+          "_postman_id": "29639f02-be2a-466c-a889-e312a1b03224",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t{\r\n\t\t\"state\":\"ACTIVE\",\r\n\t\t\"webhookKey\": {{webhookKey}}\r\n\t}\r\n]"
+            },
+            "url": "{{baseURL}}/webhooks"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete webhooks",
+          "_postman_id": "a7349d66-1ddb-404e-a06f-62026fcf86a8",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t{{webhookKey}}\r\n]"
+            },
+            "url": "{{baseURL}}/webhooks"
+          },
+          "response": []
+        },
+        {
+          "name": "Webhook",
+          "_postman_id": "b550a8db-7735-4134-abf9-16947b6bb9ba",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": "{{baseURL}}/webhooks/{{webhookKey}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Search webhooks",
+          "_postman_id": "addde8ec-77d2-4c53-a941-961b802d7d2d",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseURL}}/webhooks?product={{product}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "webhooks"
+              ],
+              "query": [
+                {
+                  "key": "product",
+                  "value": "{{product}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "1f5085ba-135d-461d-8ccb-5964b7b66ccc",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "a2b60fd0-259d-4774-8c88-8b283a2e826a",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "e438f321-d53f-4929-8c91-aa5835e27d3e",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": " User subscription",
+      "item": [
+        {
+          "name": "Create user subscriptions",
+          "_postman_id": "6db0d5c3-9806-4f7f-a223-dea436077289",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t{\r\n\t\t\"webhookKey\": {{webhookKey}},\r\n\t\t\"userSubscriptionState\": \"ACTIVE\"\r\n\t}\r\n]"
+            },
+            "url": "{{baseURL}}/userSubscriptions"
+          },
+          "response": []
+        },
+        {
+          "name": "Update user subscriptions",
+          "_postman_id": "a2159164-d30d-4e0f-bd83-93eaf9de4ff0",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t{\r\n\t\t\"userSubscriptionKey\": {{userSubscriptionKey}},\r\n\t\t\"userSubscriptionState\": \"ACTIVE\"\r\n\t}\r\n]"
+            },
+            "url": "{{baseURL}}/userSubscriptions"
+          },
+          "response": []
+        },
+        {
+          "name": "User subscription",
+          "_postman_id": "1fc90d3b-fefe-4672-a3fe-fa6483d2e414",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseURL}}/userSubscriptions/{{userSubscriptionKey}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Search user subscriptions",
+          "_postman_id": "e885ab73-c55b-410e-9bb5-7c572ce5f178",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseURL}}/userSubscriptions?product={{product}}",
+              "host": [
+                "{{baseURL}}"
+              ],
+              "path": [
+                "userSubscriptions"
+              ],
+              "query": [
+                {
+                  "key": "product",
+                  "value": "{{product}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "User subscriptions",
+          "_postman_id": "92e1f5cd-c033-4693-9be1-1420187db33d",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "oauth2",
+              "oauth2": {
+                "accessToken": "{{token}}",
+                "addTokenTo": "header"
+              }
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\r\n\t\"{{userSubscriptionKey}}\"\r\n]"
+            },
+            "url": "{{baseURL}}/userSubscriptions"
+          },
+          "response": []
+        }
+      ],
+      "_postman_id": "47c2953d-e1c0-4830-bf32-92cd699d26c4",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "5de93f4e-d76e-4918-976d-e6b8f9350f02",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "167ae0de-bca8-42f9-b5d5-157a30de976b",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Access Token (OAuth step 2)",
+      "_postman_id": "828e267a-945a-4afd-8d27-e25e4eebf172",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "auth": {
+          "type": "oauth2",
+          "oauth2": {
+            "addTokenTo": "header"
+          }
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "type": "text",
+            "value": "application/x-www-form-urlencoded"
+          },
+          {
+            "key": "Accept",
+            "type": "text",
+            "value": "application/json"
+          },
+          {
+            "warning": "This is a duplicate header and will be overridden by the Authorization header generated by Postman.",
+            "key": "Authorization",
+            "type": "text",
+            "value": "Bearer OEE1M3luSEVoVm5IUjZyc1RHOExheVRsSDZYUWRuc0g6NWM5NzJ1ZndnSzRHeEpOaQ==",
+            "disabled": true
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {}
+          }
+        },
+        "url": {
+          "raw": "{{baseURL}}/oauth/v2/token",
+          "host": [
+            "{{baseURL}}"
+          ],
+          "path": [
+            "oauth",
+            "v2",
+            "token"
+          ],
+          "query": [
+            {
+              "key": "grant_type",
+              "value": "authorization_code",
+              "disabled": true
+            },
+            {
+              "key": "code",
+              "value": "iS0vynEEvRFA9i6kZ8gvNDnnOGErsnn4Xi2MaoYNUTLyNOKq3oiA32TWcYBnZf5u5MzwMv0WqcrVJPuX121FH2qiQs02_CxIulZj.1efNHpfDhrJNaGHKZo_St5G7vHuK2-2e9iw09wT1jw5JQVwvwqp7b7lXDXxfvLvE20smM7bfTsi2jm5D0vFfRCFtmWtCir9RD1A8bV4m1NrbYFlV34bWGAunumCQfysER_YulsBdkoVJFp5HcixwMVRa8pldoPvSgpjrsjUhebv9FMxMW6DB0wNpRgxvpgAMKg-6XfYQ6SaecuE5VrYTpz11ejTCcQYvgWeW9rlAMSVERJUoM0unGfC_n65u_GRNvV3tix3Hy37IWNtCT4COUf8vwGIILFL0K2zGMQtpD-IukyCJCQ3KTTe7neRKeThmjGFamVN-VsN_NWJyiGJwM6IrO26MOUPx4m1JupZeuABRNDsteRMBUBPF1OK6JQQEqK1BS3kOI9XxWaCUvTn_2IX1Ge7zzXsBHPBlVslaX9U-0pEko2rtWIOUr_xoS0QPAjHkdtDkVTC3CURUP6LnPW8b25bmmOIbizThPiYWrDsINK1U7l7sQRd4KkZ5q-HAXQAwoJRyHWb9PcNZXhI4rly3u-NToSOWA0TCLkgXj0roHb1weUCeMTe-xL3uXj9WYJ0f9LZm_I9TyWy5iRhR1QdqXnI1kBRCYd5spwk_IcoyFF0WDraJXfgHivxEMKvZxOFTNP46kaeGRcSCC5PZcAf4kuGcfm1gtSl2aKi_IomsTV98jbcqGjLgDveP3VlgcgM.Lphi8wB5MBUEsF8pAOx5nB4qaddvRF-70Q5SdMQI7t3GOseEW_ezX5NNPHntM87Qtrkx4ptwGficVfK2r94BUujogDw0tfsIXvRB",
+              "disabled": true
+            }
+          ]
+        },
+        "description": "Use this call to obtain an access token and a refresh token.\n\nUnder **Authorization**, set Type to **OAuth 2.0**.\n\nClick **Get New Access Token** and enter the following:\n\n<h3>\tResponse Parameters\t</h3>\t\t\t\t\t\t\t\t\n<table border=1>\t\t\t\t\t\t\t\t\t\t\n<tr>\t<th>\tfield\t</th>\t<th>\tdata type\t</th>\t<th>\tdescription\t</th>\t</tr>\n<tr>\t<td>\tToken Name\t</td>\t<td>\tstring\t</td>\t<td>\tName of the attachment\t</td>\t</tr>\n<tr>\t<td>\tGrant Type\t</td>\t<td>\tstring\t</td>\t<td>\tFilename of xls or csv format\t</td>\t</tr>\n<tr>\t<td>\tCallback URL\t</td>\t<td>\tstring\t</td>\t<td>\tThe destination invoked by the API method upon call completion.\t</td>\t</tr>\n<tr>\t<td>\tAuth URL\t</td>\t<td>\tstring\t</td>\t<td>\thttps://api.getgo.com/oauth/v2/authorize\t</td>\t</tr>\n<tr>\t<td>\tAccess Token URL\t</td>\t<td>\tstring\t</td>\t<td>\thttps://api.getgo.com/oauth/v2/token\t</td>\t</tr>\n<tr>\t<td>\tClient ID\t</td>\t<td>\tstring\t</td>\t<td>\tThe consumer key from your GoTo Dev client\t</td>\t</tr>\n<tr>\t<td>\tClient Secret\t</td>\t<td>\tstring\t</td>\t<td>\tThe consumer secret from your GoTo Dev client\t</td>\t</tr>\n<tr>\t<td>\tScope\t</td>\t<td>\tstring\t</td>\t<td>\tSpecific product areas or levels to which the API requests access from the API product user\t</td>\t</tr>\n<tr>\t<td>\tState\t</td>\t<td>\tstring\t</td>\t<td>\tA typically random string sent to the auth server, which the server returns in the response. Used to prevent Cross Site Request Forgery (XRSF).\t</td>\t</tr>\n<tr>\t<td>\tClient Authentication\t</td>\t<td>\tvalue\t</td>\t<td>\tSend as Basic Auth header'\t</td>\t</tr>\n</table>\t\t\t\t\t\t\t\t\t\t\n\nAnd then click **Request Token**."
+      },
+      "response": []
+    }
+  ]
+}
