@@ -1,6 +1,9 @@
 //! Schema specification for [OpenAPI 3.0.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
-use std::collections::{BTreeMap, HashMap};
+use std::{
+    collections::{BTreeMap, HashMap, HashSet},
+    hash::{Hash, Hasher},
+};
 use url::Url;
 
 use super::{
@@ -73,7 +76,7 @@ pub struct Spec {
     /// must be declared. The tags that are not declared MAY be organized randomly or
     /// based on the tools' logic. Each tag name in the list MUST be unique.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<Tag>>,
+    pub tags: Option<HashSet<Tag>>,
 
     /// Additional external documentation.
     #[serde(skip_serializing_if = "Option::is_none", rename = "externalDocs")]
@@ -974,7 +977,7 @@ pub struct Callback(
 /// It is not mandatory to have a Tag Object per tag defined in the Operation Object instances.
 ///
 /// See <https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#tagObject>.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, Default)]
 pub struct Tag {
     /// The name of the tag.
     pub name: String,
@@ -989,6 +992,18 @@ pub struct Tag {
 
     // TODO: Add "Specification Extensions" https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions}
 }
+
+impl Hash for Tag {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
+    }
+}
+impl PartialEq for Tag {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+impl Eq for Tag {}
 
 /// Allows referencing an external resource for extended documentation.
 ///
