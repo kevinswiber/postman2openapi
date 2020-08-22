@@ -8,9 +8,9 @@ pub mod postman;
 
 use anyhow::Result;
 use convert_case::{Case, Casing};
+use indexmap::IndexSet;
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
-use std::collections::HashSet;
 
 static VAR_REPLACE_CREDITS: usize = 20;
 
@@ -80,7 +80,7 @@ impl<'a> Transpiler<'a> {
             external_docs: None,
             paths: BTreeMap::new(),
             servers: Some(Vec::<openapi3::Server>::new()),
-            tags: Some(HashSet::<openapi3::Tag>::new()),
+            tags: Some(IndexSet::<openapi3::Tag>::new()),
         };
 
         let mut variable_map = BTreeMap::<String, serde_json::value::Value>::new();

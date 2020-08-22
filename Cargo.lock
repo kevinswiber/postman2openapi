@@ -128,6 +128,7 @@ checksum = "86b45e59b16c76b11bf9738fd5d38879d3bd28ad292d7b313608becb17ae2df9"
 dependencies = [
  "autocfg",
  "hashbrown",
+ "serde",
 ]
 
 [[package]]
@@ -186,6 +187,7 @@ dependencies = [
  "atty",
  "clap",
  "convert_case",
+ "indexmap",
  "lazy_static",
  "regex",
  "semver",

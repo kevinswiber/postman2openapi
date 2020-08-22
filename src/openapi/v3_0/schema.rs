@@ -1,7 +1,8 @@
 //! Schema specification for [OpenAPI 3.0.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
+use indexmap::IndexSet;
 use std::{
-    collections::{BTreeMap, HashMap, HashSet},
+    collections::{BTreeMap, HashMap},
     hash::{Hash, Hasher},
 };
 use url::Url;
@@ -76,7 +77,7 @@ pub struct Spec {
     /// must be declared. The tags that are not declared MAY be organized randomly or
     /// based on the tools' logic. Each tag name in the list MUST be unique.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<HashSet<Tag>>,
+    pub tags: Option<IndexSet<Tag>>,
 
     /// Additional external documentation.
     #[serde(skip_serializing_if = "Option::is_none", rename = "externalDocs")]
