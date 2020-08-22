@@ -590,6 +590,7 @@ impl<'a> Transpiler<'a> {
             serde_json::Value::Array(a) => {
                 let mut schema = openapi3::Schema::default();
                 schema.schema_type = Some("array".to_string());
+                // TODO: Iterate over the array items and build up a oneOf schema.
                 if let Some(i) = &a.get(0) {
                     if let Some(item_schema) = self.generate_schema(i) {
                         let mut mut_schema = item_schema;
@@ -602,6 +603,8 @@ impl<'a> Transpiler<'a> {
                         }
                         schema.items = Some(Box::new(mut_schema));
                     }
+                } else {
+                    schema.items = Some(Box::new(openapi3::Schema::default()));
                 }
                 Some(schema)
             }
