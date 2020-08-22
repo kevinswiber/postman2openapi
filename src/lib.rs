@@ -8,6 +8,7 @@ pub mod postman;
 
 use anyhow::Result;
 use convert_case::{Case, Casing};
+use indexmap::IndexSet;
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
 
@@ -79,7 +80,7 @@ impl<'a> Transpiler<'a> {
             external_docs: None,
             paths: BTreeMap::new(),
             servers: Some(Vec::<openapi3::Server>::new()),
-            tags: Some(Vec::<openapi3::Tag>::new()),
+            tags: Some(IndexSet::<openapi3::Tag>::new()),
         };
 
         let mut variable_map = BTreeMap::<String, serde_json::value::Value>::new();
@@ -136,15 +137,24 @@ impl<'a> Transpiler<'a> {
         description: Option<String>,
     ) {
         if let Some(t) = &mut state.oas.tags {
-            t.push(openapi3::Tag {
+            let mut tag = openapi3::Tag {
                 name: name.to_string(),
                 description,
-            });
-        };
+            };
 
-        state.hierarchy.push(name.to_string());
-        self.transform(state, items);
-        state.hierarchy.pop();
+            let mut i: usize = 0;
+            while t.contains(&tag) {
+                i += 1;
+                tag.name = format!("{}{}", tag.name, i);
+            }
+
+            let name = tag.name.clone();
+            t.insert(tag);
+
+            state.hierarchy.push(name);
+            self.transform(state, items);
+            state.hierarchy.pop();
+        };
     }
 
     fn transform_request(&self, state: &mut TranspileState, item: &postman::Items) {
