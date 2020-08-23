@@ -20,6 +20,7 @@ lazy_static! {
         regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn from_path(filename: &str, format: TargetFormat) -> Result<String> {
     let collection = std::fs::read_to_string(filename)?;
     from_str(&collection, format)

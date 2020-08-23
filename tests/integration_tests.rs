@@ -3,6 +3,7 @@ mod integration_tests {
     macro_rules! test_fixture {
         ($name:ident, $filename:expr) => {
             #[test]
+            #[cfg(not(target_arch = "wasm32"))]
             fn $name() {
                 let filename = get_fixture($filename);
                 match postman2openapi::from_path(&filename, postman2openapi::TargetFormat::Yaml) {
@@ -24,6 +25,7 @@ mod integration_tests {
         "gotomeeting.postman.json"
     );
 
+    #[cfg(not(target_arch = "wasm32"))]
     fn get_fixture(filename: &str) -> String {
         let filename: std::path::PathBuf =
             [env!("CARGO_MANIFEST_DIR"), "./tests/fixtures/", filename]
