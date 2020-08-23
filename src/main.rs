@@ -1,6 +1,12 @@
+#[cfg(not(target_arch = "wasm32"))]
 use clap::{App, Arg};
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::{stdin, Read};
 
+#[cfg(target_arch = "wasm32")]
+fn main() {}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let mut app = App::new("postman2openapi")
         .version("0.1.0")

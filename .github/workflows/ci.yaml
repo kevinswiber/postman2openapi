@@ -38,6 +38,9 @@ jobs:
           - win-gnu
           - msrv
         include:
+          - build: wasm32
+            os: ubuntu-18.04
+            rust: nightly
           - build: msrv
             os: ubuntu-18.04
             rust: 1.45.2
@@ -85,7 +88,7 @@ jobs:
           components: rustfmt, clippy
 
       - name: Use Cross
-        if: matrix.target != ''
+        if: matrix.target != '' && matrix.build != 'wasm32'
         run: |
           # FIXME: to work around bugs in latest cross release, install master.
           # See: https://github.com/rust-embedded/cross/issues/357
@@ -101,11 +104,24 @@ jobs:
 
 
       - name: Build postman2openapi and all crates
+        if: matrix.build != 'wasm32'
         run: ${{ env.CARGO }} build --verbose --all ${{ env.TARGET_FLAGS }}
 
       - name: Run tests
+        if: matrix.build != 'wasm32'
         run: ${{ env.CARGO }} test --verbose --all ${{ env.TARGET_FLAGS }}
 
+      - name: Install
+        if: matrix.build == 'wasm32'
+        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+      - name: Run wasm32 headless Chrome tests
+        if: matrix.build == 'wasm32'
+        run: wasm-pack test --headless --chrome
+
+      - name: Run wasm32 Node.js tests
+        if: matrix.build == 'wasm32'
+        run: wasm-pack test --node
 
   rustfmt-clippy:
     name: rustfmt
