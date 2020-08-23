@@ -6,7 +6,7 @@ extern crate serde_derive;
 pub mod openapi;
 pub mod postman;
 
-use anyhow::Result;
+pub use anyhow::Result;
 use convert_case::{Case, Casing};
 use indexmap::IndexSet;
 use openapi::v3_0 as openapi3;

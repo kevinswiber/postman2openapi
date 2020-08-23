@@ -104,11 +104,9 @@ jobs:
 
 
       - name: Build postman2openapi and all crates
-        if: matrix.build != 'wasm32'
         run: ${{ env.CARGO }} build --verbose --all ${{ env.TARGET_FLAGS }}
 
       - name: Run tests
-        if: matrix.build != 'wasm32'
         run: ${{ env.CARGO }} test --verbose --all ${{ env.TARGET_FLAGS }}
 
       - name: Install
