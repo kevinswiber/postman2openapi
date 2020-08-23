@@ -119,10 +119,6 @@ jobs:
         if: matrix.build == 'wasm32'
         run: wasm-pack test --headless --chrome
 
-      - name: Run wasm32 headless Firefox tests
-        if: matrix.build == 'wasm32'
-        run: wasm-pack test --headless --firefox
-
       - name: Run wasm32 Node.js tests
         if: matrix.build == 'wasm32'
         run: wasm-pack test --node
