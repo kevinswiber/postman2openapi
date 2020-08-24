@@ -6,7 +6,8 @@ mod integration_tests {
             #[cfg(not(target_arch = "wasm32"))]
             fn $name() {
                 let filename = get_fixture($filename);
-                match postman2openapi::from_path(&filename, postman2openapi::TargetFormat::Yaml) {
+                let options = postman2openapi::TranspileOptions::default();
+                match postman2openapi::from_path(&filename, options) {
                     Ok(_oas) => assert!(true),
                     Err(_err) => assert!(false),
                 }

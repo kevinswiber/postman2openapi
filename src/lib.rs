@@ -6,11 +6,15 @@ extern crate serde_derive;
 pub mod openapi;
 pub mod postman;
 
-use anyhow::Result;
+pub use anyhow::Result;
 use convert_case::{Case, Casing};
 use indexmap::IndexSet;
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
+#[cfg(target_arch = "wasm32")]
+use std::str::FromStr;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
 
 static VAR_REPLACE_CREDITS: usize = 20;
 
@@ -20,26 +24,61 @@ lazy_static! {
         regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
 }
 
-#[cfg(not(target_arch = "wasm32"))]
-pub fn from_path(filename: &str, format: TargetFormat) -> Result<String> {
-    let collection = std::fs::read_to_string(filename)?;
-    from_str(&collection, format)
+#[derive(Default)]
+pub struct TranspileOptions {
+    pub format: TargetFormat,
 }
 
-pub fn from_str(collection: &str, format: TargetFormat) -> Result<String> {
+#[cfg(not(target_arch = "wasm32"))]
+pub fn from_path(filename: &str, options: TranspileOptions) -> Result<String> {
+    let collection = std::fs::read_to_string(filename)?;
+    from_str(&collection, options)
+}
+
+pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
     let postman_spec: postman::Spec = serde_json::from_str(collection)?;
     let oas_spec = Transpiler::transpile(postman_spec);
-    let oas_definition = match format {
+    let oas_definition = match options.format {
         TargetFormat::Json => openapi::to_json(&oas_spec),
         TargetFormat::Yaml => openapi::to_yaml(&oas_spec),
     }?;
     Ok(oas_definition)
 }
 
+#[cfg(target_arch = "wasm32")]
+fn from_str_with_format(collection: &str, format: TargetFormat) -> Result<String> {
+    from_str(collection, TranspileOptions { format })
+}
+
+// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
+// allocator.
+#[cfg(feature = "wee_alloc")]
+#[global_allocator]
+#[cfg(target_arch = "wasm32")]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn transpile(collection: &str, format: &str) -> std::result::Result<String, JsValue> {
+    match from_str_with_format(
+        collection,
+        TargetFormat::from_str(format).unwrap_or_default(),
+    ) {
+        Ok(val) => Ok(val),
+        Err(err) => Err(JsValue::from_str(&err.to_string())),
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub enum TargetFormat {
     Json,
     Yaml,
+}
+
+impl<'a> Default for TargetFormat {
+    fn default() -> Self {
+        TargetFormat::Yaml
+    }
 }
 
 impl std::str::FromStr for TargetFormat {

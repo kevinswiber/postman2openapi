@@ -4,8 +4,8 @@ mod wasm_browser {
     use wasm_bindgen_test::*;
     wasm_bindgen_test_configure!(run_in_browser);
     #[wasm_bindgen_test]
-    fn from_str() {
-        match postman2openapi::from_str(COLLECTION, postman2openapi::TargetFormat::Yaml) {
+    fn it_transpiles() {
+        match postman2openapi::transpile(COLLECTION, "yaml") {
             Ok(oas) => assert_eq!(OPENAPI, oas),
             Err(_) => assert!(false),
         }
