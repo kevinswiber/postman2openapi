@@ -80,7 +80,7 @@ npm install postman2openapi
 
 ```js
 const collection = require('./collection'); // any Postman collection JSON file
-const { transpile } = require('postman2openapi/postman2openapi');
+const { transpile } = require('postman2openapi');
 
 const postman = JSON.stringify(collection);
 const openapi = transpile(postman, 'yaml');
