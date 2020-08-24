@@ -4,6 +4,16 @@ Convert Postman collections to OpenAPI definitions.
 
 [![Build status](https://github.com/kevinswiber/postman2openapi/workflows/ci/badge.svg)](https://github.com/kevinswiber/postman2openapi/actions)
 
+* [CLI](#cli)
+  * [Installation](#installation)
+  * [Usage](#usage)
+    * [Examples](#examples)
+* [Node.js Library](#nodejs-library)
+  * [Installation](#installation-1)
+  * [Usage](#usage-1)
+  * [JavaScript API](#javascript-api)
+* [License](#license)
+
 ## CLI
 
 ### Installation
