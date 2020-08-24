@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use postman2openapi::{from_path, from_str, TranspileOptions};
 use std::io::{stdin, Read};
 
 fn main() {
@@ -29,14 +30,14 @@ fn main() {
     let matches = app.get_matches();
 
     let mut buffer = String::new();
-    let output_format = matches.value_of_t("output").unwrap_or_else(|e| e.exit());
+    let format = matches.value_of_t("output").unwrap_or_else(|e| e.exit());
     match &matches.value_of("INPUT") {
-        Some(filename) => match postman2openapi::from_path(filename, output_format) {
+        Some(filename) => match from_path(filename, TranspileOptions { format }) {
             Ok(oas) => println!("{}", oas),
             Err(err) => eprintln!("{}", err),
         },
         None => match stdin().read_to_string(&mut buffer) {
-            Ok(_) => match postman2openapi::from_str(&buffer, output_format) {
+            Ok(_) => match from_str(&buffer, TranspileOptions { format }) {
                 Ok(oas) => println!("{}", oas),
                 Err(err) => eprintln!("{}", err),
             },
