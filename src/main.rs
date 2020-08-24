@@ -3,7 +3,7 @@ use std::io::{stdin, Read};
 
 fn main() {
     let mut app = App::new("postman2openapi")
-        .version("0.1.0")
+        .version("1.0.0-beta")
         .author("Kevin Swiber <kswiber@gmail.com>")
         .arg(
             Arg::with_name("output")
