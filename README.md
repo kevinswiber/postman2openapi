@@ -56,6 +56,34 @@ postman2openapi collection.json > openapi.yaml
 cat collection.json | postman2openapi -o json
 ```
 
+## Node.js library
+
+### Installation
+
+```
+npm install postman2openapi
+```
+
+### Usage
+
+```js
+const collection = require('./collection'); // any Postman collection JSON file
+const { transpile } = require('postman2openapi/postman2openapi');
+
+const postman = JSON.stringify(collection);
+const openapi = transpile(postman, 'yaml');
+
+console.log(openapi);
+```
+
+### JavaScript API
+
+#### transpile(collection: string, format: string): string
+
+* collection - a stringified version of a Postman JSON object.
+* format - the return format, either `json` or `yaml`.
+* _returns_ - an OpenAPI definition in the format specified.
+
 ## License
 
 Apache License 2.0 (Apache-2.0)
