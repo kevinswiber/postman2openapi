@@ -4,7 +4,9 @@ Convert Postman collections to OpenAPI definitions.
 
 [![Build status](https://github.com/kevinswiber/postman2openapi/workflows/ci/badge.svg)](https://github.com/kevinswiber/postman2openapi/actions)
 
-## Installation
+## CLI
+
+### Installation
 
 [Archives of precompiled binaries for postman2openapi are available for Windows,
 macOS and Linux.](https://github.com/kevinswiber/postman2openapi/releases)
@@ -29,7 +31,7 @@ To install from the latest on GitHub, use:
 cargo install --git https://github.com/kevinswiber/postman2openapi --features binary
 ```
 
-## Usage
+### Usage
 
 ```
 USAGE:
@@ -46,7 +48,7 @@ OPTIONS:
     -o, --output <format>    The output format [default: yaml]  [possible values: yaml, json]
 ```
 
-### Examples
+#### Examples
 
 ```
 postman2openapi collection.json > openapi.yaml
