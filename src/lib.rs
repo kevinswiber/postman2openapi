@@ -45,6 +45,7 @@ pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
     Ok(oas_definition)
 }
 
+#[cfg(target_arch = "wasm32")]
 fn from_str_with_format(collection: &str, format: TargetFormat) -> Result<String> {
     from_str(collection, TranspileOptions { format })
 }
