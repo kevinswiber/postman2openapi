@@ -6,7 +6,7 @@ use std::io::{stdin, Read};
 fn main() {
     let authors = crate_authors!("\n");
     let version = match option_env!("POSTMAN2OPENAPI_VERSION") {
-        None => format!("v{}", crate_version!()),
+        None => format!("v{}-dev", crate_version!()),
         Some(version) => format!("v{}", version),
     };
 
@@ -76,7 +76,7 @@ pub fn long_version() -> String {
     };
 
     let version = match option_env!("POSTMAN2OPENAPI_VERSION") {
-        None => format!("v{}.{}+{}", crate_version!(), branch, hash),
+        None => format!("v{}-dev.{}+{}", crate_version!(), branch, hash),
         Some(version) => format!("v{}", version),
     };
 
