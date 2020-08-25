@@ -4,13 +4,18 @@ use postman2openapi::{from_path, from_str, TranspileOptions};
 use std::io::{stdin, Read};
 
 fn main() {
+    let authors = crate_authors!("\n");
+    let version = match option_env!("POSTMAN2OPENAPI_VERSION") {
+        None => format!("v{}", crate_version!()),
+        Some(version) => format!("v{}", version),
+    };
+
     lazy_static! {
-        static ref LONG_VERSION: String = long_version(None, None);
+        static ref LONG_VERSION: String = long_version();
     }
 
-    let authors = crate_authors!("\n");
     let mut app = App::new("postman2openapi")
-        .version(crate_version!())
+        .version(version.as_str())
         .long_version(LONG_VERSION.as_str())
         .author(authors)
         .setting(AppSettings::ColoredHelp)
@@ -54,16 +59,26 @@ fn main() {
     };
 }
 
-pub fn long_version(revision_hash: Option<&str>, date: Option<&str>) -> String {
-    let hash = match revision_hash.or(option_env!("POSTMAN2OPENAPI_BUILD_GIT_HASH")) {
+pub fn long_version() -> String {
+    let hash = match option_env!("POSTMAN2OPENAPI_BUILD_GIT_HASH") {
         None => String::new(),
-        Some(hash) => format!("commit: {}", hash),
+        Some(hash) => hash.to_string(),
     };
 
-    let date = match date.or(option_env!("POSTMAN2OPENAPI_BUILD_DATE")) {
+    let branch = match option_env!("POSTMAN2OPENAPI_BUILD_GIT_BRANCH") {
         None => String::new(),
-        Some(date) => format!("date: {}", date),
+        Some(branch) => branch.to_string(),
     };
 
-    format!("{}\n{}\n{}\n", crate_version!(), hash, date)
+    let date = match option_env!("POSTMAN2OPENAPI_BUILD_DATE") {
+        None => String::new(),
+        Some(date) => date.to_string(),
+    };
+
+    let version = match option_env!("POSTMAN2OPENAPI_VERSION") {
+        None => format!("v{}.{}+{}", crate_version!(), branch, hash),
+        Some(version) => format!("v{}", version),
+    };
+
+    format!("{}\ncommit: {}\ndate: {}\n", version, hash, date)
 }
