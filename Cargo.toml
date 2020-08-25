@@ -42,6 +42,9 @@ url = { version = "2.1.1", features = ["serde"] }
 atty = { version = "0.2", optional = true }
 clap = { version = "3.0.0-beta.1", optional = true }
 
+[build-dependencies]
+chrono = "0.4"
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2"
 console_error_panic_hook = { version = "0.1.6", optional = true }

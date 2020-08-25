@@ -1,11 +1,19 @@
-use clap::{App, Arg};
+use clap::{crate_authors, crate_version, App, AppSettings, Arg};
+use lazy_static::lazy_static;
 use postman2openapi::{from_path, from_str, TranspileOptions};
 use std::io::{stdin, Read};
 
 fn main() {
+    lazy_static! {
+        static ref LONG_VERSION: String = long_version(None, None);
+    }
+
+    let authors = crate_authors!("\n");
     let mut app = App::new("postman2openapi")
-        .version("1.0.0-beta")
-        .author("Kevin Swiber <kswiber@gmail.com>")
+        .version(crate_version!())
+        .long_version(LONG_VERSION.as_str())
+        .author(authors)
+        .setting(AppSettings::ColoredHelp)
         .arg(
             Arg::with_name("output")
                 .short('o')
@@ -44,4 +52,18 @@ fn main() {
             Err(_) => eprintln!("postman2openapi: warning: recursive search of stdin"),
         },
     };
+}
+
+pub fn long_version(revision_hash: Option<&str>, date: Option<&str>) -> String {
+    let hash = match revision_hash.or(option_env!("POSTMAN2OPENAPI_BUILD_GIT_HASH")) {
+        None => String::new(),
+        Some(hash) => format!("commit: {}", hash),
+    };
+
+    let date = match date.or(option_env!("POSTMAN2OPENAPI_BUILD_DATE")) {
+        None => String::new(),
+        Some(date) => format!("date: {}", date),
+    };
+
+    format!("{}\n{}\n{}\n", crate_version!(), hash, date)
 }
