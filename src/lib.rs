@@ -700,7 +700,7 @@ impl<'a> Transpiler<'a> {
             return original;
         }
 
-        // Reset the schema type.  TODO: Change this to one-of if different.
+        // Reset the schema type.
         if original.schema_type.is_none() && new.schema_type.is_some() && new.one_of.is_none() {
             original.schema_type = new.schema_type.clone();
         }
