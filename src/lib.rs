@@ -629,6 +629,7 @@ impl<'a> Transpiler<'a> {
             }
             serde_json::Value::Array(a) => {
                 let mut schema = openapi3::Schema::default();
+                schema.schema_type = Some("array".to_string());
                 let mut item_schema = openapi3::Schema::default();
 
                 for n in 0..a.len() {
@@ -644,6 +645,7 @@ impl<'a> Transpiler<'a> {
                 }
 
                 schema.items = Some(Box::new(item_schema));
+                schema.example = Some(value.clone());
 
                 Some(schema)
             }
@@ -695,13 +697,13 @@ impl<'a> Transpiler<'a> {
             }
         }
 
-        if let Some(ref mut one_of) = original.one_of {
-            one_of.push(openapi3::ObjectOrReference::Object(new.clone()));
+        if let Some(ref mut any_of) = original.any_of {
+            any_of.push(openapi3::ObjectOrReference::Object(new.clone()));
             return original;
         }
 
         // Reset the schema type.
-        if original.schema_type.is_none() && new.schema_type.is_some() && new.one_of.is_none() {
+        if original.schema_type.is_none() && new.schema_type.is_some() && new.any_of.is_none() {
             original.schema_type = new.schema_type.clone();
         }
 
@@ -734,7 +736,7 @@ impl<'a> Transpiler<'a> {
                     original.schema_type = None;
                     original.properties = None;
                     original.items = None;
-                    original.one_of = Some(vec![
+                    original.any_of = Some(vec![
                         openapi3::ObjectOrReference::Object(cloned),
                         openapi3::ObjectOrReference::Object(new.clone()),
                     ]);

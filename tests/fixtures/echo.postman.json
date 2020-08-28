@@ -4065,6 +4065,34 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "PUT Custom Copy",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "[\n    {\n        \"hello\": \"there\"\n    },\n    {\n        \"my\": 1,\n        \"name\": true,\n        \"is\": {\n            \"legally\": \"{{var}}\",\n            \"num\": {{var_int}},\n            \"mixed\": [\n                {\n                    \"name\": \"Kevin\"\n                },\n                true,\n                38,\n                \"Kevin\"\n            ]\n        }\n    },\n    {\n        \"authenticated\": true\n    }\n]",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://postman-echo.com/put",
+							"protocol": "https",
+							"host": [
+								"postman-echo",
+								"com"
+							],
+							"path": [
+								"put"
+							]
+						}
+					},
+					"response": []
 				}
 			],
 			"protocolProfileBehavior": {}
