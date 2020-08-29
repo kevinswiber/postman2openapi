@@ -824,7 +824,7 @@ impl<'a> Transpiler<'a> {
                     }
 
                     param.schema = Some(schema);
-                    return Some(openapi3::ObjectOrReference::Object(param));
+                    Some(openapi3::ObjectOrReference::Object(param))
                 }
                 None => None,
             })
