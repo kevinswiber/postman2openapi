@@ -458,7 +458,14 @@ impl<'a> Transpiler<'a> {
 
             if let Some(method) = &request.method {
                 let m = method.to_lowercase();
-                let mut op_id = request_name.to_case(Case::Camel);
+                let mut op_id = request_name
+                    .chars()
+                    .map(|c| match c {
+                        'A'..='Z' | 'a'..='z' | '0'..='9' => c,
+                        _ => ' ',
+                    })
+                    .collect::<String>()
+                    .to_case(Case::Camel);
                 match state.operation_ids.get_mut(&op_id) {
                     Some(v) => {
                         *v += 1;
