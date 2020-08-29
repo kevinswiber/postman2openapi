@@ -17,6 +17,7 @@ mod integration_tests {
 
     test_fixture!(it_parses_github_api_collection, "github.postman.json");
     test_fixture!(it_parses_postman_api_collection, "postman-api.postman.json");
+    test_fixture!(it_parses_pdf_co_collection, "pdfco.postman.json");
     test_fixture!(it_parses_postman_echo_collection, "echo.postman.json");
     test_fixture!(it_parses_twitter_api_collection, "twitter-api.postman.json");
     test_fixture!(it_parses_fastly_api_collection, "fastly.postman.json");
