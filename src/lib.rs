@@ -460,7 +460,6 @@ impl<'a> Transpiler<'a> {
                 let m = method.to_lowercase();
                 let mut op_id = request_name
                     .chars()
-                    .into_iter()
                     .map(|c| match c {
                         'A'..='Z' | 'a'..='z' | '0'..='9' => c,
                         _ => ' ',
