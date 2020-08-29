@@ -799,28 +799,36 @@ impl<'a> Transpiler<'a> {
         &self,
         query_params: &[postman::QueryParam],
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
-        let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = query_params
+        let mut keys = vec![];
+        let params = query_params
             .iter()
-            .map(|qp| {
-                let mut param = openapi3::Parameter::default();
-                if let Some(key) = &qp.key {
+            .filter_map(|qp| match qp.key {
+                Some(ref key) => {
+                    if keys.contains(&key.as_str()) {
+                        return None;
+                    }
+
+                    keys.push(key);
+                    let mut param = openapi3::Parameter::default();
+
                     param.name = key.to_string();
-                }
-                param.location = "query".to_string();
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("string".to_string());
-                param.description = extract_description(&qp.description);
+                    param.location = "query".to_string();
+                    let mut schema = openapi3::Schema::default();
+                    schema.schema_type = Some("string".to_string());
+                    param.description = extract_description(&qp.description);
 
-                if let Some(pval) = &qp.value {
-                    schema.example = Some(serde_json::Value::String(
-                        self.resolve_variables(pval, VAR_REPLACE_CREDITS),
-                    ));
-                }
+                    if let Some(pval) = &qp.value {
+                        schema.example = Some(serde_json::Value::String(
+                            self.resolve_variables(pval, VAR_REPLACE_CREDITS),
+                        ));
+                    }
 
-                param.schema = Some(schema);
-                openapi3::ObjectOrReference::Object(param)
+                    param.schema = Some(schema);
+                    return Some(openapi3::ObjectOrReference::Object(param));
+                }
+                None => None,
             })
-            .collect();
+            .collect::<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>>();
 
         if !params.is_empty() {
             Some(params)
