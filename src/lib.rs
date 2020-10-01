@@ -570,6 +570,43 @@ impl<'a> Transpiler<'a> {
                         content.examples = Some(example);
                     }
                 }
+                postman::Mode::Formdata => {
+                    content_type = Some("multipart/form-data".to_string());
+                    let mut schema = openapi3::Schema::default();
+                    schema.schema_type = Some("object".to_string());
+                    let mut properties = BTreeMap::<String, openapi3::Schema>::new();
+
+                    if let Some(formdata) = &body.formdata {
+                        for i in formdata {
+                            if let Some(t) = &i.form_parameter_type {
+                                let is_binary = t.as_str() == "file";
+                                if let Some(v) = &i.value {
+                                    let value = serde_json::Value::String(v.to_string());
+                                    let prop_schema = self.generate_schema(&value);
+                                    if let Some(mut prop_schema) = prop_schema {
+                                        if is_binary {
+                                            prop_schema.format = Some("binary".to_string());
+                                        }
+                                        prop_schema.description =
+                                            extract_description(&i.description);
+                                        properties.insert(i.key.clone(), prop_schema);
+                                    }
+                                } else {
+                                    let mut prop_schema = openapi3::Schema::default();
+                                    prop_schema.schema_type = Some("string".to_string());
+                                    prop_schema.description = extract_description(&i.description);
+                                    if is_binary {
+                                        prop_schema.format = Some("binary".to_string());
+                                    }
+                                    properties.insert(i.key.clone(), prop_schema);
+                                }
+                            }
+                            // NOTE: Postman doesn't store the content type of multipart files. :(
+                        }
+                        schema.properties = Some(properties);
+                        content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                    }
+                }
                 _ => content_type = Some("application/octet-stream".to_string()),
             }
         }
