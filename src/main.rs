@@ -20,7 +20,7 @@ fn main() {
         .author(authors)
         .setting(AppSettings::ColoredHelp)
         .arg(
-            Arg::with_name("output")
+            Arg::new("output")
                 .short('o')
                 .long("output")
                 .about("The output format")
@@ -29,7 +29,7 @@ fn main() {
                 .default_value("yaml"),
         )
         .arg(
-            Arg::with_name("INPUT")
+            Arg::new("INPUT")
                 .value_name("input-file")
                 .about("The Postman collection to convert; data may also come from stdin")
                 .index(1),
