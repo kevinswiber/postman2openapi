@@ -465,6 +465,7 @@ impl<'a> Transpiler<'a> {
                         _ => ' ',
                     })
                     .collect::<String>()
+                    .from_case(Case::Title)
                     .to_case(Case::Camel);
                 match state.operation_ids.get_mut(&op_id) {
                     Some(v) => {
