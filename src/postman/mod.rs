@@ -705,7 +705,7 @@ pub enum CollectionVersion {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum RequestUnion {
-    RequestClass(RequestClass),
+    RequestClass(Box<RequestClass>),
 
     String(String),
 }
@@ -729,7 +729,7 @@ pub enum Response {
     //Double(f64),
 
     //Integer(i64),
-    ResponseClass(ResponseClass),
+    ResponseClass(Box<ResponseClass>),
 
     String(String),
 }
