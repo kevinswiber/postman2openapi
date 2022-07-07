@@ -221,7 +221,7 @@ pub enum ParameterOrRef {
         #[serde(skip_serializing_if = "Option::is_none")]
         required: Option<bool>,
         #[serde(skip_serializing_if = "Option::is_none")]
-        schema: Option<Schema>,
+        schema: Box<Option<Schema>>,
         #[serde(skip_serializing_if = "Option::is_none")]
         #[serde(rename = "uniqueItems")]
         unique_items: Option<bool>,
@@ -252,12 +252,12 @@ pub enum ParameterOrRef {
         // multipleOf ??
         // allowEmptyValue ( for query / body params )
         #[serde(skip_serializing_if = "Option::is_none")]
-        items: Option<Schema>,
+        items: Box<Option<Schema>>,
         #[serde(
             rename = "additionalProperties",
             skip_serializing_if = "Option::is_none"
         )]
-        additional_properties: Option<Schema>,
+        additional_properties: Box<Option<Schema>>,
     },
     Ref {
         #[serde(rename = "$ref")]

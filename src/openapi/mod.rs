@@ -33,7 +33,7 @@ pub enum OpenApi {
     /// Refer to the official
     /// [specification](https://github.com/OAI/OpenAPI-Specification/blob/0dd79f6/versions/2.0.md)
     /// for more information.
-    V2(v2::Spec),
+    V2(Box<v2::Spec>),
 
     /// Version 3.0.1 of the OpenApi specification.
     ///
