@@ -350,10 +350,13 @@ impl<'a> Transpiler<'a> {
                                         continue;
                                     }
                                     let mut oas_header = openapi3::Header::default();
-                                    let mut header_schema = openapi3::Schema::default();
-                                    header_schema.schema_type = Some("string".to_string());
-                                    header_schema.example =
-                                        Some(serde_json::Value::String(hdr.value.to_string()));
+                                    let header_schema = openapi3::Schema {
+                                        schema_type: Some("string".to_string()),
+                                        example: Some(serde_json::Value::String(
+                                            hdr.value.to_string(),
+                                        )),
+                                        ..Default::default()
+                                    };
                                     oas_header.schema = Some(header_schema);
 
                                     oas_headers.insert(
@@ -369,7 +372,7 @@ impl<'a> Transpiler<'a> {
                         let mut response_content = openapi3::MediaType::default();
                         if let Some(raw) = &res.body {
                             let mut response_content_type: Option<String> = None;
-                            let resolved_body = self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
+                            let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
                             let example_val;
 
                             match serde_json::from_str(&resolved_body) {
@@ -519,7 +522,7 @@ impl<'a> Transpiler<'a> {
                 postman::Mode::Raw => {
                     content_type = Some("application/octet-stream".to_string());
                     if let Some(raw) = &body.raw {
-                        let resolved_body = self.resolve_variables(&raw, VAR_REPLACE_CREDITS);
+                        let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
                         let example_val;
 
                         //set content type based on options or inference.
@@ -570,8 +573,10 @@ impl<'a> Transpiler<'a> {
                 }
                 postman::Mode::Formdata => {
                     content_type = Some("multipart/form-data".to_string());
-                    let mut schema = openapi3::Schema::default();
-                    schema.schema_type = Some("object".to_string());
+                    let mut schema = openapi3::Schema {
+                        schema_type: Some("object".to_string()),
+                        ..Default::default()
+                    };
                     let mut properties = BTreeMap::<String, openapi3::Schema>::new();
 
                     if let Some(formdata) = &body.formdata {
@@ -590,9 +595,11 @@ impl<'a> Transpiler<'a> {
                                         properties.insert(i.key.clone(), prop_schema);
                                     }
                                 } else {
-                                    let mut prop_schema = openapi3::Schema::default();
-                                    prop_schema.schema_type = Some("string".to_string());
-                                    prop_schema.description = extract_description(&i.description);
+                                    let mut prop_schema = openapi3::Schema {
+                                        schema_type: Some("string".to_string()),
+                                        description: extract_description(&i.description),
+                                        ..Default::default()
+                                    };
                                     if is_binary {
                                         prop_schema.format = Some("binary".to_string());
                                     }
@@ -657,8 +664,11 @@ impl<'a> Transpiler<'a> {
     fn generate_schema(&self, value: &serde_json::Value) -> Option<openapi3::Schema> {
         match value {
             serde_json::Value::Object(m) => {
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("object".to_string());
+                let mut schema = openapi3::Schema {
+                    schema_type: Some("object".to_string()),
+                    ..Default::default()
+                };
+
                 let mut properties = BTreeMap::<String, openapi3::Schema>::new();
 
                 for (key, val) in m.iter() {
@@ -671,8 +681,11 @@ impl<'a> Transpiler<'a> {
                 Some(schema)
             }
             serde_json::Value::Array(a) => {
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("array".to_string());
+                let mut schema = openapi3::Schema {
+                    schema_type: Some("array".to_string()),
+                    ..Default::default()
+                };
+
                 let mut item_schema = openapi3::Schema::default();
 
                 for n in 0..a.len() {
@@ -693,27 +706,35 @@ impl<'a> Transpiler<'a> {
                 Some(schema)
             }
             serde_json::Value::String(_) => {
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("string".to_string());
-                schema.example = Some(value.clone());
+                let schema = openapi3::Schema {
+                    schema_type: Some("string".to_string()),
+                    example: Some(value.clone()),
+                    ..Default::default()
+                };
                 Some(schema)
             }
             serde_json::Value::Number(_) => {
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("number".to_string());
-                schema.example = Some(value.clone());
+                let schema = openapi3::Schema {
+                    schema_type: Some("number".to_string()),
+                    example: Some(value.clone()),
+                    ..Default::default()
+                };
                 Some(schema)
             }
             serde_json::Value::Bool(_) => {
-                let mut schema = openapi3::Schema::default();
-                schema.schema_type = Some("boolean".to_string());
-                schema.example = Some(value.clone());
+                let schema = openapi3::Schema {
+                    schema_type: Some("boolean".to_string()),
+                    example: Some(value.clone()),
+                    ..Default::default()
+                };
                 Some(schema)
             }
             serde_json::Value::Null => {
-                let mut schema = openapi3::Schema::default();
-                schema.nullable = Some(true);
-                schema.example = Some(value.clone());
+                let schema = openapi3::Schema {
+                    nullable: Some(true),
+                    example: Some(value.clone()),
+                    ..Default::default()
+                };
                 Some(schema)
             }
         }
@@ -806,8 +827,10 @@ impl<'a> Transpiler<'a> {
                         param.name = var.to_string();
                         param.location = "path".to_string();
                         param.required = Some(true);
-                        let mut schema = openapi3::Schema::default();
-                        schema.schema_type = Some("string".to_string());
+                        let mut schema = openapi3::Schema {
+                            schema_type: Some("string".to_string()),
+                            ..Default::default()
+                        };
                         if let Some(path_val) = &postman_variables {
                             if let Some(p) = path_val.iter().find(|p| match &p.key {
                                 Some(k) => k == var,
@@ -856,8 +879,10 @@ impl<'a> Transpiler<'a> {
 
                     param.name = key.to_string();
                     param.location = "query".to_string();
-                    let mut schema = openapi3::Schema::default();
-                    schema.schema_type = Some("string".to_string());
+                    let mut schema = openapi3::Schema {
+                        schema_type: Some("string".to_string()),
+                        ..Default::default()
+                    };
                     param.description = extract_description(&qp.description);
 
                     if let Some(pval) = &qp.value {
