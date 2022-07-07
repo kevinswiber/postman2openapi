@@ -202,16 +202,16 @@ impl<'a> Transpiler<'a> {
             Some(n) => n,
             None => "<request>",
         };
-        if let Some( postman::RequestUnion::RequestClass(request)) = &item.request {
-                if let Some(postman::Url::UrlClass(u)) = &request.url {
-                    if let Some(postman::Host::StringArray(parts)) = &u.host {
-                        self.transform_server(state, u, parts);
-                    }
-
-                    if let Some(postman::UrlPath::UnionArray(p)) = &u.path {
-                        self.transform_paths(state, item, request, name, u, p)
-                    }
+        if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
+            if let Some(postman::Url::UrlClass(u)) = &request.url {
+                if let Some(postman::Host::StringArray(parts)) = &u.host {
+                    self.transform_server(state, u, parts);
                 }
+
+                if let Some(postman::UrlPath::UnionArray(p)) = &u.path {
+                    self.transform_paths(state, item, request, name, u, p)
+                }
+            }
         }
     }
 
@@ -885,10 +885,9 @@ fn extract_description(description: &Option<postman::DescriptionUnion>) -> Optio
     match description {
         Some(d) => match d {
             postman::DescriptionUnion::String(s) => Some(s.to_string()),
-            postman::DescriptionUnion::Description(desc) => match &desc.content {
-                Some(c) => Some(c.to_string()),
-                None => None,
-            },
+            postman::DescriptionUnion::Description(desc) => {
+                desc.content.as_ref().map(|c| c.to_string())
+            }
         },
         None => None,
     }
