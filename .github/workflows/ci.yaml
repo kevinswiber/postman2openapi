@@ -43,7 +43,7 @@ jobs:
             rust: nightly
           - build: msrv
             os: ubuntu-18.04
-            rust: 1.45.2
+            rust: 1.56.1
           - build: stable
             os: ubuntu-18.04
             rust: stable

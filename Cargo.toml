@@ -9,7 +9,7 @@ authors = ["Kevin Swiber <kswiber@gmail.com>"]
 build = "build.rs"
 readme = "README.md"
 documentation = "https://docs.rs/postman2openapi"
-edition = "2018"
+edition = "2021"
 
 [features]
 binary = ["clap", "atty"]
