@@ -1,6 +1,6 @@
 //! Error types
 
-use semver::{SemVerError, Version};
+use semver::{Error as SemVerError, Version};
 use serde_json::Error as JsonError;
 use serde_yaml::Error as YamlError;
 use std::io::Error as IoError;
