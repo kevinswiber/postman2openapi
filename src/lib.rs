@@ -75,7 +75,7 @@ pub enum TargetFormat {
     Yaml,
 }
 
-impl<'a> Default for TargetFormat {
+impl Default for TargetFormat {
     fn default() -> Self {
         TargetFormat::Yaml
     }
@@ -162,9 +162,9 @@ impl<'a> Transpiler<'a> {
                 };
                 let description = extract_description(&item.description);
 
-                self.transform_folder(state, &i, name, description);
+                self.transform_folder(state, i, name, description);
             } else {
-                self.transform_request(state, &item);
+                self.transform_request(state, item);
             }
         }
     }
@@ -760,7 +760,7 @@ impl<'a> Transpiler<'a> {
                         for (key, val) in original_properties.iter_mut() {
                             if let Some(v) = new_properties.get(key) {
                                 let prop = v;
-                                *val = self.merge_schemas(val.clone(), &prop);
+                                *val = self.merge_schemas(val.clone(), prop);
                             }
                         }
 
