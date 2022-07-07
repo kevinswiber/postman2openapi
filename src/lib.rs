@@ -202,8 +202,7 @@ impl<'a> Transpiler<'a> {
             Some(n) => n,
             None => "<request>",
         };
-        if let Some(r) = &item.request {
-            if let postman::RequestUnion::RequestClass(request) = r {
+        if let Some( postman::RequestUnion::RequestClass(request)) = &item.request {
                 if let Some(postman::Url::UrlClass(u)) = &request.url {
                     if let Some(postman::Host::StringArray(parts)) = &u.host {
                         self.transform_server(state, u, parts);
@@ -213,7 +212,6 @@ impl<'a> Transpiler<'a> {
                         self.transform_paths(state, item, request, name, u, p)
                     }
                 }
-            }
         }
     }
 
