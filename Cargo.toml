@@ -40,7 +40,7 @@ url = { version = "2.1.1", features = ["serde"] }
 
 # binary only
 atty = { version = "0.2", optional = true }
-clap = { version = "^3.0.0-beta.2", optional = true }
+clap = { version = "3.2", optional = true, features = ["cargo"] }
 
 [build-dependencies]
 chrono = "0.4"

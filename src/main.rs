@@ -23,7 +23,7 @@ fn main() {
             Arg::new("output")
                 .short('o')
                 .long("output")
-                .about("The output format")
+                .help("The output format")
                 .value_name("format")
                 .possible_values(&["yaml", "json"])
                 .default_value("yaml"),
@@ -31,7 +31,7 @@ fn main() {
         .arg(
             Arg::new("INPUT")
                 .value_name("input-file")
-                .about("The Postman collection to convert; data may also come from stdin")
+                .help("The Postman collection to convert; data may also come from stdin")
                 .index(1),
         );
 
