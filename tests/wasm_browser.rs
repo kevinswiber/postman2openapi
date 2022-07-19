@@ -4164,6 +4164,480 @@ info:
 servers:
   - url: "https://postman-echo.com"
 paths:
+  /get:
+    get:
+      tags:
+        - Request Methods
+      summary: GET Request
+      description: "The HTTP `GET` request method is meant to retrieve data from a server. The data\nis identified by a unique URI (Uniform Resource Identifier). \n\nA `GET` request can pass parameters to the server using \"Query String \nParameters\". For example, in the following request,\n\n> http://example.com/hi/there?hand=wave\n\nThe parameter \"hand\" has the value \"wave\".\n\nThis endpoint echoes the HTTP headers, request parameters and the complete\nURI requested."
+      operationId: getRequest
+      parameters:
+        - name: foo1
+          in: query
+          schema:
+            type: string
+            example: bar1
+        - name: foo2
+          in: query
+          schema:
+            type: string
+            example: bar2
+      responses:
+        "200":
+          description: GET Request Woops
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Content-Length:
+              schema:
+                type: string
+                example: "249"
+            Date:
+              schema:
+                type: string
+                example: "Tue, 11 Jun 2019 10:43:13 GMT"
+            ETag:
+              schema:
+                type: string
+                example: "W/\"161-aLhNcsGArlgLSKbxPqfBW3viHPI\""
+            Server:
+              schema:
+                type: string
+                example: nginx
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            set-cookie:
+              schema:
+                type: string
+                example: sails.sid=s%3AGz-wblZgXE8FCDq7aJpx_tUgZUcG3Nsw.LdNEN8L0C7nGWkvGLwvdw6R2s6Syjr%2FzkvyevA8qR0c; Path=/; HttpOnly
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  args:
+                    type: object
+                    properties:
+                      foo1:
+                        type: string
+                        example: bar1
+                      foo2:
+                        type: string
+                        example: bar2
+                  headers:
+                    type: object
+                    properties:
+                      accept:
+                        type: string
+                        example: "*/*"
+                      accept-encoding:
+                        type: string
+                        example: "gzip, deflate"
+                      cache-control:
+                        type: string
+                        example: no-cache
+                      host:
+                        type: string
+                        example: postman-echo.com
+                      postman-token:
+                        type: string
+                        example: 5c27cd7d-6b16-4e5a-a0ef-191c9a3a275f
+                      user-agent:
+                        type: string
+                        example: PostmanRuntime/7.6.1
+                      x-forwarded-port:
+                        type: string
+                        example: "443"
+                      x-forwarded-proto:
+                        type: string
+                        example: https
+                  url:
+                    type: string
+                    example: "https://postman-echo.com/get?foo1=bar1&foo2=bar2"
+              examples:
+                GET Request Woops:
+                  value:
+                    args:
+                      foo1: bar1
+                      foo2: bar2
+                    headers:
+                      accept: "*/*"
+                      accept-encoding: "gzip, deflate"
+                      cache-control: no-cache
+                      host: postman-echo.com
+                      postman-token: 5c27cd7d-6b16-4e5a-a0ef-191c9a3a275f
+                      user-agent: PostmanRuntime/7.6.1
+                      x-forwarded-port: "443"
+                      x-forwarded-proto: https
+                    url: "https://postman-echo.com/get?foo1=bar1&foo2=bar2"
+  /post:
+    post:
+      tags:
+        - Request Methods
+      summary: POST Form Data
+      description: "The HTTP `POST` request method is meant to transfer data to a server \n(and elicit a response). What data is returned depends on the implementation\nof the server.\n\nA `POST` request can pass parameters to the server using \"Query String \nParameters\", as well as the Request Body. For example, in the following request,\n\n> POST /hi/there?hand=wave\n>\n> <request-body>\n\nThe parameter \"hand\" has the value \"wave\". The request body can be in multiple\nformats. These formats are defined by the MIME type of the request. The MIME \nType can be set using the ``Content-Type`` HTTP header. The most commonly used \nMIME types are:\n\n* `multipart/form-data`\n* `application/x-www-form-urlencoded`\n* `application/json`\n\nThis endpoint echoes the HTTP headers, request parameters, the contents of\nthe request body and the complete URI requested when data is sent as a form parameter."
+      operationId: postFormData
+      requestBody:
+        content:
+          application/form-urlencoded:
+            schema:
+              type: object
+              properties:
+                foo1:
+                  type: string
+                  example: bar1
+                foo2:
+                  type: string
+                  example: bar2
+            example:
+              foo1: bar1
+              foo2: bar2
+      responses:
+        "200":
+          description: ""
+  /put:
+    put:
+      tags:
+        - Custom
+      summary: PUT Custom Copy
+      description: PUT Custom Copy
+      operationId: putCustomCopy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  authenticated:
+                    type: boolean
+                    example: true
+                  hello:
+                    type: string
+                    example: there
+                  is:
+                    type: object
+                    properties:
+                      legally:
+                        type: string
+                        example: variable_value
+                      mixed:
+                        type: array
+                        items:
+                          anyOf:
+                            - type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: Kevin
+                            - type: boolean
+                              example: true
+                            - type: number
+                              example: 38
+                            - type: string
+                              example: Kevin
+                        example:
+                          - name: Kevin
+                          - true
+                          - 38
+                          - Kevin
+                      num:
+                        type: number
+                        example: 1000
+                  my:
+                    type: number
+                    example: 1
+                  name:
+                    type: boolean
+                    example: true
+              example:
+                - hello: there
+                - is:
+                    legally: variable_value
+                    mixed:
+                      - name: Kevin
+                      - true
+                      - 38
+                      - Kevin
+                    num: 1000
+                  my: 1
+                  name: true
+                - authenticated: true
+            example:
+              - hello: there
+              - is:
+                  legally: variable_value
+                  mixed:
+                    - name: Kevin
+                    - true
+                    - 38
+                    - Kevin
+                  num: 1000
+                my: 1
+                name: true
+              - authenticated: true
+      responses:
+        "200":
+          description: ""
+  /patch:
+    patch:
+      tags:
+        - Request Methods
+      summary: PATCH Request
+      description: "The HTTP `PATCH` method is used to update resources on a server. The exact\nuse of `PATCH` requests depends on the server in question. There are a number\nof server implementations which handle `PATCH` differently. Technically, \n`PATCH` supports both Query String parameters and a Request Body.\n\nThis endpoint accepts an HTTP `PATCH` request and provides debug information\nsuch as the HTTP headers, Query String arguments, and the Request Body."
+      operationId: patchRequest
+      requestBody:
+        content:
+          text/plain:
+            example: This is expected to be sent back as part of response body.
+      responses:
+        "200":
+          description: ""
+  /delete:
+    delete:
+      tags:
+        - Request Methods
+      summary: DELETE Request
+      description: "The HTTP `DELETE` method is used to delete resources on a server. The exact\nuse of `DELETE` requests depends on the server implementation. In general, \n`DELETE` requests support both, Query String parameters as well as a Request \nBody.\n\nThis endpoint accepts an HTTP `DELETE` request and provides debug information\nsuch as the HTTP headers, Query String arguments, and the Request Body."
+      operationId: deleteRequest
+      requestBody:
+        content:
+          text/plain:
+            example: This is expected to be sent back as part of response body.
+      responses:
+        "200":
+          description: ""
+  /headers:
+    get:
+      tags:
+        - Headers
+      summary: Request Headers
+      description: "A `GET` request to this endpoint returns the list of all request headers as part of the response JSON.\nIn Postman, sending your own set of headers through the [Headers tab](https://www.getpostman.com/docs/requests#headers?source=echo-collection-app-onboarding) will reveal the headers as part of the response."
+      operationId: requestHeaders
+      responses:
+        "200":
+          description: my-sample-header
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Content-Length:
+              schema:
+                type: string
+                example: "342"
+            Date:
+              schema:
+                type: string
+                example: "Thu, 31 Mar 2016 11:14:00 GMT"
+            Server:
+              schema:
+                type: string
+                example: nginx/1.6.2
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            X-Powered-By:
+              schema:
+                type: string
+                example: Sails <sailsjs.org>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  headers:
+                    type: object
+                    properties:
+                      accept:
+                        type: string
+                        example: "*/*"
+                      accept-encoding:
+                        type: string
+                        example: "gzip, deflate, sdch"
+                      accept-language:
+                        type: string
+                        example: "en-US,en;q=0.8"
+                      cache-control:
+                        type: string
+                        example: no-cache
+                      host:
+                        type: string
+                        example: echo.getpostman.com
+                      my-sample-header:
+                        type: string
+                        example: Lorem ipsum dolor sit amet
+                      postman-token:
+                        type: string
+                        example: 3c8ea80b-f599-fba6-e0b4-a0910440e7b6
+                      user-agent:
+                        type: string
+                        example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36"
+                      x-forwarded-port:
+                        type: string
+                        example: "443"
+                      x-forwarded-proto:
+                        type: string
+                        example: https
+              examples:
+                my-sample-header:
+                  value:
+                    headers:
+                      accept: "*/*"
+                      accept-encoding: "gzip, deflate, sdch"
+                      accept-language: "en-US,en;q=0.8"
+                      cache-control: no-cache
+                      host: echo.getpostman.com
+                      my-sample-header: Lorem ipsum dolor sit amet
+                      postman-token: 3c8ea80b-f599-fba6-e0b4-a0910440e7b6
+                      user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36"
+                      x-forwarded-port: "443"
+                      x-forwarded-proto: https
+  /response-headers:
+    get:
+      tags:
+        - Headers
+      summary: Response Headers
+      description: "This endpoint causes the server to send custom set of response headers. Providing header values as part of the URL parameters of a `GET` request to this endpoint returns the same as part of response header.\n\nTo send your own set of headers, simply add or replace the the URL parameters with your own set."
+      operationId: responseHeaders
+      parameters:
+        - name: foo1
+          in: query
+          schema:
+            type: string
+            example: bar1
+        - name: foo2
+          in: query
+          schema:
+            type: string
+            example: bar2
+      responses:
+        "200":
+          description: Response headers
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Content-Length:
+              schema:
+                type: string
+                example: "71"
+            Date:
+              schema:
+                type: string
+                example: "Thu, 31 Mar 2016 11:14:18 GMT"
+            Server:
+              schema:
+                type: string
+                example: nginx/1.6.2
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            X-Powered-By:
+              schema:
+                type: string
+                example: Sails <sailsjs.org>
+            test:
+              schema:
+                type: string
+                example: response_headers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Content-Type:
+                    type: string
+                    example: text/html
+                  test:
+                    type: string
+                    example: response_headers
+              examples:
+                Response headers:
+                  value:
+                    Content-Type: text/html
+                    test: response_headers
+  /basic-auth:
+    get:
+      tags:
+        - Authentication Methods
+      summary: Basic Auth
+      description: "This endpoint simulates a **basic-auth** protected endpoint. \nThe endpoint accepts a default username and password and returns a status code of `200 ok` only if the same is provided. \nOtherwise it will return a status code `401 unauthorized`.\n\n> Username: `postman`\n> \n> Password: `password`\n\nTo use this endpoint, send a request with the header `Authorization: Basic cG9zdG1hbjpwYXNzd29yZA==`. \nThe cryptic latter half of the header value is a base64 encoded concatenation of the default username and password. \nUsing Postman, to send this request, you can simply fill in the username and password in the \"Authorization\" tab and Postman will do the rest for you.\n\nTo know more about basic authentication, refer to the [Basic Access Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) wikipedia article.\nThe article on [authentication helpers](https://www.getpostman.com/docs/helpers#basic-auth?source=echo-collection-app-onboarding) elaborates how to use the same within the Postman app."
+      operationId: basicAuth
+      responses:
+        "200":
+          description: "200"
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Content-Length:
+              schema:
+                type: string
+                example: "42"
+            Date:
+              schema:
+                type: string
+                example: "Sat, 31 Oct 2015 06:38:25 GMT"
+            Server:
+              schema:
+                type: string
+                example: nginx/1.6.2
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            X-Powered-By:
+              schema:
+                type: string
+                example: Sails <sailsjs.org>
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authenticated:
+                    type: boolean
+                    example: true
+              examples:
+                "200":
+                  value:
+                    authenticated: true
+  /digest-auth:
+    get:
+      tags:
+        - "Auth: Digest"
+      summary: DigestAuth Request
+      description: "Performing a simple `GET` request to this endpoint returns status code `401 Unauthorized` with `WWW-Authenticate` header containing information to successfully authenticate subsequent requests.\nThe `WWW-Authenticate` header must be processed to extract `realm` and `nonce` values to hash subsequent requests.\n\nWhen this request is executed within Postman, the script attached with this request does the hard work of extracting realm and nonce from the header and set it as [global variables](https://www.getpostman.com/docs/environments#global-variables?source=echo-collection-app-onboarding) named `echo_digest_nonce` and `echo_digest_realm`.\nThese variables are re-used in subsequent request for seamless integration of the two requests."
+      operationId: digestauthRequest
+      responses:
+        "200":
+          description: ""
   /auth/hawk:
     get:
       tags:
@@ -4223,13 +4697,13 @@ paths:
                   value:
                     message: Hawk Authentication successful
                     status: pass
-  /basic-auth:
+  /oauth1:
     get:
       tags:
         - Authentication Methods
-      summary: Basic Auth
-      description: "This endpoint simulates a **basic-auth** protected endpoint. \nThe endpoint accepts a default username and password and returns a status code of `200 ok` only if the same is provided. \nOtherwise it will return a status code `401 unauthorized`.\n\n> Username: `postman`\n> \n> Password: `password`\n\nTo use this endpoint, send a request with the header `Authorization: Basic cG9zdG1hbjpwYXNzd29yZA==`. \nThe cryptic latter half of the header value is a base64 encoded concatenation of the default username and password. \nUsing Postman, to send this request, you can simply fill in the username and password in the \"Authorization\" tab and Postman will do the rest for you.\n\nTo know more about basic authentication, refer to the [Basic Access Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication) wikipedia article.\nThe article on [authentication helpers](https://www.getpostman.com/docs/helpers#basic-auth?source=echo-collection-app-onboarding) elaborates how to use the same within the Postman app."
-      operationId: basicAuth
+      summary: OAuth1.0 (verify signature)
+      description: "OAuth1.0a is a specification that defines a protocol that can be used by one\nservice to access \"protected\" resources (endpoints) on another service. A\nmajor part of OAuth1.0 is HTTP Request Signing. This endpoint allows you to \ncheck whether the request calculation works properly in the client. \n\nThe endpoint supports the HTTP ``Authorization`` header. In case the signature\nverification fails, the endpoint provides the four debug values,\n\n* ``base_uri``\n* ``normalized_param_string``\n* ``base_string``\n* ``signing_key``\n\nFor more details about these parameters, check the [OAuth1.0a Specification](http://oauth.net/core/1.0a/)\n\nIn order to use this endpoint, you can set the following values:\n\n> Consumer Key: ``RKCGzna7bv9YD57c``\n>\n> Consumer Secret: ``D+EdQ-gs$-%@2Nu7``\n\nIf you are using Postman, also check the \"Add params to header\" and \n\"Auto add parameters\" boxes."
+      operationId: oauth10VerifySignature
       responses:
         "200":
           description: "200"
@@ -4245,11 +4719,136 @@ paths:
             Content-Length:
               schema:
                 type: string
-                example: "42"
+                example: "95"
             Date:
               schema:
                 type: string
-                example: "Sat, 31 Oct 2015 06:38:25 GMT"
+                example: "Thu, 25 Aug 2016 10:34:23 GMT"
+            ETag:
+              schema:
+                type: string
+                example: "W/\"4e-Cq3UhvpVSyl6R6204lPVIA\""
+            Server:
+              schema:
+                type: string
+                example: nginx/1.8.1
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: OAuth-1.0a signature verification was successful
+                  status:
+                    type: string
+                    example: pass
+              examples:
+                "200":
+                  value:
+                    message: OAuth-1.0a signature verification was successful
+                    status: pass
+        "401":
+          description: "401"
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Length:
+              schema:
+                type: string
+                example: "536"
+            Date:
+              schema:
+                type: string
+                example: "Thu, 25 Aug 2016 10:34:55 GMT"
+            ETag:
+              schema:
+                type: string
+                example: "W/\"218-SGnurnTsu5qV5cCYWxsJlg\""
+            Server:
+              schema:
+                type: string
+                example: nginx/1.8.1
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  base_string:
+                    type: string
+                    example: GET&https%3A%2F%2Fecho.getpostman.com%2Foauth1&oauth_consumer_key%3DRKCGzna7bv9YD57c_wrong%26oauth_nonce%3D8LTsU2%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1472121295%26oauth_version%3D1.0
+                  base_uri:
+                    type: string
+                    example: "https://echo.getpostman.com/oauth1"
+                  message:
+                    type: string
+                    example: HMAC-SHA1 verification failed
+                  normalized_param_string:
+                    type: string
+                    example: oauth_consumer_key=RKCGzna7bv9YD57c_wrong&oauth_nonce=8LTsU2&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1472121295&oauth_version=1.0
+                  signing_key:
+                    type: string
+                    example: D%2BEdQ-gs%24-%25%402Nu7&
+                  status:
+                    type: string
+                    example: fail
+              examples:
+                "401":
+                  value:
+                    base_string: GET&https%3A%2F%2Fecho.getpostman.com%2Foauth1&oauth_consumer_key%3DRKCGzna7bv9YD57c_wrong%26oauth_nonce%3D8LTsU2%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1472121295%26oauth_version%3D1.0
+                    base_uri: "https://echo.getpostman.com/oauth1"
+                    message: HMAC-SHA1 verification failed
+                    normalized_param_string: oauth_consumer_key=RKCGzna7bv9YD57c_wrong&oauth_nonce=8LTsU2&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1472121295&oauth_version=1.0
+                    signing_key: D%2BEdQ-gs%24-%25%402Nu7&
+                    status: fail
+  /cookies/set:
+    get:
+      tags:
+        - Cookie Manipulation
+      summary: Set Cookies
+      description: "The cookie setter endpoint accepts a list of cookies and their values as part of URL parameters of a `GET` request. These cookies are saved and can be subsequently retrieved or deleted. The response of this request returns a JSON with all cookies listed.\n\nTo set your own set of cookies, simply replace the URL parameters \"foo1=bar1&foo2=bar2\" with your own set of key-value pairs."
+      operationId: setCookies
+      parameters:
+        - name: foo1
+          in: query
+          schema:
+            type: string
+            example: bar1
+        - name: foo2
+          in: query
+          schema:
+            type: string
+            example: bar2
+      responses:
+        "200":
+          description: Cookies
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Content-Length:
+              schema:
+                type: string
+                example: "51"
+            Date:
+              schema:
+                type: string
+                example: "Thu, 29 Oct 2015 06:15:28 GMT"
             Server:
               schema:
                 type: string
@@ -4267,13 +4866,21 @@ paths:
               schema:
                 type: object
                 properties:
-                  authenticated:
-                    type: boolean
-                    example: true
+                  cookies:
+                    type: object
+                    properties:
+                      foo1:
+                        type: string
+                        example: bar
+                      foo2:
+                        type: string
+                        example: bar
               examples:
-                "200":
+                Cookies:
                   value:
-                    authenticated: true
+                    cookies:
+                      foo1: bar
+                      foo2: bar
   /cookies:
     get:
       tags:
@@ -4393,700 +5000,6 @@ paths:
                   value:
                     cookies:
                       foo2: bar
-  /cookies/set:
-    get:
-      tags:
-        - Cookie Manipulation
-      summary: Set Cookies
-      description: "The cookie setter endpoint accepts a list of cookies and their values as part of URL parameters of a `GET` request. These cookies are saved and can be subsequently retrieved or deleted. The response of this request returns a JSON with all cookies listed.\n\nTo set your own set of cookies, simply replace the URL parameters \"foo1=bar1&foo2=bar2\" with your own set of key-value pairs."
-      operationId: setCookies
-      parameters:
-        - name: foo1
-          in: query
-          schema:
-            type: string
-            example: bar1
-        - name: foo2
-          in: query
-          schema:
-            type: string
-            example: bar2
-      responses:
-        "200":
-          description: Cookies
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Content-Length:
-              schema:
-                type: string
-                example: "51"
-            Date:
-              schema:
-                type: string
-                example: "Thu, 29 Oct 2015 06:15:28 GMT"
-            Server:
-              schema:
-                type: string
-                example: nginx/1.6.2
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            X-Powered-By:
-              schema:
-                type: string
-                example: Sails <sailsjs.org>
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  cookies:
-                    type: object
-                    properties:
-                      foo1:
-                        type: string
-                        example: bar
-                      foo2:
-                        type: string
-                        example: bar
-              examples:
-                Cookies:
-                  value:
-                    cookies:
-                      foo1: bar
-                      foo2: bar
-  /deflate:
-    get:
-      tags:
-        - Utilities
-      summary: Deflate Compressed Response
-      description: "This endpoint returns the response using [deflate compression algoritm](https://en.wikipedia.org/wiki/DEFLATE). \nThe uncompressed response is a JSON string containing the details of the request sent by the client. For this endpoint to work, one should request with `Accept-encoding` header containing `deflate` as part of its value. Postman supports gzip, deflate and SDCH decoding and automatically sends them as part of the request.\n\nHTTP Compression allows the server to send responses in a compressed format, which is uncompressed by the client before processing. This reduces network bandwidth consumption at the cost of increase in CPU usage.\nTo know more about this, refer the [HTTP Compression](https://en.wikipedia.org/wiki/HTTP_compression) wikipedia article."
-      operationId: deflateCompressedResponse
-      responses:
-        "200":
-          description: ""
-  /delay/2:
-    get:
-      tags:
-        - Utilities
-      summary: Delay Response
-      description: "Using this endpoint one can configure how long it takes for the server to come back with a response. Appending a number to the URL defines the time (in seconds) the server will wait before responding.\n\nNote that a maximum delay of 10 seconds is accepted by the server."
-      operationId: delayResponse
-      responses:
-        "200":
-          description: success-response
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Length:
-              schema:
-                type: string
-                example: "13"
-            Date:
-              schema:
-                type: string
-                example: "Mon, 02 Jan 2017 09:19:03 GMT"
-            ETag:
-              schema:
-                type: string
-                example: "W/\"d-t/L/D5c0SDl+MoXtKdSVOg\""
-            Server:
-              schema:
-                type: string
-                example: nginx/1.10.1
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  delay:
-                    type: string
-                    example: "3"
-              examples:
-                success-response:
-                  value:
-                    delay: "3"
-  /delete:
-    delete:
-      tags:
-        - Request Methods
-      summary: DELETE Request
-      description: "The HTTP `DELETE` method is used to delete resources on a server. The exact\nuse of `DELETE` requests depends on the server implementation. In general, \n`DELETE` requests support both, Query String parameters as well as a Request \nBody.\n\nThis endpoint accepts an HTTP `DELETE` request and provides debug information\nsuch as the HTTP headers, Query String arguments, and the Request Body."
-      operationId: deleteRequest
-      requestBody:
-        content:
-          text/plain:
-            example: This is expected to be sent back as part of response body.
-      responses:
-        "200":
-          description: ""
-  /digest-auth:
-    get:
-      tags:
-        - "Auth: Digest"
-      summary: DigestAuth Request
-      description: "Performing a simple `GET` request to this endpoint returns status code `401 Unauthorized` with `WWW-Authenticate` header containing information to successfully authenticate subsequent requests.\nThe `WWW-Authenticate` header must be processed to extract `realm` and `nonce` values to hash subsequent requests.\n\nWhen this request is executed within Postman, the script attached with this request does the hard work of extracting realm and nonce from the header and set it as [global variables](https://www.getpostman.com/docs/environments#global-variables?source=echo-collection-app-onboarding) named `echo_digest_nonce` and `echo_digest_realm`.\nThese variables are re-used in subsequent request for seamless integration of the two requests."
-      operationId: digestauthRequest
-      responses:
-        "200":
-          description: ""
-  /encoding/utf8:
-    get:
-      tags:
-        - Utilities
-      summary: Get UTF8 Encoded Response
-      description: "If a response of an endpoint requires to send data beyond the basic English / ASCII character set, the `charset` parameter in the `Content-Type` response header defines the character encoding policy.\n\nThis endpoint returns an `UTF8` character encoded response body with text in various languages such as Greek, Latin, East Asian, etc. Postman can interpret the character encoding and use appropriate methods to display the character set in responses."
-      operationId: getUtf8EncodedResponse
-      responses:
-        "200":
-          description: ""
-  /get:
-    get:
-      tags:
-        - Request Methods
-      summary: GET Request
-      description: "The HTTP `GET` request method is meant to retrieve data from a server. The data\nis identified by a unique URI (Uniform Resource Identifier). \n\nA `GET` request can pass parameters to the server using \"Query String \nParameters\". For example, in the following request,\n\n> http://example.com/hi/there?hand=wave\n\nThe parameter \"hand\" has the value \"wave\".\n\nThis endpoint echoes the HTTP headers, request parameters and the complete\nURI requested."
-      operationId: getRequest
-      parameters:
-        - name: foo1
-          in: query
-          schema:
-            type: string
-            example: bar1
-        - name: foo2
-          in: query
-          schema:
-            type: string
-            example: bar2
-      responses:
-        "200":
-          description: GET Request Woops
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Content-Length:
-              schema:
-                type: string
-                example: "249"
-            Date:
-              schema:
-                type: string
-                example: "Tue, 11 Jun 2019 10:43:13 GMT"
-            ETag:
-              schema:
-                type: string
-                example: "W/\"161-aLhNcsGArlgLSKbxPqfBW3viHPI\""
-            Server:
-              schema:
-                type: string
-                example: nginx
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            set-cookie:
-              schema:
-                type: string
-                example: sails.sid=s%3AGz-wblZgXE8FCDq7aJpx_tUgZUcG3Nsw.LdNEN8L0C7nGWkvGLwvdw6R2s6Syjr%2FzkvyevA8qR0c; Path=/; HttpOnly
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  args:
-                    type: object
-                    properties:
-                      foo1:
-                        type: string
-                        example: bar1
-                      foo2:
-                        type: string
-                        example: bar2
-                  headers:
-                    type: object
-                    properties:
-                      accept:
-                        type: string
-                        example: "*/*"
-                      accept-encoding:
-                        type: string
-                        example: "gzip, deflate"
-                      cache-control:
-                        type: string
-                        example: no-cache
-                      host:
-                        type: string
-                        example: postman-echo.com
-                      postman-token:
-                        type: string
-                        example: 5c27cd7d-6b16-4e5a-a0ef-191c9a3a275f
-                      user-agent:
-                        type: string
-                        example: PostmanRuntime/7.6.1
-                      x-forwarded-port:
-                        type: string
-                        example: "443"
-                      x-forwarded-proto:
-                        type: string
-                        example: https
-                  url:
-                    type: string
-                    example: "https://postman-echo.com/get?foo1=bar1&foo2=bar2"
-              examples:
-                GET Request Woops:
-                  value:
-                    args:
-                      foo1: bar1
-                      foo2: bar2
-                    headers:
-                      accept: "*/*"
-                      accept-encoding: "gzip, deflate"
-                      cache-control: no-cache
-                      host: postman-echo.com
-                      postman-token: 5c27cd7d-6b16-4e5a-a0ef-191c9a3a275f
-                      user-agent: PostmanRuntime/7.6.1
-                      x-forwarded-port: "443"
-                      x-forwarded-proto: https
-                    url: "https://postman-echo.com/get?foo1=bar1&foo2=bar2"
-  /gzip:
-    get:
-      tags:
-        - Utilities
-      summary: GZip Compressed Response
-      description: "This endpoint returns the response using [gzip compression algoritm](https://en.wikipedia.org/wiki/Gzip).\nThe uncompressed response is a JSON string containing the details of the request sent by the client. For this endpoint to work, one should request with `Accept-encoding` header containing `gzip` as part of its value. Postman supports gzip, deflate and SDCH decoding and automatically sends them as part of the request.\n\nHTTP Compression allows the server to send responses in a compressed format, which is uncompressed by the client before processing. This reduces network bandwidth consumption at the cost of increase in CPU usage.\nTo know more about this, refer the [HTTP Compression](https://en.wikipedia.org/wiki/HTTP_compression) wikipedia article."
-      operationId: gzipCompressedResponse
-      responses:
-        "200":
-          description: ""
-  /headers:
-    get:
-      tags:
-        - Headers
-      summary: Request Headers
-      description: "A `GET` request to this endpoint returns the list of all request headers as part of the response JSON.\nIn Postman, sending your own set of headers through the [Headers tab](https://www.getpostman.com/docs/requests#headers?source=echo-collection-app-onboarding) will reveal the headers as part of the response."
-      operationId: requestHeaders
-      responses:
-        "200":
-          description: my-sample-header
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Content-Length:
-              schema:
-                type: string
-                example: "342"
-            Date:
-              schema:
-                type: string
-                example: "Thu, 31 Mar 2016 11:14:00 GMT"
-            Server:
-              schema:
-                type: string
-                example: nginx/1.6.2
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            X-Powered-By:
-              schema:
-                type: string
-                example: Sails <sailsjs.org>
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  headers:
-                    type: object
-                    properties:
-                      accept:
-                        type: string
-                        example: "*/*"
-                      accept-encoding:
-                        type: string
-                        example: "gzip, deflate, sdch"
-                      accept-language:
-                        type: string
-                        example: "en-US,en;q=0.8"
-                      cache-control:
-                        type: string
-                        example: no-cache
-                      host:
-                        type: string
-                        example: echo.getpostman.com
-                      my-sample-header:
-                        type: string
-                        example: Lorem ipsum dolor sit amet
-                      postman-token:
-                        type: string
-                        example: 3c8ea80b-f599-fba6-e0b4-a0910440e7b6
-                      user-agent:
-                        type: string
-                        example: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36"
-                      x-forwarded-port:
-                        type: string
-                        example: "443"
-                      x-forwarded-proto:
-                        type: string
-                        example: https
-              examples:
-                my-sample-header:
-                  value:
-                    headers:
-                      accept: "*/*"
-                      accept-encoding: "gzip, deflate, sdch"
-                      accept-language: "en-US,en;q=0.8"
-                      cache-control: no-cache
-                      host: echo.getpostman.com
-                      my-sample-header: Lorem ipsum dolor sit amet
-                      postman-token: 3c8ea80b-f599-fba6-e0b4-a0910440e7b6
-                      user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36"
-                      x-forwarded-port: "443"
-                      x-forwarded-proto: https
-  /ip:
-    get:
-      tags:
-        - Utilities
-      summary: IP address in JSON format
-      description: "A simple `GET` request to return the IP address of the source request in the following `JSON` format:\n\n```json\n{\n  ip: \"request-ip-address\"\n}\n```"
-      operationId: ipAddressInJsonFormat
-      responses:
-        "200":
-          description: ""
-  /oauth1:
-    get:
-      tags:
-        - Authentication Methods
-      summary: OAuth1.0 (verify signature)
-      description: "OAuth1.0a is a specification that defines a protocol that can be used by one\nservice to access \"protected\" resources (endpoints) on another service. A\nmajor part of OAuth1.0 is HTTP Request Signing. This endpoint allows you to \ncheck whether the request calculation works properly in the client. \n\nThe endpoint supports the HTTP ``Authorization`` header. In case the signature\nverification fails, the endpoint provides the four debug values,\n\n* ``base_uri``\n* ``normalized_param_string``\n* ``base_string``\n* ``signing_key``\n\nFor more details about these parameters, check the [OAuth1.0a Specification](http://oauth.net/core/1.0a/)\n\nIn order to use this endpoint, you can set the following values:\n\n> Consumer Key: ``RKCGzna7bv9YD57c``\n>\n> Consumer Secret: ``D+EdQ-gs$-%@2Nu7``\n\nIf you are using Postman, also check the \"Add params to header\" and \n\"Auto add parameters\" boxes."
-      operationId: oauth10VerifySignature
-      responses:
-        "200":
-          description: "200"
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Content-Length:
-              schema:
-                type: string
-                example: "95"
-            Date:
-              schema:
-                type: string
-                example: "Thu, 25 Aug 2016 10:34:23 GMT"
-            ETag:
-              schema:
-                type: string
-                example: "W/\"4e-Cq3UhvpVSyl6R6204lPVIA\""
-            Server:
-              schema:
-                type: string
-                example: nginx/1.8.1
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: OAuth-1.0a signature verification was successful
-                  status:
-                    type: string
-                    example: pass
-              examples:
-                "200":
-                  value:
-                    message: OAuth-1.0a signature verification was successful
-                    status: pass
-        "401":
-          description: "401"
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Length:
-              schema:
-                type: string
-                example: "536"
-            Date:
-              schema:
-                type: string
-                example: "Thu, 25 Aug 2016 10:34:55 GMT"
-            ETag:
-              schema:
-                type: string
-                example: "W/\"218-SGnurnTsu5qV5cCYWxsJlg\""
-            Server:
-              schema:
-                type: string
-                example: nginx/1.8.1
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  base_string:
-                    type: string
-                    example: GET&https%3A%2F%2Fecho.getpostman.com%2Foauth1&oauth_consumer_key%3DRKCGzna7bv9YD57c_wrong%26oauth_nonce%3D8LTsU2%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1472121295%26oauth_version%3D1.0
-                  base_uri:
-                    type: string
-                    example: "https://echo.getpostman.com/oauth1"
-                  message:
-                    type: string
-                    example: HMAC-SHA1 verification failed
-                  normalized_param_string:
-                    type: string
-                    example: oauth_consumer_key=RKCGzna7bv9YD57c_wrong&oauth_nonce=8LTsU2&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1472121295&oauth_version=1.0
-                  signing_key:
-                    type: string
-                    example: D%2BEdQ-gs%24-%25%402Nu7&
-                  status:
-                    type: string
-                    example: fail
-              examples:
-                "401":
-                  value:
-                    base_string: GET&https%3A%2F%2Fecho.getpostman.com%2Foauth1&oauth_consumer_key%3DRKCGzna7bv9YD57c_wrong%26oauth_nonce%3D8LTsU2%26oauth_signature_method%3DHMAC-SHA1%26oauth_timestamp%3D1472121295%26oauth_version%3D1.0
-                    base_uri: "https://echo.getpostman.com/oauth1"
-                    message: HMAC-SHA1 verification failed
-                    normalized_param_string: oauth_consumer_key=RKCGzna7bv9YD57c_wrong&oauth_nonce=8LTsU2&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1472121295&oauth_version=1.0
-                    signing_key: D%2BEdQ-gs%24-%25%402Nu7&
-                    status: fail
-  /patch:
-    patch:
-      tags:
-        - Request Methods
-      summary: PATCH Request
-      description: "The HTTP `PATCH` method is used to update resources on a server. The exact\nuse of `PATCH` requests depends on the server in question. There are a number\nof server implementations which handle `PATCH` differently. Technically, \n`PATCH` supports both Query String parameters and a Request Body.\n\nThis endpoint accepts an HTTP `PATCH` request and provides debug information\nsuch as the HTTP headers, Query String arguments, and the Request Body."
-      operationId: patchRequest
-      requestBody:
-        content:
-          text/plain:
-            example: This is expected to be sent back as part of response body.
-      responses:
-        "200":
-          description: ""
-  /post:
-    post:
-      tags:
-        - Request Methods
-      summary: POST Form Data
-      description: "The HTTP `POST` request method is meant to transfer data to a server \n(and elicit a response). What data is returned depends on the implementation\nof the server.\n\nA `POST` request can pass parameters to the server using \"Query String \nParameters\", as well as the Request Body. For example, in the following request,\n\n> POST /hi/there?hand=wave\n>\n> <request-body>\n\nThe parameter \"hand\" has the value \"wave\". The request body can be in multiple\nformats. These formats are defined by the MIME type of the request. The MIME \nType can be set using the ``Content-Type`` HTTP header. The most commonly used \nMIME types are:\n\n* `multipart/form-data`\n* `application/x-www-form-urlencoded`\n* `application/json`\n\nThis endpoint echoes the HTTP headers, request parameters, the contents of\nthe request body and the complete URI requested when data is sent as a form parameter."
-      operationId: postFormData
-      requestBody:
-        content:
-          application/form-urlencoded:
-            schema:
-              type: object
-              properties:
-                foo1:
-                  type: string
-                  example: bar1
-                foo2:
-                  type: string
-                  example: bar2
-            example:
-              foo1: bar1
-              foo2: bar2
-      responses:
-        "200":
-          description: ""
-  /put:
-    put:
-      tags:
-        - Custom
-      summary: PUT Custom Copy
-      description: PUT Custom Copy
-      operationId: putCustomCopy
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: object
-                properties:
-                  authenticated:
-                    type: boolean
-                    example: true
-                  hello:
-                    type: string
-                    example: there
-                  is:
-                    type: object
-                    properties:
-                      legally:
-                        type: string
-                        example: variable_value
-                      mixed:
-                        type: array
-                        items:
-                          anyOf:
-                            - type: object
-                              properties:
-                                name:
-                                  type: string
-                                  example: Kevin
-                            - type: boolean
-                              example: true
-                            - type: number
-                              example: 38
-                            - type: string
-                              example: Kevin
-                        example:
-                          - name: Kevin
-                          - true
-                          - 38
-                          - Kevin
-                      num:
-                        type: number
-                        example: 1000
-                  my:
-                    type: number
-                    example: 1
-                  name:
-                    type: boolean
-                    example: true
-              example:
-                - hello: there
-                - is:
-                    legally: variable_value
-                    mixed:
-                      - name: Kevin
-                      - true
-                      - 38
-                      - Kevin
-                    num: 1000
-                  my: 1
-                  name: true
-                - authenticated: true
-            example:
-              - hello: there
-              - is:
-                  legally: variable_value
-                  mixed:
-                    - name: Kevin
-                    - true
-                    - 38
-                    - Kevin
-                  num: 1000
-                my: 1
-                name: true
-              - authenticated: true
-      responses:
-        "200":
-          description: ""
-  /response-headers:
-    get:
-      tags:
-        - Headers
-      summary: Response Headers
-      description: "This endpoint causes the server to send custom set of response headers. Providing header values as part of the URL parameters of a `GET` request to this endpoint returns the same as part of response header.\n\nTo send your own set of headers, simply add or replace the the URL parameters with your own set."
-      operationId: responseHeaders
-      parameters:
-        - name: foo1
-          in: query
-          schema:
-            type: string
-            example: bar1
-        - name: foo2
-          in: query
-          schema:
-            type: string
-            example: bar2
-      responses:
-        "200":
-          description: Response headers
-          headers:
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Content-Length:
-              schema:
-                type: string
-                example: "71"
-            Date:
-              schema:
-                type: string
-                example: "Thu, 31 Mar 2016 11:14:18 GMT"
-            Server:
-              schema:
-                type: string
-                example: nginx/1.6.2
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            X-Powered-By:
-              schema:
-                type: string
-                example: Sails <sailsjs.org>
-            test:
-              schema:
-                type: string
-                example: response_headers
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  Content-Type:
-                    type: string
-                    example: text/html
-                  test:
-                    type: string
-                    example: response_headers
-              examples:
-                Response headers:
-                  value:
-                    Content-Type: text/html
-                    test: response_headers
   /status/200:
     get:
       tags:
@@ -5148,129 +5061,90 @@ paths:
       responses:
         "200":
           description: ""
-  /time/add:
+  /delay/2:
     get:
       tags:
-        - Utilities / Date and Time
-      summary: Time addition
-      description: "A simple `GET` request to `/time/add` to add units of time to the specified / current timestamp (as provided in the `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds` query parameters).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `sum` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  sum: \"sum of (provided / current) and provided timestamps\"\n}\n```"
-      operationId: timeAddition
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: years
-          in: query
-          schema:
-            type: string
-            example: "100"
+        - Utilities
+      summary: Delay Response
+      description: "Using this endpoint one can configure how long it takes for the server to come back with a response. Appending a number to the URL defines the time (in seconds) the server will wait before responding.\n\nNote that a maximum delay of 10 seconds is accepted by the server."
+      operationId: delayResponse
+      responses:
+        "200":
+          description: success-response
+          headers:
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Content-Length:
+              schema:
+                type: string
+                example: "13"
+            Date:
+              schema:
+                type: string
+                example: "Mon, 02 Jan 2017 09:19:03 GMT"
+            ETag:
+              schema:
+                type: string
+                example: "W/\"d-t/L/D5c0SDl+MoXtKdSVOg\""
+            Server:
+              schema:
+                type: string
+                example: nginx/1.10.1
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  delay:
+                    type: string
+                    example: "3"
+              examples:
+                success-response:
+                  value:
+                    delay: "3"
+  /encoding/utf8:
+    get:
+      tags:
+        - Utilities
+      summary: Get UTF8 Encoded Response
+      description: "If a response of an endpoint requires to send data beyond the basic English / ASCII character set, the `charset` parameter in the `Content-Type` response header defines the character encoding policy.\n\nThis endpoint returns an `UTF8` character encoded response body with text in various languages such as Greek, Latin, East Asian, etc. Postman can interpret the character encoding and use appropriate methods to display the character set in responses."
+      operationId: getUtf8EncodedResponse
       responses:
         "200":
           description: ""
-  /time/after:
+  /gzip:
     get:
       tags:
-        - Utilities / Date and Time
-      summary: After comparisons
-      description: "A simple `GET` request to `/time/after` to check if the provided timestamps is after a comparison `target` (query parameter).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `after` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  after: true/false\n}\n```"
-      operationId: afterComparisons
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: target
-          in: query
-          schema:
-            type: string
-            example: 2017-10-10
+        - Utilities
+      summary: GZip Compressed Response
+      description: "This endpoint returns the response using [gzip compression algoritm](https://en.wikipedia.org/wiki/Gzip).\nThe uncompressed response is a JSON string containing the details of the request sent by the client. For this endpoint to work, one should request with `Accept-encoding` header containing `gzip` as part of its value. Postman supports gzip, deflate and SDCH decoding and automatically sends them as part of the request.\n\nHTTP Compression allows the server to send responses in a compressed format, which is uncompressed by the client before processing. This reduces network bandwidth consumption at the cost of increase in CPU usage.\nTo know more about this, refer the [HTTP Compression](https://en.wikipedia.org/wiki/HTTP_compression) wikipedia article."
+      operationId: gzipCompressedResponse
       responses:
         "200":
           description: ""
-  /time/before:
+  /deflate:
     get:
       tags:
-        - Utilities / Date and Time
-      summary: Before comparisons
-      description: "A simple `GET` request to `/time/before` to check if the provided timestamps is before a comparison `target` (query parameter).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `before` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  before: true/false\n}\n```"
-      operationId: beforeComparisons
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: target
-          in: query
-          schema:
-            type: string
-            example: 2017-10-10
+        - Utilities
+      summary: Deflate Compressed Response
+      description: "This endpoint returns the response using [deflate compression algoritm](https://en.wikipedia.org/wiki/DEFLATE). \nThe uncompressed response is a JSON string containing the details of the request sent by the client. For this endpoint to work, one should request with `Accept-encoding` header containing `deflate` as part of its value. Postman supports gzip, deflate and SDCH decoding and automatically sends them as part of the request.\n\nHTTP Compression allows the server to send responses in a compressed format, which is uncompressed by the client before processing. This reduces network bandwidth consumption at the cost of increase in CPU usage.\nTo know more about this, refer the [HTTP Compression](https://en.wikipedia.org/wiki/HTTP_compression) wikipedia article."
+      operationId: deflateCompressedResponse
       responses:
         "200":
           description: ""
-  /time/between:
+  /ip:
     get:
       tags:
-        - Utilities / Date and Time
-      summary: Between timestamps
-      description: "A simple `GET` request to `/time/between` to check if the provided timestamp is between a range specified by the `start` and `end` query parameters. A resolution limit can also be specified by the `unit` query parameter.\n\nFor instance, for a resolution `unit` of `month`,\n`2016-10-05` does lie between `2016-11-02` and `2016-09-01`.\n\nThis endpoint also accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `between` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  between: true/false\n}\n```"
-      operationId: betweenTimestamps
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: start
-          in: query
-          schema:
-            type: string
-            example: 2017-10-10
-        - name: end
-          in: query
-          schema:
-            type: string
-            example: 2019-10-10
-      responses:
-        "200":
-          description: ""
-  /time/format:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Format timestamp
-      description: "A simple `GET` request to `/time/format` to convert the timestamp to any desired valid format.\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `format` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  format: \"formatted-timestamp\"\n}\n```"
-      operationId: formatTimestamp
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: format
-          in: query
-          schema:
-            type: string
-            example: mm
-      responses:
-        "200":
-          description: ""
-  /time/leap:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Leap year check
-      description: "A simple `GET` request to `/time/leap` to check if the provided/current timestamp belongs to a leap year.\n\nThis endpoint also accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `leap` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  leap: true/false\n}\n```"
-      operationId: leapYearCheck
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
+        - Utilities
+      summary: IP address in JSON format
+      description: "A simple `GET` request to return the IP address of the source request in the following `JSON` format:\n\n```json\n{\n  ip: \"request-ip-address\"\n}\n```"
+      operationId: ipAddressInJsonFormat
       responses:
         "200":
           description: ""
@@ -5322,85 +5196,6 @@ paths:
               examples:
                 time as text:
                   value: "Wed, 11 Jan 2017 10:27:12 GMT"
-  /time/object:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Object representation
-      description: "A simple `GET` request to `/time/object` to return the current / provided timestamp as a JSON object.\n\nFor instance, if the `unit` has been specified as `month`, the returned timestamp would indicate the beginning of the current month. Similar results are returned for other units of time, like: `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds`\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  years: 2016,\n  months: 10,\n  days: 10,\n  hours: 23,\n  minutes: 34,\n  seconds: 20,\n  milliseconds: 980\n}\n```"
-      operationId: objectRepresentation
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-      responses:
-        "200":
-          description: ""
-  /time/start:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Start of time
-      description: "A simple `GET` request to `/time/start` to return a relative timstamp in the past from the specified / current timestamp (as provided in the `unit` query parameter).\n\nFor instance, if the `unit` has been specified as `month`, the returned timestamp would indicate the beginning of the current month. Similar results are returned for other units of time, like: `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds`\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `start` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  start: \"A timestamp from the past, depending on the `unit` specified\"\n}\n```"
-      operationId: startOfTime
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: unit
-          in: query
-          schema:
-            type: string
-            example: month
-      responses:
-        "200":
-          description: ""
-  /time/subtract:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Time subtraction
-      description: "A simple `GET` request to `/time/subtract` to subtract units of time from the specified / current timestamp (as provided in the `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds` query parameters).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `difference` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  difference: \"difference between (provided / current) and provided timestamps\"\n}\n```"
-      operationId: timeSubtraction
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: years
-          in: query
-          schema:
-            type: string
-            example: "50"
-      responses:
-        "200":
-          description: ""
-  /time/unit:
-    get:
-      tags:
-        - Utilities / Date and Time
-      summary: Extract timestamp unit
-      description: "A simple `GET` request to `/time/unit` to extract the specified timestamp unit (as provided in the `unit` query parameter). The default unit returned is the `year`.\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `unit` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  unit: \"extracted-timestamp-unit\"\n}\n```"
-      operationId: extractTimestampUnit
-      parameters:
-        - name: timestamp
-          in: query
-          schema:
-            type: string
-            example: 2016-10-10
-        - name: unit
-          in: query
-          schema:
-            type: string
-            example: day
-      responses:
-        "200":
-          description: ""
   /time/valid:
     get:
       tags:
@@ -5458,6 +5253,211 @@ paths:
                 Invalid Timestamp:
                   value:
                     valid: false
+  /time/format:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Format timestamp
+      description: "A simple `GET` request to `/time/format` to convert the timestamp to any desired valid format.\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `format` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  format: \"formatted-timestamp\"\n}\n```"
+      operationId: formatTimestamp
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: format
+          in: query
+          schema:
+            type: string
+            example: mm
+      responses:
+        "200":
+          description: ""
+  /time/unit:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Extract timestamp unit
+      description: "A simple `GET` request to `/time/unit` to extract the specified timestamp unit (as provided in the `unit` query parameter). The default unit returned is the `year`.\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `unit` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  unit: \"extracted-timestamp-unit\"\n}\n```"
+      operationId: extractTimestampUnit
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: unit
+          in: query
+          schema:
+            type: string
+            example: day
+      responses:
+        "200":
+          description: ""
+  /time/add:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Time addition
+      description: "A simple `GET` request to `/time/add` to add units of time to the specified / current timestamp (as provided in the `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds` query parameters).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `sum` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  sum: \"sum of (provided / current) and provided timestamps\"\n}\n```"
+      operationId: timeAddition
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: years
+          in: query
+          schema:
+            type: string
+            example: "100"
+      responses:
+        "200":
+          description: ""
+  /time/subtract:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Time subtraction
+      description: "A simple `GET` request to `/time/subtract` to subtract units of time from the specified / current timestamp (as provided in the `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds` query parameters).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `difference` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  difference: \"difference between (provided / current) and provided timestamps\"\n}\n```"
+      operationId: timeSubtraction
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: years
+          in: query
+          schema:
+            type: string
+            example: "50"
+      responses:
+        "200":
+          description: ""
+  /time/start:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Start of time
+      description: "A simple `GET` request to `/time/start` to return a relative timstamp in the past from the specified / current timestamp (as provided in the `unit` query parameter).\n\nFor instance, if the `unit` has been specified as `month`, the returned timestamp would indicate the beginning of the current month. Similar results are returned for other units of time, like: `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds`\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `start` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  start: \"A timestamp from the past, depending on the `unit` specified\"\n}\n```"
+      operationId: startOfTime
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: unit
+          in: query
+          schema:
+            type: string
+            example: month
+      responses:
+        "200":
+          description: ""
+  /time/object:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Object representation
+      description: "A simple `GET` request to `/time/object` to return the current / provided timestamp as a JSON object.\n\nFor instance, if the `unit` has been specified as `month`, the returned timestamp would indicate the beginning of the current month. Similar results are returned for other units of time, like: `years`, `months`, `days`, `hours`, `minutes`, `seconds`, and `milliseconds`\n\nThis endpoint accepts `timestamp`, `locale`, `format`, and `strict` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  years: 2016,\n  months: 10,\n  days: 10,\n  hours: 23,\n  minutes: 34,\n  seconds: 20,\n  milliseconds: 980\n}\n```"
+      operationId: objectRepresentation
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+      responses:
+        "200":
+          description: ""
+  /time/before:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Before comparisons
+      description: "A simple `GET` request to `/time/before` to check if the provided timestamps is before a comparison `target` (query parameter).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `before` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  before: true/false\n}\n```"
+      operationId: beforeComparisons
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: target
+          in: query
+          schema:
+            type: string
+            example: 2017-10-10
+      responses:
+        "200":
+          description: ""
+  /time/after:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: After comparisons
+      description: "A simple `GET` request to `/time/after` to check if the provided timestamps is after a comparison `target` (query parameter).\n\nThis endpoint accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `after` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  after: true/false\n}\n```"
+      operationId: afterComparisons
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: target
+          in: query
+          schema:
+            type: string
+            example: 2017-10-10
+      responses:
+        "200":
+          description: ""
+  /time/between:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Between timestamps
+      description: "A simple `GET` request to `/time/between` to check if the provided timestamp is between a range specified by the `start` and `end` query parameters. A resolution limit can also be specified by the `unit` query parameter.\n\nFor instance, for a resolution `unit` of `month`,\n`2016-10-05` does lie between `2016-11-02` and `2016-09-01`.\n\nThis endpoint also accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `between` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  between: true/false\n}\n```"
+      operationId: betweenTimestamps
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+        - name: start
+          in: query
+          schema:
+            type: string
+            example: 2017-10-10
+        - name: end
+          in: query
+          schema:
+            type: string
+            example: 2019-10-10
+      responses:
+        "200":
+          description: ""
+  /time/leap:
+    get:
+      tags:
+        - Utilities / Date and Time
+      summary: Leap year check
+      description: "A simple `GET` request to `/time/leap` to check if the provided/current timestamp belongs to a leap year.\n\nThis endpoint also accepts `timestamp`, `locale`, `format`, `strict`, and `target` query parameters to construct the date time instance to check against.\n\nResponses are provided in JSON format, with a `leap` key to indicate the result. The response code is `200` for valid query parameters, and `400` otherwise.\n\n```\n{\n  leap: true/false\n}\n```"
+      operationId: leapYearCheck
+      parameters:
+        - name: timestamp
+          in: query
+          schema:
+            type: string
+            example: 2016-10-10
+      responses:
+        "200":
+          description: ""
   /transform/collection:
     post:
       tags:
