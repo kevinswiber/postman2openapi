@@ -8,7 +8,7 @@ pub mod postman;
 
 pub use anyhow::Result;
 use convert_case::{Case, Casing};
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use openapi::v3_0 as openapi3;
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
@@ -118,7 +118,7 @@ impl<'a> Transpiler<'a> {
             },
             components: None,
             external_docs: None,
-            paths: BTreeMap::new(),
+            paths: IndexMap::new(),
             servers: Some(Vec::<openapi3::Server>::new()),
             tags: Some(IndexSet::<openapi3::Tag>::new()),
         };

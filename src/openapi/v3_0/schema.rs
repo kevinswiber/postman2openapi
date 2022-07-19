@@ -1,6 +1,6 @@
 //! Schema specification for [OpenAPI 3.0.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
-use indexmap::IndexSet;
+use indexmap::{IndexMap, IndexSet};
 use std::{
     collections::{BTreeMap, HashMap},
     hash::{Hash, Hasher},
@@ -57,7 +57,7 @@ pub struct Spec {
     /// [`Server Object`](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#serverObject)
     /// in order to construct the full URL. The Paths MAY be empty, due to
     /// [ACL constraints](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#securityFiltering).
-    pub paths: BTreeMap<String, PathItem>,
+    pub paths: IndexMap<String, PathItem>,
 
     /// An element to hold various schemas for the specification.
     #[serde(skip_serializing_if = "Option::is_none")]
