@@ -12,8 +12,6 @@ use indexmap::{IndexMap, IndexSet};
 use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter};
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
-use std::str::FromStr;
-#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
 static VAR_REPLACE_CREDITS: usize = 20;
@@ -35,6 +33,7 @@ pub fn from_path(filename: &str, options: TranspileOptions) -> Result<String> {
     from_str(&collection, options)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
     let postman_spec: postman::Spec = serde_json::from_str(collection)?;
     let oas_spec = Transpiler::transpile(postman_spec);
@@ -43,11 +42,6 @@ pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
         TargetFormat::Yaml => openapi::to_yaml(&oas_spec),
     }?;
     Ok(oas_definition)
-}
-
-#[cfg(target_arch = "wasm32")]
-fn from_str_with_format(collection: &str, format: TargetFormat) -> Result<String> {
-    from_str(collection, TranspileOptions { format })
 }
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -59,12 +53,18 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn transpile(collection: &str, format: &str) -> std::result::Result<String, JsValue> {
-    match from_str_with_format(
-        collection,
-        TargetFormat::from_str(format).unwrap_or_default(),
-    ) {
-        Ok(val) => Ok(val),
+pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
+    let postman_spec: std::result::Result<postman::Spec, serde_json::Error> =
+        JsValue::into_serde(&collection);
+    match postman_spec {
+        Ok(s) => {
+            let oas_spec = Transpiler::transpile(s);
+            let oas_definition = JsValue::from_serde(&oas_spec);
+            match oas_definition {
+                Ok(val) => Ok(val),
+                Err(err) => Err(JsValue::from_str(&err.to_string())),
+            }
+        }
         Err(err) => Err(JsValue::from_str(&err.to_string())),
     }
 }
@@ -861,7 +861,6 @@ impl<'a> Transpiler<'a> {
                                 _ => false,
                             }) {
                                 param.description = extract_description(&p.description);
-
                                 if let Some(pval) = &p.value {
                                     if let Some(pval_val) = pval.as_str() {
                                         schema.example = Some(serde_json::Value::String(
@@ -871,7 +870,6 @@ impl<'a> Transpiler<'a> {
                                 }
                             }
                         }
-
                         param.schema = Some(schema);
                         openapi3::ObjectOrReference::Object(param)
                     })

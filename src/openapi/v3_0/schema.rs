@@ -5,7 +5,6 @@ use std::{
     collections::{BTreeMap, HashMap},
     hash::{Hash, Hasher},
 };
-use url::Url;
 
 use super::{
     super::Error,
@@ -99,7 +98,7 @@ pub struct Info {
     pub description: Option<String>,
     /// A URL to the Terms of Service for the API. MUST be in the format of a URL.
     #[serde(rename = "termsOfService", skip_serializing_if = "Option::is_none")]
-    pub terms_of_service: Option<Url>,
+    pub terms_of_service: Option<String>,
     /// The version of the OpenAPI document (which is distinct from the [OpenAPI Specification
     /// version](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oasVersion)
     /// or the API implementation version).
@@ -121,7 +120,7 @@ pub struct Contact {
     pub name: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<Url>,
+    pub url: Option<String>,
 
     // TODO: Make sure the email is a valid email
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -138,7 +137,7 @@ pub struct License {
     pub name: String,
     /// A URL to the license used for the API.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub url: Option<Url>,
+    pub url: Option<String>,
     // TODO: Add "Specification Extensions" https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions}
 }
 
@@ -909,9 +908,9 @@ pub struct Flows {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ImplicitFlow {
-    pub authorization_url: Url,
+    pub authorization_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub refresh_url: Option<Url>,
+    pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
 }
 
@@ -921,9 +920,9 @@ pub struct ImplicitFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PasswordFlow {
-    token_url: Url,
+    token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub refresh_url: Option<Url>,
+    pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
 }
 
@@ -933,9 +932,9 @@ pub struct PasswordFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
-    token_url: Url,
+    token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub refresh_url: Option<Url>,
+    pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
 }
 
@@ -945,10 +944,10 @@ pub struct ClientCredentialsFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
-    pub authorization_url: Url,
-    token_url: Url,
+    pub authorization_url: String,
+    token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub refresh_url: Option<Url>,
+    pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
 }
 
@@ -1012,7 +1011,7 @@ impl Eq for Tag {}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ExternalDoc {
     /// The URL for the target documentation.
-    pub url: Url,
+    pub url: String,
 
     /// A short description of the target documentation.
     /// [CommonMark syntax](http://spec.commonmark.org/) MAY be used for rich text representation.
@@ -1054,7 +1053,7 @@ mod tests {
                 let implicit = flows.implicit.unwrap();
                 assert_eq!(
                     implicit.authorization_url,
-                    Url::parse("https://example.com/api/oauth/dialog").unwrap()
+                    "https://example.com/api/oauth/dialog".to_string()
                 );
                 assert!(implicit.scopes.contains_key("write:pets"));
                 assert!(implicit.scopes.contains_key("read:pets"));
@@ -1063,11 +1062,11 @@ mod tests {
                 let auth_code = flows.authorization_code.unwrap();
                 assert_eq!(
                     auth_code.authorization_url,
-                    Url::parse("https://example.com/api/oauth/dialog").unwrap()
+                    "https://example.com/api/oauth/dialog".to_string()
                 );
                 assert_eq!(
                     auth_code.token_url,
-                    Url::parse("https://example.com/api/oauth/token").unwrap()
+                    "https://example.com/api/oauth/token".to_string()
                 );
                 assert!(implicit.scopes.contains_key("write:pets"));
                 assert!(implicit.scopes.contains_key("read:pets"));

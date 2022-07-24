@@ -12,10 +12,11 @@
 //! shape and behavior should be consistent and familiar to existing
 //! error_chain users.
 //!
-use std::{fs::File, io::Read, path::Path, result::Result as StdResult};
+use std::result::Result as StdResult;
+#[cfg(not(target_arch = "wasm32"))]
+use std::{fs::File, io::Read, path::Path};
 
 pub mod error;
-pub mod v2;
 pub mod v3_0;
 
 pub use error::Error;
@@ -28,13 +29,6 @@ pub type Result<T> = StdResult<T, Error>;
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum OpenApi {
-    /// Version 2.0 of the OpenApi specification.
-    ///
-    /// Refer to the official
-    /// [specification](https://github.com/OAI/OpenAPI-Specification/blob/0dd79f6/versions/2.0.md)
-    /// for more information.
-    V2(Box<v2::Spec>),
-
     /// Version 3.0.1 of the OpenApi specification.
     ///
     /// Refer to the official
@@ -45,6 +39,7 @@ pub enum OpenApi {
 }
 
 /// deserialize an open api spec from a path
+#[cfg(not(target_arch = "wasm32"))]
 pub fn from_path<P>(path: P) -> Result<OpenApi>
 where
     P: AsRef<Path>,
@@ -53,6 +48,7 @@ where
 }
 
 /// deserialize an open api spec from type which implements Read
+#[cfg(not(target_arch = "wasm32"))]
 pub fn from_reader<R>(read: R) -> Result<OpenApi>
 where
     R: Read,
@@ -61,6 +57,7 @@ where
 }
 
 /// serialize to a yaml string
+#[cfg(not(target_arch = "wasm32"))]
 pub fn to_yaml(spec: &OpenApi) -> Result<String> {
     Ok(serde_yaml::to_string(spec)?)
 }
@@ -71,6 +68,7 @@ pub fn to_json(spec: &OpenApi) -> Result<String> {
 }
 
 #[cfg(test)]
+#[cfg(not(target_arch = "wasm32"))]
 mod tests {
     use super::*;
     use std::{
@@ -154,35 +152,11 @@ mod tests {
     // Just tests if the deserialization does not blow up. But does not test correctness
     #[test]
     fn can_deserialize() {
-        for entry in fs::read_dir("src/openapi/data/v2").unwrap() {
+        for entry in fs::read_dir("src/openapi/data/v3.0").unwrap() {
             let path = entry.unwrap().path();
             // cargo test -- --nocapture to see this message
             println!("Testing if {:?} is deserializable", path);
             from_path(path).unwrap();
-        }
-    }
-
-    #[test]
-    fn can_deserialize_and_reserialize_v2() {
-        let save_path_base: std::path::PathBuf =
-            ["target", "tests", "can_deserialize_and_reserialize_v2"]
-                .iter()
-                .collect();
-
-        for entry in fs::read_dir("src/openapi/data/v2").unwrap() {
-            let path = entry.unwrap().path();
-
-            println!("Testing if {:?} is deserializable", path);
-
-            let (api_filename, parsed_spec_json_str, spec_json_str) =
-                compare_spec_through_json(&path, &save_path_base);
-
-            assert_eq!(
-                parsed_spec_json_str.lines().collect::<Vec<_>>(),
-                spec_json_str.lines().collect::<Vec<_>>(),
-                "contents did not match for api {}",
-                api_filename
-            );
         }
     }
 
@@ -214,17 +188,16 @@ mod tests {
     #[test]
     fn can_deserialize_one_of_v3() {
         let openapi = from_path("src/openapi/data/v3.0/petstore-expanded.yaml").unwrap();
-        if let OpenApi::V3_0(spec) = openapi {
-            let components = spec.components.unwrap();
-            let schemas = components.schemas.unwrap();
-            let obj_or_ref = schemas.get("PetSpecies");
+        let OpenApi::V3_0(spec) = openapi;
+        let components = spec.components.unwrap();
+        let schemas = components.schemas.unwrap();
+        let obj_or_ref = schemas.get("PetSpecies");
 
-            if let Some(v3_0::ObjectOrReference::Object(schema)) = obj_or_ref {
-                // there should be 2 schemas in there
-                assert_eq!(schema.one_of.as_ref().unwrap().len(), 2);
-            } else {
-                panic!("object should have been schema");
-            }
+        if let Some(v3_0::ObjectOrReference::Object(schema)) = obj_or_ref {
+            // there should be 2 schemas in there
+            assert_eq!(schema.one_of.as_ref().unwrap().len(), 2);
+        } else {
+            panic!("object should have been schema");
         }
     }
 }

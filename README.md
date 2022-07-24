@@ -6,15 +6,15 @@ Convert Postman collections to OpenAPI definitions.
 
 **Try it on the Web: https://kevinswiber.github.io/postman2openapi/**
 
-* [CLI](#cli)
-  * [Installation](#installation)
-  * [Usage](#usage)
-    * [Examples](#examples)
-* [Node.js Library](#nodejs-library)
-  * [Installation](#installation-1)
-  * [Usage](#usage-1)
-  * [JavaScript API](#javascript-api)
-* [License](#license)
+- [CLI](#cli)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Examples](#examples)
+- [Node.js Library](#nodejs-library)
+  - [Installation](#installation-1)
+  - [Usage](#usage-1)
+  - [JavaScript API](#javascript-api)
+- [License](#license)
 
 ## CLI
 
@@ -29,7 +29,7 @@ prefer MSVC over GNU, but you'll need to have the [Microsoft VC++ 2015
 redistributable](https://www.microsoft.com/en-us/download/details.aspx?id=48145)
 installed.
 
-For Rust developers, installation is also available via Cargo.  [Installing Rust and Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+For Rust developers, installation is also available via Cargo. [Installing Rust and Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
 
 To install the latest published version on crates.io, use:
 
@@ -84,19 +84,17 @@ npm install postman2openapi
 const collection = require('./collection'); // any Postman collection JSON file
 const { transpile } = require('postman2openapi');
 
-const postman = JSON.stringify(collection);
-const openapi = transpile(postman, 'yaml');
+const openapi = transpile(collection);
 
-console.log(openapi);
+console.dir(openapi);
 ```
 
 ### JavaScript API
 
-#### transpile(collection: string, format: string): string
+#### transpile(collection: object): object
 
-* collection - a stringified version of a Postman JSON object.
-* format - the return format, either `json` or `yaml`.
-* _returns_ - an OpenAPI definition in the format specified.
+- collection - An object representing the Postman collection.
+- _returns_ - an OpenAPI definition as a JavaScript object.
 
 ## License
 
