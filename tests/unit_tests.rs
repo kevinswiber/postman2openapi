@@ -47,11 +47,10 @@ mod unit_tests {
             "/transform/collection",
             "/{method}/hello",
         ];
-        if let OpenApi::V3_0(s) = oas {
-            let keys = s.paths.keys().enumerate();
-            for (i, k) in keys {
-                assert_eq!(k, ordered_paths[i])
-            }
+        let OpenApi::V3_0(s) = oas;
+        let keys = s.paths.keys().enumerate();
+        for (i, k) in keys {
+            assert_eq!(k, ordered_paths[i])
         }
     }
 
@@ -59,19 +58,21 @@ mod unit_tests {
     fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
         let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
-        if let OpenApi::V3_0(oas) = oas {
-            let b = oas
-                .paths
-                .get("/post")
-                .unwrap()
-                .post
-                .as_ref()
-                .unwrap()
-                .request_body
-                .as_ref()
-                .unwrap();
-            if let ObjectOrReference::Object(b) = b {
-                assert!(b.content.contains_key("application/x-www-form-urlencoded"));
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let b = oas
+                    .paths
+                    .get("/post")
+                    .unwrap()
+                    .post
+                    .as_ref()
+                    .unwrap()
+                    .request_body
+                    .as_ref()
+                    .unwrap();
+                if let ObjectOrReference::Object(b) = b {
+                    assert!(b.content.contains_key("application/x-www-form-urlencoded"));
+                }
             }
         }
     }
@@ -80,41 +81,43 @@ mod unit_tests {
     fn it_generates_headers_from_the_request() {
         let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
-        if let OpenApi::V3_0(oas) = oas {
-            let params = oas
-                .paths
-                .get("/headers")
-                .unwrap()
-                .get
-                .as_ref()
-                .unwrap()
-                .parameters
-                .as_ref()
-                .unwrap();
-            let header = params
-                .iter()
-                .find(|p| {
-                    if let ObjectOrReference::Object(p) = p {
-                        p.location == "header"
-                    } else {
-                        false
-                    }
-                })
-                .unwrap();
-            let expected = ObjectOrReference::Object(Parameter {
-                name: "my-sample-header".to_owned(),
-                location: "header".to_owned(),
-                description: Some("My Sample Header".to_owned()),
-                schema: Some(Schema {
-                    schema_type: Some("string".to_owned()),
-                    example: Some(serde_json::Value::String(
-                        "Lorem ipsum dolor sit amet".to_owned(),
-                    )),
-                    ..Schema::default()
-                }),
-                ..Parameter::default()
-            });
-            assert_eq!(header, &expected);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let params = oas
+                    .paths
+                    .get("/headers")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .parameters
+                    .as_ref()
+                    .unwrap();
+                let header = params
+                    .iter()
+                    .find(|p| {
+                        if let ObjectOrReference::Object(p) = p {
+                            p.location == "header"
+                        } else {
+                            false
+                        }
+                    })
+                    .unwrap();
+                let expected = ObjectOrReference::Object(Parameter {
+                    name: "my-sample-header".to_owned(),
+                    location: "header".to_owned(),
+                    description: Some("My Sample Header".to_owned()),
+                    schema: Some(Schema {
+                        schema_type: Some("string".to_owned()),
+                        example: Some(serde_json::Value::String(
+                            "Lorem ipsum dolor sit amet".to_owned(),
+                        )),
+                        ..Schema::default()
+                    }),
+                    ..Parameter::default()
+                });
+                assert_eq!(header, &expected);
+            }
         }
     }
 
