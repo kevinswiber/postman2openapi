@@ -1,12 +1,12 @@
 #[cfg(test)]
 #[cfg(not(target_arch = "wasm32"))]
 mod unit_tests {
+    use postman2openapi::openapi::v3_0::ObjectOrReference;
     use postman2openapi::openapi::OpenApi;
     use postman2openapi::postman::Spec;
     use postman2openapi::Transpiler;
 
     #[test]
-    #[cfg(not(target_arch = "wasm32"))]
     fn it_preserves_order_on_paths() {
         let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
@@ -55,7 +55,27 @@ mod unit_tests {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
+    #[test]
+    fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        if let OpenApi::V3_0(oas) = oas {
+            let b = oas
+                .paths
+                .get("/post")
+                .unwrap()
+                .post
+                .as_ref()
+                .unwrap()
+                .request_body
+                .as_ref()
+                .unwrap();
+            if let ObjectOrReference::Object(b) = b {
+                assert!(b.content.contains_key("application/x-www-form-urlencoded"));
+            }
+        }
+    }
+
     fn get_fixture(filename: &str) -> String {
         use std::fs;
 
