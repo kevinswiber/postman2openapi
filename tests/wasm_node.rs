@@ -4285,7 +4285,7 @@ paths:
       operationId: postFormData
       requestBody:
         content:
-          application/form-urlencoded:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               properties:

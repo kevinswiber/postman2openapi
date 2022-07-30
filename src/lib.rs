@@ -554,7 +554,7 @@ impl<'a> Transpiler<'a> {
                     }
                 }
                 postman::Mode::Urlencoded => {
-                    content_type = Some("application/form-urlencoded".to_string());
+                    content_type = Some("application/x-www-form-urlencoded".to_string());
                     if let Some(urlencoded) = &body.urlencoded {
                         let mut oas_data = serde_json::Map::new();
                         for i in urlencoded {
