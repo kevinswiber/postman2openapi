@@ -10,7 +10,7 @@ Convert Postman collections to OpenAPI definitions.
   - [Installation](#installation)
   - [Usage](#usage)
     - [Examples](#examples)
-- [Node.js Library](#nodejs-library)
+- [JavaScript Library](#javascript-library)
   - [Installation](#installation-1)
   - [Usage](#usage-1)
   - [JavaScript API](#javascript-api)
@@ -52,12 +52,10 @@ USAGE:
 ARGS:
     <input-file>    The Postman collection to convert; data may also come from stdin
 
-FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-
 OPTIONS:
-    -o, --output <format>    The output format [default: yaml]  [possible values: yaml, json]
+    -f, --output-format <format>    The output format [default: yaml] [possible values: yaml, json]
+    -h, --help                      Print help information
+    -V, --version                   Print version information
 ```
 
 #### Examples
@@ -67,10 +65,10 @@ postman2openapi collection.json > openapi.yaml
 ```
 
 ```
-cat collection.json | postman2openapi -o json
+cat collection.json | postman2openapi -f json
 ```
 
-## Node.js library
+## JavaScript library
 
 ### Installation
 
@@ -99,5 +97,3 @@ console.dir(openapi);
 ## License
 
 Apache License 2.0 (Apache-2.0)
-
-Copyright © 2020 Kevin Swiber kswiber@gmail.com

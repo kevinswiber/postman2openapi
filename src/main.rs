@@ -20,9 +20,9 @@ fn main() {
         .author(authors)
         .setting(AppSettings::ColoredHelp)
         .arg(
-            Arg::new("output")
-                .short('o')
-                .long("output")
+            Arg::new("output-format")
+                .short('f')
+                .long("output-format")
                 .help("The output format")
                 .value_name("format")
                 .possible_values(&["yaml", "json"])
@@ -43,7 +43,9 @@ fn main() {
     let matches = app.get_matches();
 
     let mut buffer = String::new();
-    let format = matches.value_of_t("output").unwrap_or_else(|e| e.exit());
+    let format = matches
+        .value_of_t("output-format")
+        .unwrap_or_else(|e| e.exit());
     match &matches.value_of("INPUT") {
         Some(filename) => match from_path(filename, TranspileOptions { format }) {
             Ok(oas) => println!("{}", oas),
