@@ -394,12 +394,12 @@ pub struct Parameter {
     /// value. Default values (based on value of in): for `query` - `form`; for `path` - `simple`; for
     /// `header` - `simple`; for cookie - `form`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    style: Option<ParameterStyle>,
+    pub style: Option<ParameterStyle>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
-enum ParameterStyle {
+pub enum ParameterStyle {
     Form,
     Simple,
 }

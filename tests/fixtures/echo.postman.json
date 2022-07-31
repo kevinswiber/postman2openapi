@@ -391,7 +391,8 @@
 						"header": [
 							{
 								"key": "my-sample-header",
-								"value": "Lorem ipsum dolor sit amet"
+								"value": "Lorem ipsum dolor sit amet",
+								"description": "My Sample Header"
 							}
 						],
 						"url": {

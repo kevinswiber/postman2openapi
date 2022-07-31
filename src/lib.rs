@@ -9,7 +9,7 @@ pub mod postman;
 pub use anyhow::Result;
 use convert_case::{Case, Casing};
 use indexmap::{IndexMap, IndexSet};
-use openapi::v3_0 as openapi3;
+use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter};
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
 use std::str::FromStr;
@@ -309,12 +309,33 @@ impl<'a> Transpiler<'a> {
             let mut content_type: Option<String> = None;
 
             if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
-                let content_type_header = headers
-                    .iter()
-                    .find(|h| h.key.to_lowercase() == "content-type");
-                if let Some(t) = content_type_header {
-                    let content_type_parts: Vec<&str> = t.value.split(';').collect();
-                    content_type = Some(content_type_parts[0].to_string());
+                for header in headers.iter() {
+                    let key = header.key.to_lowercase();
+                    if key == "accept" || key == "authorization" {
+                        continue;
+                    }
+                    if key == "content-type" {
+                        let content_type_parts: Vec<&str> = header.value.split(';').collect();
+                        content_type = Some(content_type_parts[0].to_owned());
+                    } else {
+                        let param = ObjectOrReference::Object(Parameter {
+                            location: "header".to_owned(),
+                            name: header.key.to_owned(),
+                            description: extract_description(&header.description),
+                            schema: Some(openapi3::Schema {
+                                schema_type: Some("string".to_owned()),
+                                example: Some(serde_json::Value::String(header.value.to_owned())),
+                                ..openapi3::Schema::default()
+                            }),
+                            ..Parameter::default()
+                        });
+
+                        if op.parameters.is_none() {
+                            op.parameters = Some(vec![param]);
+                        } else {
+                            op.parameters.as_mut().unwrap().push(param);
+                        }
+                    }
                 }
             }
 
