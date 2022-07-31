@@ -25,7 +25,7 @@ const MINIMUM_OPENAPI30_VERSION: &str = ">= 3.0";
 pub type Result<T> = StdResult<T, Error>;
 
 /// Supported versions of the OpenApi.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum OpenApi {
     /// Version 2.0 of the OpenApi specification.

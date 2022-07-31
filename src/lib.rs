@@ -69,7 +69,7 @@ pub fn transpile(collection: &str, format: &str) -> std::result::Result<String, 
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum TargetFormat {
     Json,
     Yaml,
@@ -670,7 +670,7 @@ impl<'a> Transpiler<'a> {
                         if let Some(v2) = v.as_str() {
                             let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
                             return self.resolve_variables(
-                                &re.replace_all(&s, v2).to_string(),
+                                &re.replace_all(&s, v2),
                                 sub_replace_credits - 1,
                             );
                         }
@@ -844,10 +844,13 @@ impl<'a> Transpiler<'a> {
                     .captures_iter(segment.as_str())
                     .map(|capture| {
                         let var = capture.get(1).unwrap().as_str();
-                        let mut param = openapi3::Parameter::default();
-                        param.name = var.to_string();
-                        param.location = "path".to_string();
-                        param.required = Some(true);
+                        let mut param = Parameter {
+                            name: var.to_owned(),
+                            location: "path".to_owned(),
+                            required: Some(true),
+                            ..Parameter::default()
+                        };
+
                         let mut schema = openapi3::Schema {
                             schema_type: Some("string".to_string()),
                             ..Default::default()
@@ -896,23 +899,22 @@ impl<'a> Transpiler<'a> {
                     }
 
                     keys.push(key);
-                    let mut param = openapi3::Parameter::default();
-
-                    param.name = key.to_string();
-                    param.location = "query".to_string();
-                    let mut schema = openapi3::Schema {
-                        schema_type: Some("string".to_string()),
-                        ..Default::default()
+                    let param = Parameter {
+                        name: key.to_owned(),
+                        description: extract_description(&qp.description),
+                        location: "query".to_owned(),
+                        schema: Some(openapi3::Schema {
+                            schema_type: Some("string".to_string()),
+                            example: qp.value.as_ref().map(|pval| {
+                                serde_json::Value::String(
+                                    self.resolve_variables(pval, VAR_REPLACE_CREDITS),
+                                )
+                            }),
+                            ..openapi3::Schema::default()
+                        }),
+                        ..Parameter::default()
                     };
-                    param.description = extract_description(&qp.description);
 
-                    if let Some(pval) = &qp.value {
-                        schema.example = Some(serde_json::Value::String(
-                            self.resolve_variables(pval, VAR_REPLACE_CREDITS),
-                        ));
-                    }
-
-                    param.schema = Some(schema);
                     Some(openapi3::ObjectOrReference::Object(param))
                 }
                 None => None,
