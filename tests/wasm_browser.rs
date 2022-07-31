@@ -405,7 +405,8 @@ mod wasm_browser {
 						"header": [
 							{
 								"key": "my-sample-header",
-								"value": "Lorem ipsum dolor sit amet"
+								"value": "Lorem ipsum dolor sit amet",
+								"description": "My Sample Header"
 							}
 						],
 						"url": {
@@ -4423,6 +4424,13 @@ paths:
       summary: Request Headers
       description: "A `GET` request to this endpoint returns the list of all request headers as part of the response JSON.\nIn Postman, sending your own set of headers through the [Headers tab](https://www.getpostman.com/docs/requests#headers?source=echo-collection-app-onboarding) will reveal the headers as part of the response."
       operationId: requestHeaders
+      parameters:
+        - name: my-sample-header
+          in: header
+          schema:
+            type: string
+            example: Lorem ipsum dolor sit amet
+          description: My Sample Header
       responses:
         "200":
           description: my-sample-header

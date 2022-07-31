@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(not(target_arch = "wasm32"))]
 mod unit_tests {
-    use postman2openapi::openapi::v3_0::ObjectOrReference;
+    use postman2openapi::openapi::v3_0::{ObjectOrReference, Parameter, Schema};
     use postman2openapi::openapi::OpenApi;
     use postman2openapi::postman::Spec;
     use postman2openapi::Transpiler;
@@ -73,6 +73,48 @@ mod unit_tests {
             if let ObjectOrReference::Object(b) = b {
                 assert!(b.content.contains_key("application/x-www-form-urlencoded"));
             }
+        }
+    }
+
+    #[test]
+    fn it_generates_headers_from_the_request() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        if let OpenApi::V3_0(oas) = oas {
+            let params = oas
+                .paths
+                .get("/headers")
+                .unwrap()
+                .get
+                .as_ref()
+                .unwrap()
+                .parameters
+                .as_ref()
+                .unwrap();
+            let header = params
+                .iter()
+                .find(|p| {
+                    if let ObjectOrReference::Object(p) = p {
+                        p.location == "header"
+                    } else {
+                        false
+                    }
+                })
+                .unwrap();
+            let expected = ObjectOrReference::Object(Parameter {
+                name: "my-sample-header".to_owned(),
+                location: "header".to_owned(),
+                description: Some("My Sample Header".to_owned()),
+                schema: Some(Schema {
+                    schema_type: Some("string".to_owned()),
+                    example: Some(serde_json::Value::String(
+                        "Lorem ipsum dolor sit amet".to_owned(),
+                    )),
+                    ..Schema::default()
+                }),
+                ..Parameter::default()
+            });
+            assert_eq!(header, &expected);
         }
     }
 
