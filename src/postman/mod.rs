@@ -1,6 +1,6 @@
 extern crate serde_json;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Spec {
     #[serde(rename = "auth")]
     pub auth: Option<Auth>,
@@ -22,7 +22,7 @@ pub struct Spec {
 }
 
 /// Represents authentication helpers provided by Postman
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Auth {
     /// The attributes for [AWS
     /// Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html).
@@ -70,7 +70,7 @@ pub struct Auth {
 
 /// Represents an attribute for any authorization method provided by Postman. For example
 /// `username` and `password` are set as auth attributes for Basic Authentication method.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AuthAttribute {
     #[serde(rename = "key")]
     pub key: String,
@@ -82,7 +82,7 @@ pub struct AuthAttribute {
     pub value: Option<serde_json::Value>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AuthAttributeUnion {
     AuthAttribute20(Option<serde_json::Value>),
@@ -93,7 +93,7 @@ pub enum AuthAttributeUnion {
 /// are stored here, and can be referenced in the collection by their ID.
 ///
 /// Defines a script associated with an associated event name
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Event {
     /// Indicates whether the event is disabled. If absent, the event is assumed to be enabled.
     #[serde(rename = "disabled")]
@@ -113,7 +113,7 @@ pub struct Event {
 
 /// A script is a snippet of Javascript code that can be used to to perform setup or teardown
 /// operations on a particular response.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Script {
     #[serde(rename = "exec")]
     pub exec: Option<Host>,
@@ -134,7 +134,7 @@ pub struct Script {
     pub script_type: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UrlClass {
     /// Contains the URL fragment (if any). Usually this is not transmitted over the network, but
     /// it could be useful to store this in some cases.
@@ -174,7 +174,7 @@ pub struct UrlClass {
     pub variable: Option<Vec<Variable>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PathClass {
     #[serde(rename = "type")]
     pub path_type: Option<String>,
@@ -183,7 +183,7 @@ pub struct PathClass {
     pub value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct QueryParam {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -199,7 +199,7 @@ pub struct QueryParam {
     pub value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Description {
     /// The content of the description goes here, as a raw string.
     #[serde(rename = "content")]
@@ -223,7 +223,7 @@ pub struct Description {
 /// Using variables in your Postman requests eliminates the need to duplicate requests, which
 /// can save a lot of time. Variables can be defined, and referenced to from any part of a
 /// request.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Variable {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -260,7 +260,7 @@ pub struct Variable {
 }
 
 /// Detailed description of the info block
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Information {
     /// Every collection is identified by the unique value of this field. The value of this field
     /// is usually easiest to generate using a UID generator function. If you already have a
@@ -288,7 +288,7 @@ pub struct Information {
     pub version: Option<CollectionVersion>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CollectionVersionClass {
     /// A human friendly identifier to make sense of the version numbers. E.g: 'beta-3'
     #[serde(rename = "identifier")]
@@ -318,7 +318,7 @@ pub struct CollectionVersionClass {
 /// One of the primary goals of Postman is to organize the development of APIs. To this end,
 /// it is necessary to be able to group requests together. This can be achived using
 /// 'Folders'. A folder just is an ordered set of requests.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Items {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -360,14 +360,14 @@ pub struct Items {
 }
 
 /// Set of configurations used to alter the usual behavior of sending the request
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ProtocolProfileBehavior {
     /// Disable body pruning for GET, COPY, HEAD, PURGE and UNLOCK request methods.
     #[serde(rename = "disableBodyPruning")]
     pub disable_body_pruning: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RequestClass {
     #[serde(rename = "auth")]
     pub auth: Option<Auth>,
@@ -395,7 +395,7 @@ pub struct RequestClass {
 }
 
 /// This field contains the data usually contained in the request body.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Body {
     /// When set to true, prevents request body from being sent.
     #[serde(rename = "disabled")]
@@ -418,7 +418,7 @@ pub struct Body {
     pub urlencoded: Option<Vec<UrlEncodedParameter>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct File {
     #[serde(rename = "content")]
     pub content: Option<String>,
@@ -427,7 +427,7 @@ pub struct File {
     pub src: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct FormParameter {
     /// Override Content-Type header of this form data entity.
     #[serde(rename = "contentType")]
@@ -450,7 +450,7 @@ pub struct FormParameter {
     pub value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UrlEncodedParameter {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -466,7 +466,7 @@ pub struct UrlEncodedParameter {
 }
 
 /// A representation of an ssl certificate
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Certificate {
     /// An object containing path to file certificate, on the file system
     #[serde(rename = "cert")]
@@ -490,7 +490,7 @@ pub struct Certificate {
 }
 
 /// An object containing path to file certificate, on the file system
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Cert {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
@@ -498,7 +498,7 @@ pub struct Cert {
 }
 
 /// An object containing path to file containing private key, on the file system
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Key {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
@@ -508,7 +508,7 @@ pub struct Key {
 /// A representation for a list of headers
 ///
 /// Represents a single HTTP Header
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Header {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -528,7 +528,7 @@ pub struct Header {
 
 /// Using the Proxy, you can configure your custom proxy into the postman for particular url
 /// match
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ProxyConfig {
     /// When set to true, ignores this proxy configuration entity
     #[serde(rename = "disabled")]
@@ -551,7 +551,7 @@ pub struct ProxyConfig {
     pub tunnel: Option<bool>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ResponseClass {
     /// The name of the response.
     #[serde(rename = "name")]
@@ -591,7 +591,7 @@ pub struct ResponseClass {
 
 /// A Cookie, that follows the [Google Chrome
 /// format](https://developer.chrome.com/extensions/cookies)
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Cookie {
     /// The domain for which this cookie is valid.
     #[serde(rename = "domain")]
@@ -643,7 +643,7 @@ pub struct Cookie {
 
 /// The host for the URL, E.g: api.yourdomain.com. Can be stored as a string or as an array
 /// of strings.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Host {
     String(String),
@@ -653,7 +653,7 @@ pub enum Host {
 
 /// If object, contains the complete broken-down URL for this request. If string, contains
 /// the literal request URL.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Url {
     String(String),
@@ -661,7 +661,7 @@ pub enum Url {
     UrlClass(UrlClass),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum UrlPath {
     String(String),
@@ -671,7 +671,7 @@ pub enum UrlPath {
 
 /// The complete path of the current url, broken down into segments. A segment could be a
 /// string, or a path variable.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum PathElement {
     PathClass(PathClass),
@@ -681,7 +681,7 @@ pub enum PathElement {
 
 /// A Description can be a raw text, or be an object, which holds the description along with
 /// its format.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DescriptionUnion {
     Description(Description),
@@ -692,7 +692,7 @@ pub enum DescriptionUnion {
 /// Postman allows you to version your collections as they grow, and this field holds the
 /// version number. While optional, it is recommended that you use this field to its fullest
 /// extent!
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum CollectionVersion {
     CollectionVersionClass(CollectionVersionClass),
@@ -702,7 +702,7 @@ pub enum CollectionVersion {
 
 /// A request represents an HTTP request. If a string, the string is assumed to be the
 /// request URL and the method is assumed to be 'GET'.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum RequestUnion {
     RequestClass(Box<RequestClass>),
@@ -710,7 +710,7 @@ pub enum RequestUnion {
     String(String),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HeaderUnion {
     HeaderArray(Vec<Header>),
@@ -719,7 +719,7 @@ pub enum HeaderUnion {
 }
 
 /// A response represents an HTTP response.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Response {
     //AnythingArray(Vec<Option<serde_json::Value>>),
@@ -734,7 +734,7 @@ pub enum Response {
     String(String),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Headers {
     String(String),
@@ -744,7 +744,7 @@ pub enum Headers {
 
 /// No HTTP request is complete without its headers, and the same is true for a Postman
 /// request. This field is an array containing all the headers.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HeaderElement {
     Header(Header),
@@ -754,15 +754,15 @@ pub enum HeaderElement {
 
 /// The time taken by the request to complete. If a number, the unit is milliseconds. If the
 /// response is manually created, this can be set to `null`.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ResponseTime {
-    Double(f64),
+    Number(u64),
 
     String(String),
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum AuthType {
     #[serde(rename = "awsv4")]
     Awsv4,
@@ -803,7 +803,7 @@ impl Default for AuthType {
 }
 
 /// A variable may have multiple types. This field specifies the type of the variable.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum VariableType {
     #[serde(rename = "any")]
     Any,
@@ -819,7 +819,7 @@ pub enum VariableType {
 }
 
 /// Postman stores the type of data associated with this request in this field.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum Mode {
     #[serde(rename = "file")]
     File,

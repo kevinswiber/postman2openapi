@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 
 // http://json.schemastore.org/swagger-2.0
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Scheme {
     Http,
@@ -19,7 +19,7 @@ impl Default for Scheme {
 }
 
 /// top level document
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Spec {
     /// The Swagger version of this document.
@@ -61,7 +61,7 @@ pub struct Spec {
     pub external_docs: Option<Vec<ExternalDoc>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub struct Tag {
     pub name: String,
@@ -71,7 +71,7 @@ pub struct Tag {
     pub external_docs: Option<Vec<ExternalDoc>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct ExternalDoc {
     pub url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -81,7 +81,7 @@ pub struct ExternalDoc {
 /// General information about the API.
 ///
 /// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#info-object
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub struct Info {
     /// A unique and precise title of the API.
@@ -100,7 +100,7 @@ pub struct Info {
     pub version: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Contact {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
@@ -113,7 +113,7 @@ pub struct Contact {
 }
 
 /// todo x-* properties
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct License {
     /// The name of the license type. It's encouraged to use an OSI
     /// compatible license.
@@ -126,7 +126,7 @@ pub struct License {
 }
 
 /// todo support x-* properties
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct PathItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub get: Option<Operation>,
@@ -147,7 +147,7 @@ pub struct PathItem {
 }
 
 /// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#operation-object
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub struct Operation {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -174,7 +174,7 @@ pub struct Operation {
 /// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#securityRequirementObject
 pub type SecurityRequirement = BTreeMap<String, Vec<String>>;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Parameter {
     pub name: String,
@@ -199,7 +199,7 @@ pub struct Parameter {
     default: Option<serde_json::Value>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Response {
     pub description: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -208,7 +208,7 @@ pub struct Response {
 
 // todo: support x-* fields
 /// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md#parameter-object
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum ParameterOrRef {
     /// both bodyParameter and nonBodyParameter in one for now
@@ -265,7 +265,7 @@ pub enum ParameterOrRef {
         ref_path: String,
     },
 }
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(tag = "type")]
 pub enum Security {
     #[serde(rename = "apiKey")]
@@ -295,7 +295,7 @@ pub enum Security {
     },
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum Flow {
     Implicit,
@@ -308,7 +308,7 @@ pub enum Flow {
 /// the shape and properties of an object.
 ///
 /// This may also contain a `$ref` to another definition
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Schema {
     #[serde(skip_serializing_if = "Option::is_none")]
     /// [JSON reference](https://tools.ietf.org/html/draft-pbryan-zyp-json-ref-03)
