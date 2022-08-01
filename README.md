@@ -34,7 +34,7 @@ For Rust developers, installation is also available via Cargo. [Installing Rust 
 To install the latest published version on crates.io, use:
 
 ```
-cargo install postman2openapi --features binary
+cargo install postman2openapi --bin --features binary
 ```
 
 To install from the latest on GitHub, use:
