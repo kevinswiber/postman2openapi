@@ -1,0 +1,117 @@
+{
+  "info": {
+    "_postman_id": "bff8cb92-c6f1-465a-a0c6-43d233ab0a37",
+    "name": "Star Wars GraphQL API - documentation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10825352"
+  },
+  "item": [
+    {
+      "name": "queries",
+      "item": [
+        {
+          "name": "hero",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query hero ($episode: Episode!) {\n    hero (episode: $episode) {\n        id\n        name\n        friends {\n            id\n            name\n            friends {\n                id\n                name\n                appearsIn\n            }\n            appearsIn\n        }\n        appearsIn\n    }\n}",
+                "variables": "{\n  \"episode\": \"\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "human",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query human ($id: String!) {\n    human (id: $id) {\n        id\n        name\n        friends {\n            id\n            name\n            friends {\n                id\n                name\n                appearsIn\n            }\n            appearsIn\n        }\n        appearsIn\n        homePlanet\n    }\n}",
+                "variables": "{\n  \"id\": \"\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "humans",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query humans ($after: String, $before: String, $first: Int, $last: Int) {\n    humans (after: $after, before: $before, first: $first, last: $last) {\n        pageInfo {\n            hasPreviousPage\n            hasNextPage\n            startCursor\n            endCursor\n        }\n        edges {\n            node {\n                id\n                name\n                friends {\n                    id\n                    name\n                    friends {\n                        id\n                        name\n                        appearsIn\n                    }\n                    appearsIn\n                }\n                appearsIn\n                homePlanet\n            }\n            cursor\n        }\n    }\n}",
+                "variables": "{\n  \"after\": \"\",\n  \"before\": \"\",\n  \"first\": 0,\n  \"last\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "droid",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query droid ($id: String!) {\n    droid (id: $id) {\n        id\n        name\n        friends {\n            id\n            name\n            friends {\n                id\n                name\n                appearsIn\n            }\n            appearsIn\n        }\n        appearsIn\n        primaryFunction\n    }\n}",
+                "variables": "{\n  \"id\": \"\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "droids",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query droids ($after: String, $before: String, $first: Int, $last: Int) {\n    droids (after: $after, before: $before, first: $first, last: $last) {\n        pageInfo {\n            hasPreviousPage\n            hasNextPage\n            startCursor\n            endCursor\n        }\n        edges {\n            node {\n                id\n                name\n                friends {\n                    id\n                    name\n                    friends {\n                        id\n                        name\n                        appearsIn\n                    }\n                    appearsIn\n                }\n                appearsIn\n                primaryFunction\n            }\n            cursor\n        }\n    }\n}",
+                "variables": "{\n  \"after\": \"\",\n  \"before\": \"\",\n  \"first\": 0,\n  \"last\": 0\n}"
+              }
+            },
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": "https://swapi-graphql.netlify.app/.netlify/functions/index",
+      "type": "any"
+    }
+  ]
+}
