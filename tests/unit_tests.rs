@@ -121,6 +121,18 @@ mod unit_tests {
         }
     }
 
+    #[test]
+    fn it_generates_root_path_when_no_path_exists_in_collection() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("only-root-path.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                assert!(oas.paths.contains_key("/"));
+            }
+        }
+    }
+
     fn get_fixture(filename: &str) -> String {
         use std::fs;
 

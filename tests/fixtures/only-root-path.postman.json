@@ -1,0 +1,87 @@
+{
+  "info": {
+    "_postman_id": "bff8cb92-c6f1-465a-a0c6-43d233ab0a37",
+    "name": "Star Wars GraphQL API - documentation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10825352"
+  },
+  "item": [
+    {
+      "name": "queries",
+      "item": [
+        {
+          "name": "hero",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {},
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "human",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {},
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "humans",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {},
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "droid",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {},
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "droids",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {},
+            "url": {
+              "raw": "{{url}}",
+              "host": ["{{url}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "url",
+      "value": "https://swapi-graphql.netlify.app/.netlify/functions/index",
+      "type": "any"
+    }
+  ]
+}

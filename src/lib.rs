@@ -208,9 +208,13 @@ impl<'a> Transpiler<'a> {
                     self.transform_server(state, u, parts);
                 }
 
-                if let Some(postman::UrlPath::UnionArray(p)) = &u.path {
-                    self.transform_paths(state, item, request, name, u, p)
-                }
+                let root_path: Vec<postman::PathElement> = vec![];
+                let paths = match &u.path {
+                    Some(postman::UrlPath::UnionArray(p)) => p,
+                    _ => &root_path,
+                };
+
+                self.transform_paths(state, item, request, name, u, paths)
             }
         }
     }
