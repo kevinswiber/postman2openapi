@@ -204,7 +204,7 @@ checksum = "21326818e99cfe6ce1e524c2a805c189a99b5ae555a35d19f9a284b427d86afa"
 
 [[package]]
 name = "postman2openapi"
-version = "1.0.0-beta"
+version = "1.0.0"
 dependencies = [
  "anyhow",
  "atty",
