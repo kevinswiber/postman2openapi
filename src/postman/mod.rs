@@ -184,6 +184,15 @@ pub struct PathClass {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct GraphQlBodyClass {
+    #[serde(rename = "query")]
+    pub query: Option<String>,
+
+    #[serde(rename = "variables")]
+    pub variables: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct QueryParam {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -269,6 +278,9 @@ pub struct Information {
     /// *Note: This field exists for compatibility reasons with Collection Format V1.*
     #[serde(rename = "_postman_id")]
     pub postman_id: Option<String>,
+
+    #[serde(rename = "_exporter_id")]
+    pub exporter_id: Option<String>,
 
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -416,6 +428,9 @@ pub struct Body {
 
     #[serde(rename = "urlencoded")]
     pub urlencoded: Option<Vec<UrlEncodedParameter>>,
+
+    #[serde(rename = "graphql")]
+    pub graphql: Option<GraphQlBody>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -763,6 +778,14 @@ pub enum ResponseTime {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum GraphQlBody {
+    String(String),
+
+    GraphQlBodyClass(GraphQlBodyClass),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum AuthType {
     #[serde(rename = "awsv4")]
     Awsv4,
@@ -832,4 +855,7 @@ pub enum Mode {
 
     #[serde(rename = "urlencoded")]
     Urlencoded,
+
+    #[serde(rename = "graphql")]
+    GraphQl,
 }

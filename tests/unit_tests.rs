@@ -1,7 +1,7 @@
 #[cfg(test)]
 #[cfg(not(target_arch = "wasm32"))]
 mod unit_tests {
-    use postman2openapi::openapi::v3_0::{ObjectOrReference, Parameter, Schema};
+    use postman2openapi::openapi::v3_0::{MediaTypeExample, ObjectOrReference, Parameter, Schema};
     use postman2openapi::openapi::OpenApi;
     use postman2openapi::postman::Spec;
     use postman2openapi::Transpiler;
@@ -129,6 +129,45 @@ mod unit_tests {
         match oas {
             OpenApi::V3_0(oas) => {
                 assert!(oas.paths.contains_key("/"));
+            }
+        }
+    }
+
+    #[test]
+    fn it_parses_graphql_request_bodies() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("graphql.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let body = oas
+                    .paths
+                    .get("/")
+                    .unwrap()
+                    .post
+                    .as_ref()
+                    .unwrap()
+                    .request_body
+                    .as_ref()
+                    .unwrap();
+
+                if let ObjectOrReference::Object(body) = body {
+                    assert!(body.content.contains_key("application/json"));
+                    let content = body.content.get("application/json").unwrap();
+                    let schema = content.schema.as_ref().unwrap();
+                    if let ObjectOrReference::Object(schema) = schema {
+                        let props = schema.properties.as_ref().unwrap();
+                        assert!(props.contains_key("query"));
+                        assert!(props.contains_key("variables"));
+                    }
+                    let examples = content.examples.as_ref().unwrap();
+                    if let MediaTypeExample::Example { example } = examples {
+                        let example: serde_json::Map<String, serde_json::Value> =
+                            serde_json::from_value(example.clone()).unwrap();
+                        assert!(example.contains_key("query"));
+                        assert!(example.contains_key("variables"));
+                    }
+                }
             }
         }
     }

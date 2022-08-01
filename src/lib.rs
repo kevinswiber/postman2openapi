@@ -637,6 +637,49 @@ impl<'a> Transpiler<'a> {
                         content.schema = Some(openapi3::ObjectOrReference::Object(schema));
                     }
                 }
+
+                postman::Mode::GraphQl => {
+                    content_type = Some("application/json".to_string());
+
+                    // The schema is the same for every GraphQL request.
+                    content.schema = Some(ObjectOrReference::Object(openapi3::Schema {
+                        schema_type: Some("object".to_owned()),
+                        properties: Some(BTreeMap::from([
+                            (
+                                "query".to_owned(),
+                                openapi3::Schema {
+                                    schema_type: Some("string".to_owned()),
+                                    ..openapi3::Schema::default()
+                                },
+                            ),
+                            (
+                                "variables".to_owned(),
+                                openapi3::Schema {
+                                    schema_type: Some("object".to_owned()),
+                                    ..openapi3::Schema::default()
+                                },
+                            ),
+                        ])),
+                        ..openapi3::Schema::default()
+                    }));
+
+                    if let Some(postman::GraphQlBody::GraphQlBodyClass(graphql)) = &body.graphql {
+                        if let Some(query) = &graphql.query {
+                            let mut example_map = serde_json::Map::new();
+                            example_map.insert("query".to_owned(), query.to_owned().into());
+                            if let Some(vars) = &graphql.variables {
+                                if let Ok(vars) = serde_json::from_str::<serde_json::Value>(vars) {
+                                    example_map.insert("variables".to_owned(), vars);
+                                }
+                            }
+
+                            let example = openapi3::MediaTypeExample::Example {
+                                example: serde_json::Value::Object(example_map),
+                            };
+                            content.examples = Some(example);
+                        }
+                    }
+                }
                 _ => content_type = Some("application/octet-stream".to_string()),
             }
         }
