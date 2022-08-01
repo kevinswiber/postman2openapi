@@ -54,7 +54,7 @@ jobs:
         run: echo "${{ steps.release.outputs.upload_url }}" > artifacts/release-upload-url
 
       - name: Save version number to artifact
-        run: echo "$POSTMAN2OPENAPI_VERSION" > artifacts/release-version
+        run: echo "${{ env.POSTMAN2OPENAPI_VERSION }}" > artifacts/release-version
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
@@ -127,6 +127,7 @@ jobs:
 
       - name: Use Cross
         if: matrix.target != '' && matrix.build != 'wasm32'
+        shell: bash
         run: |
           # We used to install 'cross' from master, but it kept failing. So now
           # we build from a known-good version until 'cross' becomes more stable
@@ -139,9 +140,9 @@ jobs:
 
       - name: Show command used for Cargo
         run: |
-          echo "cargo command is: $CARGO"
-          echo "target flag is: $TARGET_FLAGS"
-          echo "target dir is: $TARGET_DIR"
+          echo "cargo command is: ${{ env.CARGO }}"
+          echo "target flag is: ${{ env.TARGET_FLAGS }}"
+          echo "target dir is: ${{ env.TARGET_DIR }}"
 
       - name: Get release download URL
         uses: actions/download-artifact@v1
@@ -161,7 +162,7 @@ jobs:
           echo "release version: $RELEASE_VERSION"
 
       - name: Build release binary
-        run: $CARGO build --verbose --features binary --release $TARGET_FLAGS
+        run: ${{ env.CARGO }} build --verbose --features binary --release ${{ env.TARGET_FLAGS }}
 
       - name: Strip release binary (linux and macos)
         if: matrix.build == 'linux' || matrix.build == 'macos'
@@ -170,8 +171,8 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          outdir="$(ci/cargo-out-dir "$TARGET_DIR")"
-          staging="postman2openapi-$RELEASE_VERSION-${{ matrix.target }}"
+          outdir="$(ci/cargo-out-dir "${{ env.TARGET_DIR }}")"
+          staging="postman2openapi-${{ env.RELEASE_VERSION }}-${{ matrix.target }}"
           mkdir "$staging"/
 
           cp {README.md,LICENSE} "$staging/"
