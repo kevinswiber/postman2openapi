@@ -126,14 +126,16 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Use Cross
-        # if: matrix.os != 'windows-2019'
+        if: matrix.target != '' && matrix.build != 'wasm32'
         run: |
-          # FIXME: to work around bugs in latest cross release, install master.
-          # See: https://github.com/rust-embedded/cross/issues/357
-          cargo install --git https://github.com/rust-embedded/cross
-          echo "::set-env name=CARGO::cross"
-          echo "::set-env name=TARGET_FLAGS::--target ${{ matrix.target }}"
-          echo "::set-env name=TARGET_DIR::./target/${{ matrix.target }}"
+          # We used to install 'cross' from master, but it kept failing. So now
+          # we build from a known-good version until 'cross' becomes more stable
+          # or we find an alternative. Notably, between v0.2.1 and current
+          # master (2022-06-14), the number of Cross's dependencies has doubled.
+          cargo install --bins --git https://github.com/rust-embedded/cross --tag v0.2.1
+          echo "CARGO=cross" >> $GITHUB_ENV
+          echo "TARGET_FLAGS=--target ${{ matrix.target }}" >> $GITHUB_ENV
+          echo "TARGET_DIR=./target/${{ matrix.target }}" >> $GITHUB_ENV
 
       - name: Show command used for Cargo
         run: |
