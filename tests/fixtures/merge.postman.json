@@ -1,0 +1,200 @@
+{
+  "info": {
+    "name": "Example Products API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST /products/ (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "type": "text",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"id\": \"09\",\n    \"name\": \"Gem Visa\",\n    \"type\": \"CREDIT_CARD\",\n    \"price\": 99.99,\n    \"version\": \"v1\"\n}"
+        },
+        "url": {
+          "raw": "{{host}}/products",
+          "host": ["{{host}}"],
+          "path": ["products"]
+        },
+        "description": "Create a product"
+      },
+      "response": [
+        {
+          "name": "POST /products/ (200)",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"09\",\n    \"name\": \"Gem Visa\",\n    \"type\": \"CREDIT_CARD\",\n    \"price\": 99.99,\n    \"version\": \"v1\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/products",
+              "host": ["{{host}}"],
+              "path": ["products"]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "79"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"4f-7upA8VUHobjcwMU2JZU+mGYVfEo\""
+            },
+            {
+              "key": "Date",
+              "value": "Sun, 09 May 2021 12:29:53 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"id\": \"09\",\n    \"name\": \"Gem Visa\",\n    \"type\": \"CREDIT_CARD\",\n    \"price\": 99.99,\n    \"version\": \"v1\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "POST /products/ (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {",
+              "    pm.response.to.have.status(400);",
+              "});",
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "type": "text",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n\n}"
+        },
+        "url": {
+          "raw": "{{host}}/products",
+          "host": ["{{host}}"],
+          "path": ["products"]
+        },
+        "description": "Create a product"
+      },
+      "response": [
+        {
+          "name": "POST /products/ (400)",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n\"hi\":\"there\"\n}"
+            },
+            "url": {
+              "raw": "{{host}}/products",
+              "host": ["{{host}}"],
+              "path": ["products"]
+            }
+          },
+          "status": "Bad Request",
+          "code": 400,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "X-Powered-By",
+              "value": "Express"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json; charset=utf-8"
+            },
+            {
+              "key": "Content-Length",
+              "value": "29"
+            },
+            {
+              "key": "ETag",
+              "value": "W/\"1d-pnhbRSD4NZML3cnaJuyottC+RiE\""
+            },
+            {
+              "key": "Date",
+              "value": "Sun, 09 May 2021 12:53:30 GMT"
+            },
+            {
+              "key": "Connection",
+              "value": "keep-alive"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n    \"message\": \"invalid product\"\n}"
+        }
+      ]
+    }
+  ]
+}

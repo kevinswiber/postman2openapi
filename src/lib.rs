@@ -295,7 +295,23 @@ impl<'a> Transpiler<'a> {
 
             path.parameters = self.generate_path_parameters(&resolved_segments, &url.variable);
 
-            let mut op = openapi3::Operation::default();
+            let m = request
+                .method
+                .as_ref()
+                .unwrap_or(&"get".to_owned())
+                .to_lowercase();
+
+            let mut op = match m.as_str() {
+                "get" => path.get.clone(),
+                "post" => path.post.clone(),
+                "put" => path.put.clone(),
+                "delete" => path.delete.clone(),
+                "patch" => path.patch.clone(),
+                "options" => path.options.clone(),
+                "trace" => path.trace.clone(),
+                _ => Some(openapi3::Operation::default()),
+            }
+            .unwrap_or(openapi3::Operation::default());
 
             if let Some(qp) = &url.query {
                 if let Some(mut query_params) = self.generate_query_parameters(qp) {
@@ -344,7 +360,7 @@ impl<'a> Transpiler<'a> {
             }
 
             if let Some(body) = &request.body {
-                self.extract_request_body(body, &mut op, content_type);
+                self.extract_request_body(request_name, body, &mut op, content_type);
             }
 
             op.summary = Some(request_name.to_string());
@@ -482,64 +498,65 @@ impl<'a> Transpiler<'a> {
                 );
             }
 
-            if let Some(method) = &request.method {
-                let m = method.to_lowercase();
-                let mut op_id = request_name
-                    .chars()
-                    .map(|c| match c {
-                        'A'..='Z' | 'a'..='z' | '0'..='9' => c,
-                        _ => ' ',
-                    })
-                    .collect::<String>()
-                    .from_case(Case::Title)
-                    .to_case(Case::Camel);
-                match state.operation_ids.get_mut(&op_id) {
-                    Some(v) => {
-                        *v += 1;
-                        op_id = format!("{}{}", op_id, v);
-                    }
-                    None => {
-                        state.operation_ids.insert(op_id.clone(), 0);
-                    }
+            let mut op_id = request_name
+                .chars()
+                .map(|c| match c {
+                    'A'..='Z' | 'a'..='z' | '0'..='9' => c,
+                    _ => ' ',
+                })
+                .collect::<String>()
+                .from_case(Case::Title)
+                .to_case(Case::Camel);
+            match state.operation_ids.get_mut(&op_id) {
+                Some(v) => {
+                    *v += 1;
+                    op_id = format!("{}{}", op_id, v);
                 }
+                None => {
+                    state.operation_ids.insert(op_id.clone(), 0);
+                }
+            }
 
-                op.operation_id = Some(op_id);
-                match m.as_str() {
-                    "get" => {
-                        path.get = Some(op);
-                    }
-                    "post" => {
-                        path.post = Some(op);
-                    }
-                    "put" => {
-                        path.put = Some(op);
-                    }
-                    "delete" => {
-                        path.delete = Some(op);
-                    }
-                    "patch" => {
-                        path.patch = Some(op);
-                    }
-                    "options" => {
-                        path.options = Some(op);
-                    }
-                    "trace" => {
-                        path.trace = Some(op);
-                    }
-                    _ => {}
+            op.operation_id = Some(op_id);
+            match m.as_str() {
+                "get" => {
+                    path.get = Some(op);
                 }
+                "post" => {
+                    path.post = Some(op);
+                }
+                "put" => {
+                    path.put = Some(op);
+                }
+                "delete" => {
+                    path.delete = Some(op);
+                }
+                "patch" => {
+                    path.patch = Some(op);
+                }
+                "options" => {
+                    path.options = Some(op);
+                }
+                "trace" => {
+                    path.trace = Some(op);
+                }
+                _ => {}
             }
         }
     }
 
     fn extract_request_body(
         &self,
+        name: &str,
         body: &postman::Body,
         op: &mut openapi3::Operation,
         ct: Option<String>,
     ) {
         let mut content_type = ct;
-        let mut request_body = openapi3::RequestBody::default();
+        let mut request_body = match &op.request_body {
+            Some(ObjectOrReference::Object(b)) => b.clone(),
+            _ => openapi3::RequestBody::default(),
+        };
         let mut content = openapi3::MediaType::default();
 
         if let Some(mode) = &body.mode {
@@ -555,9 +572,31 @@ impl<'a> Transpiler<'a> {
                             Ok(v) => match v {
                                 serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                     content_type = Some("application/json".to_string());
+                                    let mut original_schema: Option<openapi3::Schema> = None;
+                                    if let Some(ObjectOrReference::Object(b)) = &op.request_body {
+                                        if b.content.contains_key(content_type.as_ref().unwrap()) {
+                                            content = b
+                                                .content
+                                                .get(content_type.as_ref().unwrap())
+                                                .unwrap()
+                                                .clone();
+                                            let s = &content.schema;
+                                            if let Some(ObjectOrReference::Object(s)) = s {
+                                                original_schema = Some(s.clone());
+                                            }
+                                        }
+                                    }
                                     if let Some(schema) = self.generate_schema(&v) {
-                                        content.schema =
-                                            Some(openapi3::ObjectOrReference::Object(schema));
+                                        if original_schema.is_some() {
+                                            content.schema =
+                                                Some(ObjectOrReference::Object(self.merge_schemas(
+                                                    original_schema.unwrap(),
+                                                    &schema,
+                                                )))
+                                        } else {
+                                            content.schema =
+                                                Some(openapi3::ObjectOrReference::Object(schema));
+                                        }
                                     }
                                     example_val = v;
                                 }
@@ -572,14 +611,42 @@ impl<'a> Transpiler<'a> {
                             }
                         }
 
-                        let example = openapi3::MediaTypeExample::Example {
-                            example: example_val,
+                        let example = openapi3::Example {
+                            summary: Some(name.to_owned()),
+                            value: Some(example_val),
+                            ..openapi3::Example::default()
                         };
-                        content.examples = Some(example);
+
+                        if let Some(openapi3::MediaTypeExample::Examples { mut examples }) =
+                            content.examples.clone()
+                        {
+                            examples.insert(name.to_owned(), ObjectOrReference::Object(example));
+                        } else {
+                            content.examples = Some(openapi3::MediaTypeExample::Examples {
+                                examples: BTreeMap::from([(
+                                    name.to_owned(),
+                                    ObjectOrReference::Object(example),
+                                )]),
+                            });
+                        }
                     }
                 }
                 postman::Mode::Urlencoded => {
                     content_type = Some("application/x-www-form-urlencoded".to_string());
+                    let mut original_schema: Option<openapi3::Schema> = None;
+                    if let Some(ObjectOrReference::Object(b)) = &op.request_body {
+                        if b.content.contains_key(content_type.as_ref().unwrap()) {
+                            content = b
+                                .content
+                                .get(content_type.as_ref().unwrap())
+                                .unwrap()
+                                .clone();
+                            let s = &content.schema;
+                            if let Some(ObjectOrReference::Object(s)) = s {
+                                original_schema = Some(s.clone());
+                            }
+                        }
+                    }
                     if let Some(urlencoded) = &body.urlencoded {
                         let mut oas_data = serde_json::Map::new();
                         for i in urlencoded {
@@ -590,14 +657,51 @@ impl<'a> Transpiler<'a> {
                         }
                         let oas_obj = serde_json::Value::Object(oas_data);
                         if let Some(schema) = self.generate_schema(&oas_obj) {
-                            content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                            if original_schema.is_some() {
+                                content.schema = Some(ObjectOrReference::Object(
+                                    self.merge_schemas(original_schema.unwrap(), &schema),
+                                ))
+                            } else {
+                                content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                            }
                         }
-                        let example = openapi3::MediaTypeExample::Example { example: oas_obj };
-                        content.examples = Some(example);
+
+                        let example = openapi3::Example {
+                            summary: Some(name.to_owned()),
+                            value: Some(oas_obj),
+                            ..openapi3::Example::default()
+                        };
+
+                        if let Some(openapi3::MediaTypeExample::Examples { mut examples }) =
+                            content.examples.clone()
+                        {
+                            examples.insert(name.to_owned(), ObjectOrReference::Object(example));
+                        } else {
+                            content.examples = Some(openapi3::MediaTypeExample::Examples {
+                                examples: BTreeMap::from([(
+                                    name.to_owned(),
+                                    ObjectOrReference::Object(example),
+                                )]),
+                            });
+                        }
                     }
                 }
                 postman::Mode::Formdata => {
                     content_type = Some("multipart/form-data".to_string());
+                    let mut original_schema: Option<openapi3::Schema> = None;
+                    if let Some(ObjectOrReference::Object(b)) = &op.request_body {
+                        if b.content.contains_key(content_type.as_ref().unwrap()) {
+                            content = b
+                                .content
+                                .get(content_type.as_ref().unwrap())
+                                .unwrap()
+                                .clone();
+                            let s = &content.schema;
+                            if let Some(ObjectOrReference::Object(s)) = s {
+                                original_schema = Some(s.clone());
+                            }
+                        }
+                    }
                     let mut schema = openapi3::Schema {
                         schema_type: Some("object".to_string()),
                         ..Default::default()
@@ -634,12 +738,28 @@ impl<'a> Transpiler<'a> {
                             // NOTE: Postman doesn't store the content type of multipart files. :(
                         }
                         schema.properties = Some(properties);
-                        content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                        if original_schema.is_some() {
+                            content.schema = Some(ObjectOrReference::Object(
+                                self.merge_schemas(original_schema.unwrap(), &schema),
+                            ))
+                        } else {
+                            content.schema = Some(openapi3::ObjectOrReference::Object(schema));
+                        }
                     }
                 }
 
                 postman::Mode::GraphQl => {
                     content_type = Some("application/json".to_string());
+
+                    if let Some(ObjectOrReference::Object(b)) = &op.request_body {
+                        if b.content.contains_key(content_type.as_ref().unwrap()) {
+                            content = b
+                                .content
+                                .get(content_type.as_ref().unwrap())
+                                .unwrap()
+                                .clone();
+                        }
+                    }
 
                     // The schema is the same for every GraphQL request.
                     content.schema = Some(ObjectOrReference::Object(openapi3::Schema {
@@ -673,10 +793,26 @@ impl<'a> Transpiler<'a> {
                                 }
                             }
 
-                            let example = openapi3::MediaTypeExample::Example {
-                                example: serde_json::Value::Object(example_map),
+                            let example = openapi3::Example {
+                                summary: Some(name.to_owned()),
+                                value: Some(serde_json::Value::Object(example_map)),
+                                ..openapi3::Example::default()
                             };
-                            content.examples = Some(example);
+                            if let Some(openapi3::MediaTypeExample::Examples { mut examples }) =
+                                content.examples.clone()
+                            {
+                                examples
+                                    .insert(name.to_owned(), ObjectOrReference::Object(example));
+                                content.examples =
+                                    Some(openapi3::MediaTypeExample::Examples { examples });
+                            } else {
+                                content.examples = Some(openapi3::MediaTypeExample::Examples {
+                                    examples: BTreeMap::from([(
+                                        name.to_owned(),
+                                        ObjectOrReference::Object(example),
+                                    )]),
+                                });
+                            }
                         }
                     }
                 }
@@ -769,14 +905,14 @@ impl<'a> Transpiler<'a> {
                 }
 
                 schema.items = Some(Box::new(item_schema));
-                schema.example = Some(value.clone());
+                //schema.example = Some(value.clone());
 
                 Some(schema)
             }
             serde_json::Value::String(_) => {
                 let schema = openapi3::Schema {
                     schema_type: Some("string".to_string()),
-                    example: Some(value.clone()),
+                    //example: Some(value.clone()),
                     ..Default::default()
                 };
                 Some(schema)
@@ -784,7 +920,7 @@ impl<'a> Transpiler<'a> {
             serde_json::Value::Number(_) => {
                 let schema = openapi3::Schema {
                     schema_type: Some("number".to_string()),
-                    example: Some(value.clone()),
+                    //example: Some(value.clone()),
                     ..Default::default()
                 };
                 Some(schema)
@@ -792,7 +928,7 @@ impl<'a> Transpiler<'a> {
             serde_json::Value::Bool(_) => {
                 let schema = openapi3::Schema {
                     schema_type: Some("boolean".to_string()),
-                    example: Some(value.clone()),
+                    //example: Some(value.clone()),
                     ..Default::default()
                 };
                 Some(schema)
@@ -800,7 +936,7 @@ impl<'a> Transpiler<'a> {
             serde_json::Value::Null => {
                 let schema = openapi3::Schema {
                     nullable: Some(true),
-                    example: Some(value.clone()),
+                    //example: Some(value.clone()),
                     ..Default::default()
                 };
                 Some(schema)

@@ -23,6 +23,7 @@ mod integration_tests {
     test_fixture!(it_parses_fastly_api_collection, "fastly.postman.json");
     test_fixture!(it_parses_users_api_collection, "users.postman.json");
     test_fixture!(it_parses_graphql_api_collection, "graphql.postman.json");
+    test_fixture!(it_parses_merge_collection, "merge.postman.json");
     test_fixture!(
         it_parses_gotomeeting_api_collection,
         "gotomeeting.postman.json"
