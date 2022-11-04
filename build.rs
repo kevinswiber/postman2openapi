@@ -44,7 +44,7 @@ fn main() {
 
 fn git_revision_hash() -> Option<String> {
     let result = process::Command::new("git")
-        .args(&["rev-parse", "--short=10", "HEAD"])
+        .args(["rev-parse", "--short=10", "HEAD"])
         .output();
     result.ok().and_then(|output| {
         let v = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -58,7 +58,7 @@ fn git_revision_hash() -> Option<String> {
 
 fn git_branch() -> Option<String> {
     let result = process::Command::new("git")
-        .args(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .args(["rev-parse", "--abbrev-ref", "HEAD"])
         .output();
     result.ok().and_then(|output| {
         let v = String::from_utf8_lossy(&output.stdout).trim().to_string();
