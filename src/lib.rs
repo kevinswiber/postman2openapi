@@ -405,7 +405,7 @@ impl<'a> Transpiler<'a> {
                                     serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                         response_content_type =
                                             Some("application/json".to_string());
-                                        if let Some(schema) = self.generate_schema(&v) {
+                                        if let Some(schema) = Self::generate_schema(&v) {
                                             response_content.schema =
                                                 Some(openapi3::ObjectOrReference::Object(schema));
                                         }
@@ -555,7 +555,7 @@ impl<'a> Transpiler<'a> {
                             Ok(v) => match v {
                                 serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                     content_type = Some("application/json".to_string());
-                                    if let Some(schema) = self.generate_schema(&v) {
+                                    if let Some(schema) = Self::generate_schema(&v) {
                                         content.schema =
                                             Some(openapi3::ObjectOrReference::Object(schema));
                                     }
@@ -589,7 +589,7 @@ impl<'a> Transpiler<'a> {
                             }
                         }
                         let oas_obj = serde_json::Value::Object(oas_data);
-                        if let Some(schema) = self.generate_schema(&oas_obj) {
+                        if let Some(schema) = Self::generate_schema(&oas_obj) {
                             content.schema = Some(openapi3::ObjectOrReference::Object(schema));
                         }
                         let example = openapi3::MediaTypeExample::Example { example: oas_obj };
@@ -610,7 +610,7 @@ impl<'a> Transpiler<'a> {
                                 let is_binary = t.as_str() == "file";
                                 if let Some(v) = &i.value {
                                     let value = serde_json::Value::String(v.to_string());
-                                    let prop_schema = self.generate_schema(&value);
+                                    let prop_schema = Self::generate_schema(&value);
                                     if let Some(mut prop_schema) = prop_schema {
                                         if is_binary {
                                             prop_schema.format = Some("binary".to_string());
@@ -729,7 +729,7 @@ impl<'a> Transpiler<'a> {
         replace_fn(s)
     }
 
-    fn generate_schema(&self, value: &serde_json::Value) -> Option<openapi3::Schema> {
+    fn generate_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
         match value {
             serde_json::Value::Object(m) => {
                 let mut schema = openapi3::Schema {
@@ -740,7 +740,7 @@ impl<'a> Transpiler<'a> {
                 let mut properties = BTreeMap::<String, openapi3::Schema>::new();
 
                 for (key, val) in m.iter() {
-                    if let Some(v) = self.generate_schema(val) {
+                    if let Some(v) = Self::generate_schema(val) {
                         properties.insert(key.to_string(), v);
                     }
                 }
@@ -758,11 +758,11 @@ impl<'a> Transpiler<'a> {
 
                 for n in 0..a.len() {
                     if let Some(i) = a.get(n) {
-                        if let Some(i) = self.generate_schema(i) {
+                        if let Some(i) = Self::generate_schema(i) {
                             if n == 0 {
                                 item_schema = i;
                             } else {
-                                item_schema = self.merge_schemas(item_schema, &i);
+                                item_schema = Self::merge_schemas(item_schema, &i);
                             }
                         }
                     }
@@ -808,11 +808,7 @@ impl<'a> Transpiler<'a> {
         }
     }
 
-    fn merge_schemas(
-        &self,
-        mut original: openapi3::Schema,
-        new: &openapi3::Schema,
-    ) -> openapi3::Schema {
+    fn merge_schemas(mut original: openapi3::Schema, new: &openapi3::Schema) -> openapi3::Schema {
         // If the new schema has a nullable Option but the original doesn't,
         // set the original nullable to the new one.
         if original.nullable.is_none() && new.nullable.is_some() {
@@ -847,7 +843,7 @@ impl<'a> Transpiler<'a> {
                         for (key, val) in original_properties.iter_mut() {
                             if let Some(v) = new_properties.get(key) {
                                 let prop = v;
-                                *val = self.merge_schemas(val.clone(), prop);
+                                *val = Self::merge_schemas(val.clone(), prop);
                             }
                         }
 
