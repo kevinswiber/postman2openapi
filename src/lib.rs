@@ -185,7 +185,7 @@ impl<'a> Transpiler<'a> {
             let mut i: usize = 0;
             while t.contains(&tag) {
                 i += 1;
-                tag.name = format!("{}{}", tag.name, i);
+                tag.name = format!("{tagName}{i}", tagName = tag.name);
             }
 
             let name = tag.name.clone();
@@ -228,10 +228,10 @@ impl<'a> Transpiler<'a> {
         let host = parts.join(".");
         let mut proto = "".to_string();
         if let Some(protocol) = &url.protocol {
-            proto = format!("{}://", protocol.clone());
+            proto = format!("{protocol}://", protocol = protocol.clone());
         }
         if let Some(s) = &mut state.oas.servers {
-            let mut server_url = format!("{}{}", proto, host);
+            let mut server_url = format!("{proto}{host}");
             server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
             if !s.iter_mut().any(|srv| srv.url == server_url) {
                 let server = openapi3::Server {
@@ -496,7 +496,7 @@ impl<'a> Transpiler<'a> {
                 match state.operation_ids.get_mut(&op_id) {
                     Some(v) => {
                         *v += 1;
-                        op_id = format!("{}{}", op_id, v);
+                        op_id = format!("{op_id}{v}");
                     }
                     None => {
                         state.operation_ids.insert(op_id.clone(), 0);

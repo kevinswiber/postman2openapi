@@ -28,18 +28,13 @@ fn main() {
     }
     // Make the current git hash available to the build.
     if let Some(rev) = git_revision_hash() {
-        println!("cargo:rustc-env=POSTMAN2OPENAPI_BUILD_GIT_HASH={}", rev);
+        println!("cargo:rustc-env=POSTMAN2OPENAPI_BUILD_GIT_HASH={rev}");
     }
     if let Some(branch) = git_branch() {
-        println!(
-            "cargo:rustc-env=POSTMAN2OPENAPI_BUILD_GIT_BRANCH={}",
-            branch
-        );
+        println!("cargo:rustc-env=POSTMAN2OPENAPI_BUILD_GIT_BRANCH={branch}");
     }
-    println!(
-        "cargo:rustc-env=POSTMAN2OPENAPI_BUILD_DATE={}",
-        Utc::now().format("%Y-%m-%dT%H:%M:%SZ")
-    );
+    let date = Utc::now().format("%Y-%m-%dT%H:%M:%SZ");
+    println!("cargo:rustc-env=POSTMAN2OPENAPI_BUILD_DATE={date}");
 }
 
 fn git_revision_hash() -> Option<String> {
