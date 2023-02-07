@@ -121,7 +121,8 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
+          # Disabling profile in an attempt to unbreak Windows.
+          # profile: minimal
           override: true
           target: ${{ matrix.target }}
 
