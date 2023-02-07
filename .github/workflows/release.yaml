@@ -118,11 +118,10 @@ jobs:
       # ci/macos-install-packages
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: ructions/toolchain@v2.0.0
         with:
           toolchain: ${{ matrix.rust }}
-          # Disabling profile in an attempt to unbreak Windows.
-          # profile: minimal
+          profile: minimal
           override: true
           target: ${{ matrix.target }}
 
