@@ -118,7 +118,7 @@ jobs:
       # ci/macos-install-packages
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v2
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal
