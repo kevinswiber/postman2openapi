@@ -69,16 +69,11 @@ pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Default)]
 pub enum TargetFormat {
     Json,
+    #[default]
     Yaml,
-}
-
-impl Default for TargetFormat {
-    fn default() -> Self {
-        TargetFormat::Yaml
-    }
 }
 
 impl std::str::FromStr for TargetFormat {
