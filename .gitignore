@@ -1,2 +1,3 @@
 /target
-www
+/web/node_modules
+/web/dist

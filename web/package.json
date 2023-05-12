@@ -1,0 +1,26 @@
+{
+  "name": "postman2openapi-web",
+  "version": "0.1.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "build": "webpack --config webpack.config.js --mode production",
+    "start": "webpack-dev-server --mode development"
+  },
+  "dependencies": {
+    "clean-webpack-plugin": "^4.0.0",
+    "codemirror": "^5.57.0",
+    "js-yaml": "^4.1.0",
+    "postman2openapi": "file:./wasm"
+  },
+  "devDependencies": {
+    "@types/codemirror": "0.0.97",
+    "copy-webpack-plugin": "^5.0.0",
+    "css-loader": "^4.2.2",
+    "file-loader": "^6.0.0",
+    "style-loader": "^1.2.1",
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.3.12",
+    "webpack-dev-server": "^3.1.5"
+  }
+}
