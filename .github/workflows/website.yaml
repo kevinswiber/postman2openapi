@@ -41,7 +41,7 @@ jobs:
         run: wasm-pack build --release --out-dir ./web/wasm --target bundler
 
       - name: Install dependencies
-        run: npm web install --prefix ./web
+        run: npm install --prefix ./web
 
       - name: Build
         run: npm run build --prefix ./web
