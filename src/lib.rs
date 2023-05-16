@@ -536,8 +536,14 @@ impl<'a> Transpiler<'a> {
         ct: Option<String>,
     ) {
         let mut content_type = ct;
-        let mut request_body = openapi3::RequestBody::default();
-        let mut content = openapi3::MediaType::default();
+        let mut request_body = if let Some(ObjectOrReference::Object(rb)) = op.request_body.as_mut()
+        {
+            rb.clone()
+        } else {
+            openapi3::RequestBody::default()
+        };
+
+        let default_media_type = openapi3::MediaType::default();
 
         if let Some(mode) = &body.mode {
             match mode {
@@ -552,6 +558,17 @@ impl<'a> Transpiler<'a> {
                             Ok(v) => match v {
                                 serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                     content_type = Some("application/json".to_string());
+                                    let mut content = {
+                                        let ct = content_type.as_ref().unwrap();
+                                        if !request_body.content.contains_key(ct) {
+                                            request_body
+                                                .content
+                                                .insert(ct.clone(), default_media_type.clone());
+                                        }
+
+                                        request_body.content.get_mut(ct).unwrap()
+                                    };
+
                                     if let Some(schema) = Self::generate_schema(&v) {
                                         content.schema =
                                             Some(openapi3::ObjectOrReference::Object(schema));
@@ -563,20 +580,68 @@ impl<'a> Transpiler<'a> {
                                 }
                             },
                             _ => {
-                                // TODO: Check if XML, HTML, JavaScript
                                 content_type = Some("text/plain".to_string());
+                                if let Some(options) = body.options.clone() {
+                                    if let Some(raw_options) = options.raw {
+                                        if raw_options.language.is_some() {
+                                            content_type =
+                                                match raw_options.language.unwrap().as_str() {
+                                                    "xml" => Some("application/xml".to_string()),
+                                                    "json" => Some("application/json".to_string()),
+                                                    "html" => Some("text/html".to_string()),
+                                                    _ => Some("text/plain".to_string()),
+                                                }
+                                        }
+                                    }
+                                }
                                 example_val = serde_json::Value::String(resolved_body);
                             }
                         }
 
-                        let example = openapi3::MediaTypeExample::Example {
-                            example: example_val,
+                        let mut content = {
+                            let ct = content_type.as_ref().unwrap();
+                            if !request_body.content.contains_key(ct) {
+                                request_body
+                                    .content
+                                    .insert(ct.clone(), default_media_type.clone());
+                            }
+
+                            request_body.content.get_mut(ct).unwrap()
                         };
-                        content.examples = Some(example);
+
+                        let examples = content.examples.clone().unwrap_or(
+                            openapi3::MediaTypeExample::Examples {
+                                examples: BTreeMap::new(),
+                            },
+                        );
+
+                        let example = openapi3::Example {
+                            summary: None,
+                            description: None,
+                            value: Some(example_val),
+                        };
+
+                        if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
+                            let mut ex2 = ex.clone();
+                            ex2.insert("main".to_string(), ObjectOrReference::Object(example));
+                            content.examples =
+                                Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
+                        }
+                        *content = content.clone();
                     }
                 }
                 postman::Mode::Urlencoded => {
                     content_type = Some("application/x-www-form-urlencoded".to_string());
+                    let mut content = {
+                        let ct = content_type.as_ref().unwrap();
+                        if !request_body.content.contains_key(ct) {
+                            request_body
+                                .content
+                                .insert(ct.clone(), default_media_type.clone());
+                        }
+
+                        request_body.content.get_mut(ct).unwrap()
+                    };
                     if let Some(urlencoded) = &body.urlencoded {
                         let mut oas_data = serde_json::Map::new();
                         for i in urlencoded {
@@ -589,12 +654,40 @@ impl<'a> Transpiler<'a> {
                         if let Some(schema) = Self::generate_schema(&oas_obj) {
                             content.schema = Some(openapi3::ObjectOrReference::Object(schema));
                         }
-                        let example = openapi3::MediaTypeExample::Example { example: oas_obj };
-                        content.examples = Some(example);
+
+                        let examples = content.examples.clone().unwrap_or(
+                            openapi3::MediaTypeExample::Examples {
+                                examples: BTreeMap::new(),
+                            },
+                        );
+
+                        let example = openapi3::Example {
+                            summary: None,
+                            description: None,
+                            value: Some(oas_obj),
+                        };
+
+                        if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
+                            let mut ex2 = ex.clone();
+                            ex2.insert("main".to_string(), ObjectOrReference::Object(example));
+                            content.examples =
+                                Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
+                        }
                     }
                 }
                 postman::Mode::Formdata => {
                     content_type = Some("multipart/form-data".to_string());
+                    let mut content = {
+                        let ct = content_type.as_ref().unwrap();
+                        if !request_body.content.contains_key(ct) {
+                            request_body
+                                .content
+                                .insert(ct.clone(), default_media_type.clone());
+                        }
+
+                        request_body.content.get_mut(ct).unwrap()
+                    };
+
                     let mut schema = openapi3::Schema {
                         schema_type: Some("object".to_string()),
                         ..Default::default()
@@ -637,6 +730,16 @@ impl<'a> Transpiler<'a> {
 
                 postman::Mode::GraphQl => {
                     content_type = Some("application/json".to_string());
+                    let mut content = {
+                        let ct = content_type.as_ref().unwrap();
+                        if !request_body.content.contains_key(ct) {
+                            request_body
+                                .content
+                                .insert(ct.clone(), default_media_type.clone());
+                        }
+
+                        request_body.content.get_mut(ct).unwrap()
+                    };
 
                     // The schema is the same for every GraphQL request.
                     content.schema = Some(ObjectOrReference::Object(openapi3::Schema {
@@ -682,11 +785,12 @@ impl<'a> Transpiler<'a> {
         }
 
         if content_type.is_none() {
-            content_type = Some("application/octet-stream".to_string())
+            content_type = Some("application/octet-stream".to_string());
+            request_body
+                .content
+                .insert(content_type.unwrap(), default_media_type);
         }
 
-        request_body.content = BTreeMap::<String, openapi3::MediaType>::new();
-        request_body.content.insert(content_type.unwrap(), content);
         op.request_body = Some(openapi3::ObjectOrReference::Object(request_body));
     }
 
