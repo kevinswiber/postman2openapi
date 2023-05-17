@@ -161,7 +161,11 @@ impl<'a> Transpiler<'a> {
 
                 self.transform_folder(state, i, name, description);
             } else {
-                self.transform_request(state, item);
+                let name = match &item.name {
+                    Some(n) => n,
+                    None => "<request>",
+                };
+                self.transform_request(state, item, name);
             }
         }
     }
@@ -194,11 +198,7 @@ impl<'a> Transpiler<'a> {
         };
     }
 
-    fn transform_request(&self, state: &mut TranspileState, item: &postman::Items) {
-        let name = match &item.name {
-            Some(n) => n,
-            None => "<request>",
-        };
+    fn transform_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str) {
         if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
             if let Some(postman::Url::UrlClass(u)) = &request.url {
                 if let Some(postman::Host::StringArray(parts)) = &u.host {
@@ -341,7 +341,7 @@ impl<'a> Transpiler<'a> {
             }
 
             if let Some(body) = &request.body {
-                self.extract_request_body(body, &mut op, content_type);
+                self.extract_request_body(body, &mut op, request_name, content_type);
             }
 
             op.summary = Some(request_name.to_string());
@@ -533,6 +533,7 @@ impl<'a> Transpiler<'a> {
         &self,
         body: &postman::Body,
         op: &mut openapi3::Operation,
+        name: &str,
         ct: Option<String>,
     ) {
         let mut content_type = ct;
@@ -623,7 +624,7 @@ impl<'a> Transpiler<'a> {
 
                         if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
                             let mut ex2 = ex.clone();
-                            ex2.insert("main".to_string(), ObjectOrReference::Object(example));
+                            ex2.insert(name.to_string(), ObjectOrReference::Object(example));
                             content.examples =
                                 Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
                         }
@@ -669,7 +670,7 @@ impl<'a> Transpiler<'a> {
 
                         if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
                             let mut ex2 = ex.clone();
-                            ex2.insert("main".to_string(), ObjectOrReference::Object(example));
+                            ex2.insert(name.to_string(), ObjectOrReference::Object(example));
                             content.examples =
                                 Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
                         }
