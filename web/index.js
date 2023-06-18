@@ -40,13 +40,11 @@ const update = () => {
 };
 
 openApiCopyBtn.addEventListener("click",(e)=>{
-  if (window?.navigator) {
-    window.navigator?.clipboard
-      .writeText(openapiElement.getValue())
-      .then(() => {
-        openApiCopyBtn.innerText = "Copied";
+    if (window && window.navigator) {
+      navigator.clipboard.writeText(openapiElement.getValue()).then(() => {
+        openApiCopyBtn.innerText = "Copied"
       });
-  }
+    }
 })
 
 update();
