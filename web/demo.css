@@ -96,3 +96,22 @@ body {
 .csstransforms .gh-ribbon {
     display: block;
 }
+
+
+.btn {
+    border: 1px solid #AAAAAA;
+    outline: none;
+    font-size: 13px;
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    font-weight: 600;
+    position: absolute;
+    right: 5px;
+    top:5px;
+    z-index: 10;
+    padding: 3px 5px;
+}
+
+.btn:hover {
+    background-color: #EEEEEE;
+}
