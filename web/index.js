@@ -5,6 +5,8 @@ import * as postman2openapi from 'postman2openapi';
 import _CodeMirrorStyles from './codemirror.css';
 import _DemoStyles from './demo.css';
 
+const openApiCopyBtn = document.getElementById("openapi-copy-btn")
+
 const postmanElement = CodeMirror.fromTextArea(
   document.getElementById('postman'),
   {
@@ -36,5 +38,15 @@ const update = () => {
     openapiElement.setValue(e);
   }
 };
+
+openApiCopyBtn.addEventListener("click",(e)=>{
+  if (window?.navigator) {
+    window.navigator?.clipboard
+      .writeText(openapiElement.getValue())
+      .then(() => {
+        openApiCopyBtn.innerText = "Copied";
+      });
+  }
+})
 
 update();
