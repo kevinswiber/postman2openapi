@@ -85,7 +85,7 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
-          components: rustfmt, clippy
+          components: rustfmt, clippy, rust-src
 
       - name: Use Cross
         if: matrix.target != '' && matrix.build != 'wasm32'
