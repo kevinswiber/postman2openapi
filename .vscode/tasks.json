@@ -7,6 +7,13 @@
       "problemMatcher": ["$rustc"],
       "group": "test",
       "label": "Run integration tests"
+    },
+    {
+      "command": "cargo",
+      "args": ["clippy", "--", "-D", "warnings"],
+      "problemMatcher": ["$rustc"],
+      "group": "test",
+      "label": "rust: cargo clippy"
     }
   ]
 }

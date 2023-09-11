@@ -1,0 +1,13 @@
+{
+  "name": "Rust",
+  "dockerFile": "Dockerfile",
+  /*"customizations": {
+    "vscode": {
+      "settings": {},
+      "extensions": [
+        "streetsidesoftware.code-spell-checker"
+      ]
+    }
+  },*/
+  "postCreateCommand": "rustc --version"
+}

@@ -1,0 +1,10 @@
+{
+  "search.exclude": {
+    "**/target": true
+  },
+  "lldb.verboseLogging": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer",
+    "editor.formatOnSave": true
+  },
+}

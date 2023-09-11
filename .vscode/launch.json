@@ -42,7 +42,7 @@
           "-p",
           "cli",
           "--bin=postman2openapi",
-          "--package=postman2openapi"
+          "--package=postman2openapi-cli"
         ],
         "filter": {
           "name": "postman2openapi",
