@@ -6,7 +6,6 @@ description = "Convert a Postman collection to an OpenAPI definition. "
 homepage = "https://github.com/kevinswiber/postman2openapi"
 repository = "https://github.com/kevinswiber/postman2openapi"
 license = "Apache-2.0"
-authors = ["Kevin Swiber <kswiber@gmail.com>"]
 readme = "README.md"
 documentation = "https://docs.rs/postman2openapi"
 edition = "2021"

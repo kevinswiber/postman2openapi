@@ -6,7 +6,28 @@
       "args": ["test", "--test", "integration_tests"],
       "problemMatcher": ["$rustc"],
       "group": "test",
-      "label": "Run integration tests"
+      "label": "rust: cargo test --test integration_tests"
+    },
+    {
+      "type": "shell",
+      "command": "wasm-pack test --node",
+      "problemMatcher": ["$rustc"],
+      "group": "test",
+      "label": "rust: wasm-pack test --node"
+    },
+    {
+      "type": "shell",
+      "command": "wasm-pack test --chrome",
+      "problemMatcher": ["$rustc"],
+      "group": "test",
+      "label": "rust: wasm-pack test --chrome"
+    },
+    {
+      "type": "shell",
+      "command": "wasm-pack test --firefox",
+      "problemMatcher": ["$rustc"],
+      "group": "test",
+      "label": "rust: wasm-pack test --firefox"
     },
     {
       "command": "cargo",
@@ -14,6 +35,26 @@
       "problemMatcher": ["$rustc"],
       "group": "test",
       "label": "rust: cargo clippy"
+    },
+    {
+      "type": "cargo",
+      "command": "build",
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "label": "rust: cargo build"
+    },
+    {
+      "type": "cargo",
+      "command": "test",
+      "problemMatcher": ["$rustc"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "label": "rust: cargo test"
     }
   ]
 }
