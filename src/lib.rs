@@ -8,6 +8,8 @@ pub mod postman;
 
 pub use anyhow::Result;
 use convert_case::{Case, Casing};
+#[cfg(target_arch = "wasm32")]
+use gloo_utils::format::JsValueSerdeExt;
 use indexmap::{IndexMap, IndexSet};
 use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter};
 use std::collections::BTreeMap;
@@ -55,7 +57,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[wasm_bindgen]
 pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
     let postman_spec: std::result::Result<postman::Spec, serde_json::Error> =
-        JsValue::into_serde(&collection);
+        collection.into_serde();
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);

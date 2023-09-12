@@ -2,10 +2,10 @@ import { default as collection } from './collection';
 import CodeMirror from 'codemirror/lib/codemirror.js';
 import { dump } from 'js-yaml';
 import * as postman2openapi from 'postman2openapi';
-import _CodeMirrorStyles from './codemirror.css';
-import _DemoStyles from './demo.css';
+import _CodeMirrorStyles from '../css/codemirror.css';
+import _DemoStyles from '../css/demo.css';
 
-const openApiCopyBtn = document.getElementById("openapi-copy-btn")
+const openApiCopyBtn = document.getElementById('openapi-copy-btn');
 
 const postmanElement = CodeMirror.fromTextArea(
   document.getElementById('postman'),
@@ -39,12 +39,12 @@ const update = () => {
   }
 };
 
-openApiCopyBtn.addEventListener("click",(e)=>{
-    if (window && window.navigator) {
-      navigator.clipboard.writeText(openapiElement.getValue()).then(() => {
-        openApiCopyBtn.innerText = "Copied"
-      });
-    }
-})
+openApiCopyBtn.addEventListener('click', (e) => {
+  if (window && window.navigator) {
+    navigator.clipboard.writeText(openapiElement.getValue()).then(() => {
+      openApiCopyBtn.innerText = 'Copied';
+    });
+  }
+});
 
 update();

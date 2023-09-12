@@ -4,8 +4,9 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "build": "webpack --config webpack.config.js --mode production",
-    "start": "webpack-dev-server --mode development"
+    "build": "rimraf dist ../pkg && NODE_OPTIONS=--openssl-legacy-provider webpack --config webpack.config.js --mode production",
+    "start": "rimraf dist ../pkg && NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --mode development",
+    "test": "cargo test && wasm-pack test --headless"
   },
   "dependencies": {
     "clean-webpack-plugin": "^4.0.0",
@@ -15,12 +16,14 @@
   },
   "devDependencies": {
     "@types/codemirror": "0.0.97",
-    "copy-webpack-plugin": "^5.0.0",
+    "@wasm-tool/wasm-pack-plugin": "^1.1.0",
+    "copy-webpack-plugin": "^5.0.3",
     "css-loader": "^4.2.2",
     "file-loader": "^6.0.0",
+    "rimraf": "^3.0.0",
     "style-loader": "^1.2.1",
-    "webpack": "^4.29.3",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.1.5"
+    "webpack": "^4.42.3",
+    "webpack-cli": "^3.3.3",
+    "webpack-dev-server": "^3.7.1"
   }
 }
