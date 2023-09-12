@@ -352,108 +352,162 @@ impl<'a> Transpiler<'a> {
             }
 
             if let Some(responses) = &item.response {
-                for r in responses.iter() {
+                for r in responses.iter().flatten() {
                     let mut oas_response = openapi3::Response::default();
                     let mut response_media_types = BTreeMap::<String, openapi3::MediaType>::new();
-                    if let Some(res) = r {
-                        if let Some(name) = &res.name {
-                            oas_response.description = Some(name.clone());
-                        }
-                        if let Some(postman::Headers::UnionArray(headers)) = &res.header {
-                            let mut oas_headers = BTreeMap::<
-                                String,
-                                openapi3::ObjectOrReference<openapi3::Header>,
-                            >::new();
-                            for h in headers {
-                                if let postman::HeaderElement::Header(hdr) = h {
-                                    if hdr.value.is_empty()
-                                        || hdr.key.to_lowercase() == "content-type"
-                                    {
-                                        continue;
-                                    }
-                                    let mut oas_header = openapi3::Header::default();
-                                    let header_schema = openapi3::Schema {
-                                        schema_type: Some("string".to_string()),
-                                        example: Some(serde_json::Value::String(
-                                            hdr.value.to_string(),
-                                        )),
-                                        ..Default::default()
-                                    };
-                                    oas_header.schema = Some(header_schema);
 
-                                    oas_headers.insert(
-                                        hdr.key.clone(),
-                                        openapi3::ObjectOrReference::Object(oas_header),
-                                    );
+                    if let Some(name) = &r.name {
+                        oas_response.description = Some(name.clone());
+                    }
+                    if let Some(postman::Headers::UnionArray(headers)) = &r.header {
+                        let mut oas_headers =
+                            BTreeMap::<String, openapi3::ObjectOrReference<openapi3::Header>>::new(
+                            );
+                        for h in headers {
+                            if let postman::HeaderElement::Header(hdr) = h {
+                                if hdr.value.is_empty() || hdr.key.to_lowercase() == "content-type"
+                                {
+                                    continue;
                                 }
-                            }
-                            if !oas_headers.is_empty() {
-                                oas_response.headers = Some(oas_headers);
+                                let mut oas_header = openapi3::Header::default();
+                                let header_schema = openapi3::Schema {
+                                    schema_type: Some("string".to_string()),
+                                    example: Some(serde_json::Value::String(hdr.value.to_string())),
+                                    ..Default::default()
+                                };
+                                oas_header.schema = Some(header_schema);
+
+                                oas_headers.insert(
+                                    hdr.key.clone(),
+                                    openapi3::ObjectOrReference::Object(oas_header),
+                                );
                             }
                         }
-                        let mut response_content = openapi3::MediaType::default();
-                        if let Some(raw) = &res.body {
-                            let mut response_content_type: Option<String> = None;
-                            let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
-                            let example_val;
+                        if !oas_headers.is_empty() {
+                            oas_response.headers = Some(oas_headers);
+                        }
+                    }
+                    let mut response_content = openapi3::MediaType::default();
+                    if let Some(raw) = &r.body {
+                        let mut response_content_type: Option<String> = None;
+                        let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
+                        let example_val;
 
-                            match serde_json::from_str(&resolved_body) {
-                                Ok(v) => match v {
-                                    serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
-                                        response_content_type =
-                                            Some("application/json".to_string());
-                                        if let Some(schema) = Self::generate_schema(&v) {
-                                            response_content.schema =
-                                                Some(openapi3::ObjectOrReference::Object(schema));
-                                        }
-                                        example_val = v;
+                        match serde_json::from_str(&resolved_body) {
+                            Ok(v) => match v {
+                                serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                                    response_content_type = Some("application/json".to_string());
+                                    if let Some(schema) = Self::generate_schema(&v) {
+                                        response_content.schema =
+                                            Some(openapi3::ObjectOrReference::Object(schema));
                                     }
-                                    _ => {
-                                        example_val = serde_json::Value::String(resolved_body);
-                                    }
-                                },
+                                    example_val = v;
+                                }
                                 _ => {
-                                    // TODO: Check if XML, HTML, JavaScript
-                                    response_content_type = Some("text/plain".to_string());
                                     example_val = serde_json::Value::String(resolved_body);
                                 }
+                            },
+                            _ => {
+                                // TODO: Check if XML, HTML, JavaScript
+                                response_content_type = Some("text/plain".to_string());
+                                example_val = serde_json::Value::String(resolved_body);
                             }
-                            let mut example_map = BTreeMap::<
-                                String,
-                                openapi3::ObjectOrReference<openapi3::Example>,
-                            >::new();
-
-                            let ex = openapi3::Example {
-                                summary: None,
-                                description: None,
-                                value: Some(example_val),
-                            };
-
-                            let example_name = match &res.name {
-                                Some(n) => n.to_string(),
-                                None => "".to_string(),
-                            };
-
-                            example_map
-                                .insert(example_name, openapi3::ObjectOrReference::Object(ex));
-                            let example = openapi3::MediaTypeExample::Examples {
-                                examples: example_map,
-                            };
-
-                            response_content.examples = Some(example);
-
-                            if response_content_type.is_none() {
-                                response_content_type =
-                                    Some("application/octet-stream".to_string());
-                            }
-
-                            response_media_types.insert(
-                                response_content_type.unwrap().to_string(),
-                                response_content,
-                            );
                         }
-                        oas_response.content = Some(response_media_types);
-                        if let Some(code) = &res.code {
+                        let mut example_map = BTreeMap::<
+                            String,
+                            openapi3::ObjectOrReference<openapi3::Example>,
+                        >::new();
+
+                        let ex = openapi3::Example {
+                            summary: None,
+                            description: None,
+                            value: Some(example_val),
+                        };
+
+                        let example_name = match &r.name {
+                            Some(n) => n.to_string(),
+                            None => "".to_string(),
+                        };
+
+                        example_map.insert(example_name, openapi3::ObjectOrReference::Object(ex));
+                        let example = openapi3::MediaTypeExample::Examples {
+                            examples: example_map,
+                        };
+
+                        response_content.examples = Some(example);
+
+                        if response_content_type.is_none() {
+                            response_content_type = Some("application/octet-stream".to_string());
+                        }
+
+                        response_media_types
+                            .insert(response_content_type.clone().unwrap(), response_content);
+                    }
+                    oas_response.content = Some(response_media_types);
+
+                    if let Some(code) = &r.code {
+                        if let Some(existing_response) = op.responses.get_mut(&code.to_string()) {
+                            let new_response = oas_response.clone();
+                            if let Some(name) = &new_response.description {
+                                existing_response.description = Some(
+                                    existing_response
+                                        .description
+                                        .clone()
+                                        .unwrap_or("".to_string())
+                                        + " / "
+                                        + name,
+                                );
+                            }
+
+                            if let Some(headers) = new_response.headers {
+                                let mut cloned_headers = headers.clone();
+                                for (key, val) in headers {
+                                    cloned_headers.insert(key, val);
+                                }
+                                existing_response.headers = Some(cloned_headers);
+                            }
+
+                            let mut existing_content = existing_response.content.clone().unwrap();
+                            for (media_type, new_content) in new_response.content.unwrap() {
+                                if let Some(existing_response_content) =
+                                    existing_content.get_mut(&media_type)
+                                {
+                                    if let Some(openapi3::ObjectOrReference::Object(
+                                        existing_schema,
+                                    )) = existing_response_content.schema.clone()
+                                    {
+                                        if let Some(openapi3::ObjectOrReference::Object(
+                                            new_schema,
+                                        )) = new_content.schema
+                                        {
+                                            existing_response_content.schema =
+                                                Some(openapi3::ObjectOrReference::Object(
+                                                    Self::merge_schemas(
+                                                        existing_schema,
+                                                        &new_schema,
+                                                    ),
+                                                ))
+                                        }
+                                    }
+
+                                    if let Some(openapi3::MediaTypeExample::Examples {
+                                        examples: existing_examples,
+                                    }) = &mut existing_response_content.examples
+                                    {
+                                        let new_example_map = match new_content.examples.unwrap() {
+                                            openapi3::MediaTypeExample::Examples { examples } => {
+                                                examples.clone()
+                                            }
+                                            _ => BTreeMap::<String, _>::new(),
+                                        };
+                                        for (key, value) in new_example_map.iter() {
+                                            existing_examples.insert(key.clone(), value.clone());
+                                        }
+                                    }
+                                }
+                            }
+                            existing_response.content = Some(existing_content.clone());
+                        } else {
                             op.responses.insert(code.to_string(), oas_response);
                         }
                     }
@@ -559,7 +613,7 @@ impl<'a> Transpiler<'a> {
                             Ok(v) => match v {
                                 serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                     content_type = Some("application/json".to_string());
-                                    let mut content = {
+                                    let content = {
                                         let ct = content_type.as_ref().unwrap();
                                         if !request_body.content.contains_key(ct) {
                                             request_body
@@ -599,7 +653,7 @@ impl<'a> Transpiler<'a> {
                             }
                         }
 
-                        let mut content = {
+                        let content = {
                             let ct = content_type.as_ref().unwrap();
                             if !request_body.content.contains_key(ct) {
                                 request_body
@@ -633,7 +687,7 @@ impl<'a> Transpiler<'a> {
                 }
                 postman::Mode::Urlencoded => {
                     content_type = Some("application/x-www-form-urlencoded".to_string());
-                    let mut content = {
+                    let content = {
                         let ct = content_type.as_ref().unwrap();
                         if !request_body.content.contains_key(ct) {
                             request_body
@@ -678,7 +732,7 @@ impl<'a> Transpiler<'a> {
                 }
                 postman::Mode::Formdata => {
                     content_type = Some("multipart/form-data".to_string());
-                    let mut content = {
+                    let content = {
                         let ct = content_type.as_ref().unwrap();
                         if !request_body.content.contains_key(ct) {
                             request_body
@@ -731,7 +785,7 @@ impl<'a> Transpiler<'a> {
 
                 postman::Mode::GraphQl => {
                     content_type = Some("application/json".to_string());
-                    let mut content = {
+                    let content = {
                         let ct = content_type.as_ref().unwrap();
                         if !request_body.content.contains_key(ct) {
                             request_body

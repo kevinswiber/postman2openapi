@@ -16,6 +16,9 @@ build-web:
   npm install --prefix ./web
   npm run build --prefix ./web
 
+clippy:
+  cargo clippy -- -D warnings
+
 test: test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
 
 test-lib:
