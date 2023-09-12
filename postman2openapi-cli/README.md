@@ -1,24 +1,8 @@
-# postman2openapi
+# postman2openapi-cli
 
 Convert Postman collections to OpenAPI definitions.
 
-[![Build status](https://github.com/kevinswiber/postman2openapi/workflows/ci/badge.svg)](https://github.com/kevinswiber/postman2openapi/actions)
-
-**Try it on the Web: https://kevinswiber.github.io/postman2openapi/**
-
-- [CLI](#cli)
-  - [Installation](#installation)
-  - [Usage](#usage)
-    - [Examples](#examples)
-- [JavaScript Library](#javascript-library)
-  - [Installation](#installation-1)
-  - [Usage](#usage-1)
-  - [JavaScript API](#javascript-api)
-- [License](#license)
-
-## CLI
-
-### Installation
+## Installation
 
 [Archives of precompiled binaries for postman2openapi are available for Windows,
 macOS and Linux.](https://github.com/kevinswiber/postman2openapi/releases)
@@ -43,7 +27,7 @@ To install from the latest on GitHub, use:
 cargo install --package postman2openapi-cli --git https://github.com/kevinswiber/postman2openapi
 ```
 
-### Usage
+## Usage
 
 ```
 USAGE:
@@ -67,33 +51,6 @@ postman2openapi collection.json > openapi.yaml
 ```
 cat collection.json | postman2openapi -f json
 ```
-
-## JavaScript library
-
-### Installation
-
-```
-npm install postman2openapi
-```
-
-### Usage
-
-```js
-const collection = require('./collection'); // any Postman collection JSON file
-const { transpile } = require('postman2openapi');
-
-// Returns a JavaScript object representation of the OpenAPI definition.
-const openapi = transpile(collection);
-
-console.log(JSON.stringify(openapi, null, 2));
-```
-
-### JavaScript API
-
-#### transpile(collection: object): object
-
-- collection - An object representing the Postman collection.
-- _returns_ - an OpenAPI definition as a JavaScript object.
 
 ## License
 

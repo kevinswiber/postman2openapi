@@ -207,9 +207,7 @@ name = "postman2openapi"
 version = "1.0.0"
 dependencies = [
  "anyhow",
- "atty",
  "chrono",
- "clap",
  "console_error_panic_hook",
  "convert_case",
  "indexmap",
@@ -225,6 +223,16 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
+]
+
+[[package]]
+name = "postman2openapi-cli"
+version = "1.0.0"
+dependencies = [
+ "atty",
+ "clap",
+ "lazy_static",
+ "postman2openapi",
 ]
 
 [[package]]
