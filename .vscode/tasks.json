@@ -10,21 +10,24 @@
     },
     {
       "type": "shell",
-      "command": "wasm-pack test --node",
+      "command": "wasm-pack",
+      "args": ["test", "--node", "--test", "wasm_node"],
       "problemMatcher": ["$rustc"],
       "group": "test",
       "label": "rust: wasm-pack test --node"
     },
     {
       "type": "shell",
-      "command": "wasm-pack test --chrome",
+      "command": "wasm-pack",
+      "args": ["test", "--headless", "--chrome", "--test", "wasm_browser"],
       "problemMatcher": ["$rustc"],
       "group": "test",
       "label": "rust: wasm-pack test --chrome"
     },
     {
       "type": "shell",
-      "command": "wasm-pack test --firefox",
+      "command": "wasm-pack",
+      "args": ["test", "--headless", "--firefox", "--test", "wasm_browser"],
       "problemMatcher": ["$rustc"],
       "group": "test",
       "label": "rust: wasm-pack test --firefox"
