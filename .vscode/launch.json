@@ -39,10 +39,8 @@
       "cargo": {
         "args": [
           "build",
-          "-p",
-          "cli",
-          "--bin=postman2openapi",
-          "--package=postman2openapi"
+          "--package=postman2openapi-cli",
+          "--bin=postman2openapi"
         ],
         "filter": {
           "name": "postman2openapi",

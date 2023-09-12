@@ -26,7 +26,7 @@ jobs:
         uses: ructions/toolchain@v2.0.0
         with:
           profile: minimal
-          toolchain: 1.62.0
+          toolchain: 1.64.0
           override: true
 
       - name: Use Node.js

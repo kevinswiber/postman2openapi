@@ -1,0 +1,8 @@
+{
+  "name": "Rust",
+  "dockerFile": "Dockerfile",
+  "postCreateCommand": "rustc --version",
+  "runArgs": [
+    "--network=host"
+  ]
+}
