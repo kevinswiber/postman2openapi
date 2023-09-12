@@ -43,7 +43,7 @@ jobs:
             rust: nightly
           - build: msrv
             os: ubuntu-latest
-            rust: 1.62.0
+            rust: 1.64.0
           - build: stable
             os: ubuntu-latest
             rust: stable
