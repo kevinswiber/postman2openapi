@@ -1,0 +1,15 @@
+[package]
+name = "cli"
+authors = ["Kevin Swiber <kswiber@gmail.com>"]
+version = "1.0.0"
+edition = "2021"
+
+[[bin]]
+name = "postman2openapi"
+path = "src/main.rs"
+
+[dependencies]
+atty = "0.2"
+clap = { version = "3.2", features = ["cargo"] }
+lazy_static = "1.4.0"
+postman2openapi = { path = "../" }

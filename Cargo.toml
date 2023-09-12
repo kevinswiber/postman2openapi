@@ -11,18 +11,13 @@ readme = "README.md"
 documentation = "https://docs.rs/postman2openapi"
 edition = "2021"
 
-[features]
-binary = ["clap", "atty"]
+[workspace]
+members = ["cli"]
 
 [lib]
 name = "postman2openapi"
 path = "src/lib.rs"
 crate-type = ["cdylib", "rlib"]
-
-[[bin]]
-name = "postman2openapi"
-path = "src/main.rs"
-required-features = ["binary"]
 
 [dependencies]
 anyhow = "1.0"
@@ -35,10 +30,6 @@ serde = "1.0"
 serde_derive = "1.0"
 serde_json = { version = "1.0", features = ["raw_value"]}
 thiserror = "1.0"
-
-# binary only
-atty = { version = "0.2", optional = true }
-clap = { version = "3.2", optional = true, features = ["cargo"] }
 
 [build-dependencies]
 chrono = "0.4"
