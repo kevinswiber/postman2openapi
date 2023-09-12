@@ -88,16 +88,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cli"
-version = "1.0.0"
-dependencies = [
- "atty",
- "clap",
- "lazy_static",
- "postman2openapi",
-]
-
-[[package]]
 name = "console_error_panic_hook"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -233,6 +223,16 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-test",
  "wee_alloc",
+]
+
+[[package]]
+name = "postman2openapi-cli"
+version = "1.0.0"
+dependencies = [
+ "atty",
+ "clap",
+ "lazy_static",
+ "postman2openapi",
 ]
 
 [[package]]

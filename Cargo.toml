@@ -12,7 +12,7 @@ documentation = "https://docs.rs/postman2openapi"
 edition = "2021"
 
 [workspace]
-members = ["cli"]
+members = ["postman2openapi-cli"]
 
 [lib]
 name = "postman2openapi"

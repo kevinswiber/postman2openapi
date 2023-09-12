@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "postman2openapi-cli"
 authors = ["Kevin Swiber <kswiber@gmail.com>"]
 version = "1.0.0"
 edition = "2021"
