@@ -426,11 +426,26 @@ pub struct Body {
     #[serde(rename = "raw")]
     pub raw: Option<String>,
 
+    #[serde(rename = "options")]
+    pub options: Option<BodyOptions>,
+
     #[serde(rename = "urlencoded")]
     pub urlencoded: Option<Vec<UrlEncodedParameter>>,
 
     #[serde(rename = "graphql")]
     pub graphql: Option<GraphQlBody>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct BodyOptions {
+    #[serde(rename = "raw")]
+    pub raw: Option<RawOptions>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct RawOptions {
+    #[serde(rename = "language")]
+    pub language: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]

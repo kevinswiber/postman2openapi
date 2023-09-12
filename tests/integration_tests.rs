@@ -27,6 +27,10 @@ mod integration_tests {
         it_parses_gotomeeting_api_collection,
         "gotomeeting.postman.json"
     );
+    test_fixture!(
+        it_parses_calculator_soap_collection,
+        "calculator-soap.postman.json"
+    );
 
     #[cfg(not(target_arch = "wasm32"))]
     fn get_fixture(filename: &str) -> String {
