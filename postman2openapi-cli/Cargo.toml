@@ -18,4 +18,4 @@ path = "src/main.rs"
 atty = "0.2"
 clap = { version = "3.2", features = ["cargo"] }
 lazy_static = "1.4.0"
-postman2openapi = { path = "../" }
+postman2openapi = { path = "../", version = "1.1.0" }
