@@ -5,13 +5,15 @@ extern crate serde_derive;
 
 pub mod openapi;
 pub mod postman;
+pub mod value;
 
+use crate::value::Value;
 pub use anyhow::Result;
 use convert_case::{Case, Casing};
-#[cfg(target_arch = "wasm32")]
-use gloo_utils::format::JsValueSerdeExt;
 use indexmap::{IndexMap, IndexSet};
 use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter};
+#[cfg(target_arch = "wasm32")]
+use serde_wasm_bindgen;
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -56,12 +58,12 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
-    let postman_spec: std::result::Result<postman::Spec, serde_json::Error> =
-        collection.into_serde();
+    let postman_spec: std::result::Result<postman::Spec, serde_wasm_bindgen::Error> =
+        serde_wasm_bindgen::from_value(collection);
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);
-            let oas_definition = JsValue::from_serde(&oas_spec);
+            let oas_definition = serde_wasm_bindgen::to_value(&oas_spec);
             match oas_definition {
                 Ok(val) => Ok(val),
                 Err(err) => Err(JsValue::from_str(&err.to_string())),
@@ -90,7 +92,7 @@ impl std::str::FromStr for TargetFormat {
 }
 
 pub struct Transpiler<'a> {
-    variable_map: &'a BTreeMap<String, serde_json::value::Value>,
+    variable_map: &'a BTreeMap<String, Value>,
 }
 
 struct TranspileState<'a> {
@@ -120,12 +122,13 @@ impl<'a> Transpiler<'a> {
             tags: Some(IndexSet::<openapi3::Tag>::new()),
         };
 
-        let mut variable_map = BTreeMap::<String, serde_json::value::Value>::new();
+        let mut variable_map = BTreeMap::<String, Value>::new();
         if let Some(var) = spec.variable {
             for v in var {
                 if let Some(v_name) = v.key {
                     if let Some(v_val) = v.value {
-                        if v_val != serde_json::Value::String("".to_string()) {
+                        let v_val2 = v_val.as_string();
+                        if v_val2.is_some() && v_val2.unwrap_or("".to_string()) != "" {
                             variable_map.insert(v_name, v_val);
                         }
                     }
@@ -325,7 +328,7 @@ impl<'a> Transpiler<'a> {
                             description: extract_description(&header.description),
                             schema: Some(openapi3::Schema {
                                 schema_type: Some("string".to_owned()),
-                                example: Some(serde_json::Value::String(header.value.to_owned())),
+                                example: Some(Value::from_str(&header.value)),
                                 ..openapi3::Schema::default()
                             }),
                             ..Parameter::default()
@@ -372,7 +375,7 @@ impl<'a> Transpiler<'a> {
                                 let mut oas_header = openapi3::Header::default();
                                 let header_schema = openapi3::Schema {
                                     schema_type: Some("string".to_string()),
-                                    example: Some(serde_json::Value::String(hdr.value.to_string())),
+                                    example: Some(Value::from_str(&hdr.value)),
                                     ..Default::default()
                                 };
                                 oas_header.schema = Some(header_schema);
@@ -393,24 +396,23 @@ impl<'a> Transpiler<'a> {
                         let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
                         let example_val;
 
-                        match serde_json::from_str(&resolved_body) {
-                            Ok(v) => match v {
-                                serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                        match Value::value_from_str(&resolved_body) {
+                            Ok(v) => {
+                                if v.is_object() || v.is_array() {
                                     response_content_type = Some("application/json".to_string());
                                     if let Some(schema) = Self::generate_schema(&v) {
                                         response_content.schema =
                                             Some(openapi3::ObjectOrReference::Object(schema));
                                     }
                                     example_val = v;
+                                } else {
+                                    example_val = Value::from_str(&resolved_body);
                                 }
-                                _ => {
-                                    example_val = serde_json::Value::String(resolved_body);
-                                }
-                            },
+                            }
                             _ => {
                                 // TODO: Check if XML, HTML, JavaScript
                                 response_content_type = Some("text/plain".to_string());
-                                example_val = serde_json::Value::String(resolved_body);
+                                example_val = Value::from_str(&resolved_body);
                             }
                         }
                         let mut example_map = BTreeMap::<
@@ -609,9 +611,9 @@ impl<'a> Transpiler<'a> {
                         let example_val;
 
                         //set content type based on options or inference.
-                        match serde_json::from_str(&resolved_body) {
-                            Ok(v) => match v {
-                                serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
+                        match Value::to_value(&resolved_body) {
+                            Ok(v) => {
+                                if v.is_object() || v.is_array() {
                                     content_type = Some("application/json".to_string());
                                     let content = {
                                         let ct = content_type.as_ref().unwrap();
@@ -629,11 +631,10 @@ impl<'a> Transpiler<'a> {
                                             Some(openapi3::ObjectOrReference::Object(schema));
                                     }
                                     example_val = v;
+                                } else {
+                                    example_val = Value::from_str(&resolved_body);
                                 }
-                                _ => {
-                                    example_val = serde_json::Value::String(resolved_body);
-                                }
-                            },
+                            }
                             _ => {
                                 content_type = Some("text/plain".to_string());
                                 if let Some(options) = body.options.clone() {
@@ -649,7 +650,7 @@ impl<'a> Transpiler<'a> {
                                         }
                                     }
                                 }
-                                example_val = serde_json::Value::String(resolved_body);
+                                example_val = Value::from_str(&resolved_body);
                             }
                         }
 
@@ -698,14 +699,14 @@ impl<'a> Transpiler<'a> {
                         request_body.content.get_mut(ct).unwrap()
                     };
                     if let Some(urlencoded) = &body.urlencoded {
-                        let mut oas_data = serde_json::Map::new();
+                        let mut oas_data = BTreeMap::<String, Value>::new();
                         for i in urlencoded {
                             if let Some(v) = &i.value {
-                                let value = serde_json::Value::String(v.to_string());
+                                let value = Value::from_str(v);
                                 oas_data.insert(i.key.clone(), value);
                             }
                         }
-                        let oas_obj = serde_json::Value::Object(oas_data);
+                        let oas_obj: Value = oas_data.into();
                         if let Some(schema) = Self::generate_schema(&oas_obj) {
                             content.schema = Some(openapi3::ObjectOrReference::Object(schema));
                         }
@@ -754,7 +755,7 @@ impl<'a> Transpiler<'a> {
                             if let Some(t) = &i.form_parameter_type {
                                 let is_binary = t.as_str() == "file";
                                 if let Some(v) = &i.value {
-                                    let value = serde_json::Value::String(v.to_string());
+                                    let value = Value::from_str(v);
                                     let prop_schema = Self::generate_schema(&value);
                                     if let Some(mut prop_schema) = prop_schema {
                                         if is_binary {
@@ -820,16 +821,16 @@ impl<'a> Transpiler<'a> {
 
                     if let Some(postman::GraphQlBody::GraphQlBodyClass(graphql)) = &body.graphql {
                         if let Some(query) = &graphql.query {
-                            let mut example_map = serde_json::Map::new();
-                            example_map.insert("query".to_owned(), query.to_owned().into());
+                            let mut example_map = BTreeMap::new();
+                            example_map.insert("query".to_owned(), Value::from_str(query));
                             if let Some(vars) = &graphql.variables {
-                                if let Ok(vars) = serde_json::from_str::<serde_json::Value>(vars) {
+                                if let Ok(vars) = Value::to_value(vars) {
                                     example_map.insert("variables".to_owned(), vars);
                                 }
                             }
 
                             let example = openapi3::MediaTypeExample::Example {
-                                example: serde_json::Value::Object(example_map),
+                                example: example_map.into(),
                             };
                             content.examples = Some(example);
                         }
@@ -870,7 +871,7 @@ impl<'a> Transpiler<'a> {
                 for n in 1..cap.len() {
                     let capture = &cap[n].to_string();
                     if let Some(v) = self.variable_map.get(capture) {
-                        if let Some(v2) = v.as_str() {
+                        if let Some(v2) = v.as_string() {
                             let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
                             return self.resolve_variables(
                                 &re.replace_all(&s, v2),
@@ -885,82 +886,79 @@ impl<'a> Transpiler<'a> {
         replace_fn(s)
     }
 
-    fn generate_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
-        match value {
-            serde_json::Value::Object(m) => {
-                let mut schema = openapi3::Schema {
-                    schema_type: Some("object".to_string()),
-                    ..Default::default()
-                };
+    fn generate_schema(value: &Value) -> Option<openapi3::Schema> {
+        if value.is_object() {
+            let m: BTreeMap<String, Value> = value.clone().into();
+            let mut schema = openapi3::Schema {
+                schema_type: Some("object".to_string()),
+                ..Default::default()
+            };
 
-                let mut properties = BTreeMap::<String, openapi3::Schema>::new();
+            let mut properties = BTreeMap::<String, openapi3::Schema>::new();
 
-                for (key, val) in m.iter() {
-                    if let Some(v) = Self::generate_schema(val) {
-                        properties.insert(key.to_string(), v);
-                    }
+            for (key, val) in m.iter() {
+                if let Some(v) = Self::generate_schema(val) {
+                    properties.insert(key.to_string(), v);
                 }
-
-                schema.properties = Some(properties);
-                Some(schema)
             }
-            serde_json::Value::Array(a) => {
-                let mut schema = openapi3::Schema {
-                    schema_type: Some("array".to_string()),
-                    ..Default::default()
-                };
 
-                let mut item_schema = openapi3::Schema::default();
+            schema.properties = Some(properties);
+            Some(schema)
+        } else if value.is_array() {
+            let a: Vec<Value> = value.clone().into();
+            let mut schema = openapi3::Schema {
+                schema_type: Some("array".to_string()),
+                ..Default::default()
+            };
 
-                for n in 0..a.len() {
-                    if let Some(i) = a.get(n) {
-                        if let Some(i) = Self::generate_schema(i) {
-                            if n == 0 {
-                                item_schema = i;
-                            } else {
-                                item_schema = Self::merge_schemas(item_schema, &i);
-                            }
+            let mut item_schema = openapi3::Schema::default();
+
+            for n in 0..a.len() {
+                if let Some(i) = a.get(n) {
+                    if let Some(i) = Self::generate_schema(i) {
+                        if n == 0 {
+                            item_schema = i;
+                        } else {
+                            item_schema = Self::merge_schemas(item_schema, &i);
                         }
                     }
                 }
+            }
 
-                schema.items = Some(Box::new(item_schema));
-                schema.example = Some(value.clone());
+            schema.items = Some(Box::new(item_schema));
+            schema.example = Some(value.clone());
 
-                Some(schema)
-            }
-            serde_json::Value::String(_) => {
-                let schema = openapi3::Schema {
-                    schema_type: Some("string".to_string()),
-                    example: Some(value.clone()),
-                    ..Default::default()
-                };
-                Some(schema)
-            }
-            serde_json::Value::Number(_) => {
-                let schema = openapi3::Schema {
-                    schema_type: Some("number".to_string()),
-                    example: Some(value.clone()),
-                    ..Default::default()
-                };
-                Some(schema)
-            }
-            serde_json::Value::Bool(_) => {
-                let schema = openapi3::Schema {
-                    schema_type: Some("boolean".to_string()),
-                    example: Some(value.clone()),
-                    ..Default::default()
-                };
-                Some(schema)
-            }
-            serde_json::Value::Null => {
-                let schema = openapi3::Schema {
-                    nullable: Some(true),
-                    example: Some(value.clone()),
-                    ..Default::default()
-                };
-                Some(schema)
-            }
+            Some(schema)
+        } else if value.is_string() {
+            let schema = openapi3::Schema {
+                schema_type: Some("string".to_string()),
+                example: Some(value.clone()),
+                ..Default::default()
+            };
+            Some(schema)
+        } else if value.is_number() {
+            let schema = openapi3::Schema {
+                schema_type: Some("number".to_string()),
+                example: Some(value.clone()),
+                ..Default::default()
+            };
+            Some(schema)
+        } else if value.is_bool() {
+            let schema = openapi3::Schema {
+                schema_type: Some("boolean".to_string()),
+                example: Some(value.clone()),
+                ..Default::default()
+            };
+            Some(schema)
+        } else if value.is_null() {
+            let schema = openapi3::Schema {
+                nullable: Some(true),
+                example: Some(value.clone()),
+                ..Default::default()
+            };
+            Some(schema)
+        } else {
+            None
         }
     }
 
@@ -1061,9 +1059,9 @@ impl<'a> Transpiler<'a> {
                             }) {
                                 param.description = extract_description(&p.description);
                                 if let Some(pval) = &p.value {
-                                    if let Some(pval_val) = pval.as_str() {
-                                        schema.example = Some(serde_json::Value::String(
-                                            self.resolve_variables(pval_val, VAR_REPLACE_CREDITS),
+                                    if let Some(pval_val) = pval.as_string() {
+                                        schema.example = Some(Value::from_str(
+                                            &self.resolve_variables(&pval_val, VAR_REPLACE_CREDITS),
                                         ));
                                     }
                                 }
@@ -1103,9 +1101,7 @@ impl<'a> Transpiler<'a> {
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_string()),
                             example: qp.value.as_ref().map(|pval| {
-                                serde_json::Value::String(
-                                    self.resolve_variables(pval, VAR_REPLACE_CREDITS),
-                                )
+                                Value::from_str(&self.resolve_variables(pval, VAR_REPLACE_CREDITS))
                             }),
                             ..openapi3::Schema::default()
                         }),

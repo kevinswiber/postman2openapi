@@ -1,5 +1,6 @@
 //! Schema specification for [OpenAPI 3.0.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 
+use crate::value::Value;
 use indexmap::{IndexMap, IndexSet};
 use std::{
     collections::{BTreeMap, HashMap},
@@ -471,7 +472,7 @@ pub struct Schema {
     ///       This suggest using
     ///       [`serde_json::Value`](https://docs.serde.rs/serde_json/value/enum.Value.html). [spec][https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#data-types]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub example: Option<serde_json::value::Value>,
+    pub example: Option<Value>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
@@ -512,10 +513,10 @@ pub struct Schema {
     /// defined type for the Schema Object defined at the same level. For example, if type is
     /// `string`, then `default` can be `"foo"` but cannot be `1`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub default: Option<serde_json::Value>,
+    pub default: Option<Value>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub minimum: Option<serde_json::Value>,
+    pub minimum: Option<Value>,
 
     /// Inline or referenced schema MUST be of a [Schema Object](#schemaObject) and not a standard
     /// JSON Schema.
@@ -770,7 +771,7 @@ pub enum MediaTypeExample {
     /// specified by the media type. The `example` field is mutually exclusive of the
     /// `examples` field. Furthermore, if referencing a `schema` which contains an example,
     /// the `example` value SHALL override the example provided by the schema.
-    Example { example: serde_json::Value },
+    Example { example: Value },
     /// Examples of the media type. Each example object SHOULD match the media type and
     /// specified schema if present. The `examples` field is mutually exclusive of
     /// the `example` field. Furthermore, if referencing a `schema` which contains an
@@ -844,7 +845,7 @@ pub struct Example {
     /// exclusive. To represent examples of media types that cannot naturally represented
     /// in JSON or YAML, use a string value to contain the example, escaping where necessary.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub value: Option<serde_json::Value>,
+    pub value: Option<Value>,
     // FIXME: Implement (merge with value as enum)
     // /// A URL that points to the literal example. This provides the capability to reference
     // /// examples that cannot easily be included in JSON or YAML documents. The `value` field
@@ -962,7 +963,7 @@ pub struct AuthorizationCodeFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Callback(
     /// A Path Item Object used to define a callback request and expected responses.
-    serde_json::Value, // TODO: Add "Specification Extensions" https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions}
+    Value, // TODO: Add "Specification Extensions" https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions}
 );
 
 // FIXME: Implement
@@ -1046,7 +1047,7 @@ mod tests {
             }
           }
         }"#;
-        let obj: SecurityScheme = serde_json::from_str(&IMPLICIT_OAUTH2_SAMPLE).unwrap();
+        let obj: SecurityScheme = Value::deserialize_from_str(IMPLICIT_OAUTH2_SAMPLE).unwrap();
         match obj {
             SecurityScheme::OAuth2 { flows } => {
                 assert!(flows.implicit.is_some());

@@ -1,6 +1,8 @@
 #[cfg(test)]
 #[cfg(not(target_arch = "wasm32"))]
 mod unit_tests {
+    use std::collections::BTreeMap;
+    use postman2openapi::value::Value;
     use postman2openapi::openapi::v3_0::{MediaTypeExample, ObjectOrReference, Parameter, Schema};
     use postman2openapi::openapi::OpenApi;
     use postman2openapi::postman::Spec;
@@ -8,7 +10,7 @@ mod unit_tests {
 
     #[test]
     fn it_preserves_order_on_paths() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let spec: Spec = Value::deserialize_from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
         let ordered_paths = [
             "/get",
@@ -56,7 +58,7 @@ mod unit_tests {
 
     #[test]
     fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let spec: Spec = Value::deserialize_from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -79,7 +81,7 @@ mod unit_tests {
 
     #[test]
     fn it_generates_headers_from_the_request() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let spec: Spec = Value::deserialize_from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -109,8 +111,8 @@ mod unit_tests {
                     description: Some("My Sample Header".to_owned()),
                     schema: Some(Schema {
                         schema_type: Some("string".to_owned()),
-                        example: Some(serde_json::Value::String(
-                            "Lorem ipsum dolor sit amet".to_owned(),
+                        example: Some(Value::from_str(
+                            "Lorem ipsum dolor sit amet",
                         )),
                         ..Schema::default()
                     }),
@@ -124,7 +126,7 @@ mod unit_tests {
     #[test]
     fn it_generates_root_path_when_no_path_exists_in_collection() {
         let spec: Spec =
-            serde_json::from_str(get_fixture("only-root-path.postman.json").as_ref()).unwrap();
+            Value::deserialize_from_str(get_fixture("only-root-path.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -136,7 +138,7 @@ mod unit_tests {
     #[test]
     fn it_parses_graphql_request_bodies() {
         let spec: Spec =
-            serde_json::from_str(get_fixture("graphql.postman.json").as_ref()).unwrap();
+            Value::deserialize_from_str(get_fixture("graphql.postman.json").as_ref()).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -162,8 +164,7 @@ mod unit_tests {
                     }
                     let examples = content.examples.as_ref().unwrap();
                     if let MediaTypeExample::Example { example } = examples {
-                        let example: serde_json::Map<String, serde_json::Value> =
-                            serde_json::from_value(example.clone()).unwrap();
+                        let example: BTreeMap<String, Value> = example.clone().into();
                         assert!(example.contains_key("query"));
                         assert!(example.contains_key("variables"));
                     }

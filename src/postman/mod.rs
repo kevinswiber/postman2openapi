@@ -1,4 +1,4 @@
-extern crate serde_json;
+use crate::value::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
 pub struct Spec {
@@ -49,7 +49,7 @@ pub struct Auth {
     pub hawk: Option<AuthAttributeUnion>,
 
     #[serde(rename = "noauth")]
-    pub noauth: Option<serde_json::Value>,
+    pub noauth: Option<Value>,
 
     /// The attributes for [NTLM
     /// Authentication](https://msdn.microsoft.com/en-us/library/cc237488.aspx)
@@ -79,13 +79,13 @@ pub struct AuthAttribute {
     pub auth_type: Option<String>,
 
     #[serde(rename = "value")]
-    pub value: Option<serde_json::Value>,
+    pub value: Option<Value>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AuthAttributeUnion {
-    AuthAttribute20(Option<serde_json::Value>),
+    AuthAttribute20(Option<Value>),
     AuthAttribute21(Vec<AuthAttribute>),
 }
 
@@ -222,7 +222,7 @@ pub struct Description {
 
     /// Description can have versions associated with it, which should be put in this property.
     #[serde(rename = "version")]
-    pub version: Option<serde_json::Value>,
+    pub version: Option<Value>,
 }
 
 /// Collection variables allow you to define a set of variables, that are a *part of the
@@ -265,7 +265,7 @@ pub struct Variable {
     /// The value that a variable holds in this collection. Ultimately, the variables will be
     /// replaced by this value, when say running a set of requests from a collection
     #[serde(rename = "value")]
-    pub value: Option<serde_json::Value>,
+    pub value: Option<Value>,
 }
 
 /// Detailed description of the info block
@@ -312,7 +312,7 @@ pub struct CollectionVersionClass {
     pub major: i64,
 
     #[serde(rename = "meta")]
-    pub meta: Option<serde_json::Value>,
+    pub meta: Option<Value>,
 
     /// You should increment this number if you make changes that will not break anything that
     /// uses the collection. E.g: removing a folder.
@@ -508,7 +508,7 @@ pub struct Certificate {
 
     /// A list of Url match pattern strings, to identify Urls this certificate can be used for.
     #[serde(rename = "matches")]
-    pub matches: Option<Vec<Option<serde_json::Value>>>,
+    pub matches: Option<Vec<Option<Value>>>,
 
     /// A name for the certificate for user reference
     #[serde(rename = "name")]
@@ -524,7 +524,7 @@ pub struct Certificate {
 pub struct Cert {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
-    pub src: Option<serde_json::Value>,
+    pub src: Option<Value>,
 }
 
 /// An object containing path to file containing private key, on the file system
@@ -532,7 +532,7 @@ pub struct Cert {
 pub struct Key {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
-    pub src: Option<serde_json::Value>,
+    pub src: Option<Value>,
 }
 
 /// A representation for a list of headers
@@ -634,7 +634,7 @@ pub struct Cookie {
     /// Custom attributes for a cookie go here, such as the [Priority
     /// Field](https://code.google.com/p/chromium/issues/detail?id=232693)
     #[serde(rename = "extensions")]
-    pub extensions: Option<Vec<Option<serde_json::Value>>>,
+    pub extensions: Option<Vec<Option<Value>>>,
 
     /// True if the cookie is a host-only cookie. (i.e. a request's URL domain must exactly match
     /// the domain of the cookie).
