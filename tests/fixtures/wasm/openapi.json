@@ -184,9 +184,9 @@
         "tags": [
           "Request Methods"
         ],
-        "summary": "POST Form Data",
-        "description": "The HTTP `POST` request method is meant to transfer data to a server \n(and elicit a response). What data is returned depends on the implementation\nof the server.\n\nA `POST` request can pass parameters to the server using \"Query String \nParameters\", as well as the Request Body. For example, in the following request,\n\n> POST /hi/there?hand=wave\n>\n> <request-body>\n\nThe parameter \"hand\" has the value \"wave\". The request body can be in multiple\nformats. These formats are defined by the MIME type of the request. The MIME \nType can be set using the ``Content-Type`` HTTP header. The most commonly used \nMIME types are:\n\n* `multipart/form-data`\n* `application/x-www-form-urlencoded`\n* `application/json`\n\nThis endpoint echoes the HTTP headers, request parameters, the contents of\nthe request body and the complete URI requested when data is sent as a form parameter.",
-        "operationId": "postFormData",
+        "summary": "POST Raw Text",
+        "description": "The HTTP `POST` request method is meant to transfer data to a server \n(and elicit a response). What data is returned depends on the implementation\nof the server.\n\nA `POST` request can pass parameters to the server using \"Query String \nParameters\", as well as the Request Body. For example, in the following request,\n\n> POST /hi/there?hand=wave\n>\n> <request-body>\n\nThe parameter \"hand\" has the value \"wave\". The request body can be in multiple\nformats. These formats are defined by the MIME type of the request. The MIME \nType can be set using the ``Content-Type`` HTTP header. The most commonly used \nMIME types are:\n\n* `multipart/form-data`\n* `application/x-www-form-urlencoded`\n* `application/json`\n\nThis endpoint echoes the HTTP headers, request parameters, the contents of\nthe request body and the complete URI requested.",
+        "operationId": "postRawText",
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
@@ -211,6 +211,13 @@
                   }
                 }
               }
+            },
+            "text/plain": {
+              "examples": {
+                "POST Raw Text": {
+                  "value": "This is expected to be sent back as part of response body."
+                }
+              }
             }
           }
         },
@@ -226,9 +233,9 @@
         "tags": [
           "Custom"
         ],
-        "summary": "PUT Custom Copy",
-        "description": "PUT Custom Copy",
-        "operationId": "putCustomCopy",
+        "summary": "PUT Request",
+        "description": "The HTTP `PUT` request method is similar to HTTP `POST`. It too is meant to \ntransfer data to a server (and elicit a response). What data is returned depends on the implementation\nof the server.\n\nA `PUT` request can pass parameters to the server using \"Query String \nParameters\", as well as the Request Body. For example, in the following \nraw HTTP request,\n\n> PUT /hi/there?hand=wave\n>\n> <request-body>\n\n\n",
+        "operationId": "putRequest",
         "requestBody": {
           "content": {
             "application/json": {
@@ -330,6 +337,25 @@
                 ]
               },
               "examples": {
+                "PUT Custom": {
+                  "value": {
+                    "hello": "there",
+                    "is": {
+                      "legally": "variable_value",
+                      "mixed": [
+                        {
+                          "name": "Kevin"
+                        },
+                        true,
+                        38,
+                        "Kevin"
+                      ],
+                      "num": 1000
+                    },
+                    "my": 1,
+                    "name": true
+                  }
+                },
                 "PUT Custom Copy": {
                   "value": [
                     {
@@ -355,6 +381,13 @@
                       "authenticated": true
                     }
                   ]
+                }
+              }
+            },
+            "text/plain": {
+              "examples": {
+                "PUT Request": {
+                  "value": "This is expected to be sent back as part of response body."
                 }
               }
             }
@@ -753,12 +786,76 @@
         "tags": [
           "Auth: Digest"
         ],
-        "summary": "DigestAuth Request",
-        "description": "Performing a simple `GET` request to this endpoint returns status code `401 Unauthorized` with `WWW-Authenticate` header containing information to successfully authenticate subsequent requests.\nThe `WWW-Authenticate` header must be processed to extract `realm` and `nonce` values to hash subsequent requests.\n\nWhen this request is executed within Postman, the script attached with this request does the hard work of extracting realm and nonce from the header and set it as [global variables](https://www.getpostman.com/docs/environments#global-variables?source=echo-collection-app-onboarding) named `echo_digest_nonce` and `echo_digest_realm`.\nThese variables are re-used in subsequent request for seamless integration of the two requests.",
-        "operationId": "digestauthRequest",
+        "summary": "DigestAuth Success",
+        "description": "This endpoint sends a hashed Digest Authorization header to gain access to a valid `200 Ok` response code. In Postman, it uses the stored [global variables](https://www.getpostman.com/docs/environments#gloval-variables?source=echo-collection-app-onboarding), `echo_digest_realm` and `echo_digest_nonce`, to generate the hashed authorisation header.\n\nWithin Postman, for this request to successfully authenticate, running the previous request \"DigestAuth Request\" stores the relevant information within the global variables.",
+        "operationId": "digestauthSuccess",
         "responses": {
           "200": {
-            "description": ""
+            "description": "200",
+            "headers": {
+              "Connection": {
+                "schema": {
+                  "type": "string",
+                  "example": "keep-alive"
+                }
+              },
+              "Content-Encoding": {
+                "schema": {
+                  "type": "string",
+                  "example": "gzip"
+                }
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "string",
+                  "example": "42"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "type": "string",
+                  "example": "Thu, 29 Oct 2015 06:17:51 GMT"
+                }
+              },
+              "Server": {
+                "schema": {
+                  "type": "string",
+                  "example": "nginx/1.6.2"
+                }
+              },
+              "Vary": {
+                "schema": {
+                  "type": "string",
+                  "example": "Accept-Encoding"
+                }
+              },
+              "X-Powered-By": {
+                "schema": {
+                  "type": "string",
+                  "example": "Sails <sailsjs.org>"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "authenticated": {
+                      "type": "boolean",
+                      "example": true
+                    }
+                  }
+                },
+                "examples": {
+                  "200": {
+                    "value": {
+                      "authenticated": true
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -2042,10 +2139,26 @@
         "tags": [
           "Utilities / Postman Collection"
         ],
-        "summary": "Transform collection from format v2 to v1",
-        "description": "Transform collection from format v2 to v1",
-        "operationId": "transformCollectionFromFormatV2ToV1",
+        "summary": "Transform collection from format v1 to v2",
+        "description": "Transform collection from format v1 to v2",
+        "operationId": "transformCollectionFromFormatV1ToV2",
         "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "1"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "2"
+            }
+          },
           {
             "name": "from",
             "in": "query",
@@ -2175,6 +2288,43 @@
                 }
               },
               "examples": {
+                "Transform collection from format v1 to v2": {
+                  "value": {
+                    "description": "A sample collection to demonstrate collections as a set of related requests",
+                    "folders": [],
+                    "id": "7875be4b-917d-4aff-8cc4-5606c36bf418",
+                    "name": "Sample Postman Collection",
+                    "order": [
+                      "4d9134be-e8bf-4693-9cd7-1c0fc66ae739",
+                      "141ba274-cc50-4377-a59c-e080066f375e"
+                    ],
+                    "requests": [
+                      {
+                        "collectionId": "877b9dae-a50e-4152-9b89-870c37216f78",
+                        "data": [],
+                        "headers": "",
+                        "id": "4d9134be-e8bf-4693-9cd7-1c0fc66ae739",
+                        "method": "GET",
+                        "name": "A simple GET request",
+                        "preRequestScript": "",
+                        "rawModeData": "",
+                        "tests": "tests['response code is 200'] = (responseCode.code === 200);",
+                        "url": "https://postman-echo.com/get?source=newman-sample-github-collection"
+                      },
+                      {
+                        "collectionId": "877b9dae-a50e-4152-9b89-870c37216f78",
+                        "data": [],
+                        "dataMode": "raw",
+                        "headers": "Content-Type: text/plain",
+                        "id": "141ba274-cc50-4377-a59c-e080066f375e",
+                        "method": "POST",
+                        "name": "A simple POST request",
+                        "rawModeData": "Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...",
+                        "url": "https://postman-echo.com/post"
+                      }
+                    ]
+                  }
+                },
                 "Transform collection from format v2 to v1": {
                   "value": {
                     "info": {
@@ -2216,7 +2366,7 @@
         },
         "responses": {
           "200": {
-            "description": "Sample v1 Response",
+            "description": "Sample v2 Response / Sample v1 Response",
             "headers": {
               "Connection": {
                 "schema": {
@@ -2284,6 +2434,181 @@
                     "id": {
                       "type": "string",
                       "example": "0c42230c-c8e4-4ca0-a4aa-d393971de8b8"
+                    },
+                    "info": {
+                      "type": "object",
+                      "properties": {
+                        "_postman_id": {
+                          "type": "string",
+                          "example": "7875be4b-917d-4aff-8cc4-5606c36bf418"
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "A sample collection to demonstrate collections as a set of related requests"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Sample Postman Collection"
+                        },
+                        "schema": {
+                          "type": "string",
+                          "example": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+                        }
+                      }
+                    },
+                    "item": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "event": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "listen": {
+                                  "type": "string",
+                                  "example": "test"
+                                },
+                                "script": {
+                                  "type": "object",
+                                  "properties": {
+                                    "exec": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "example": "tests['response code is 200'] = (responseCode.code === 200);"
+                                      },
+                                      "example": [
+                                        "tests['response code is 200'] = (responseCode.code === 200);"
+                                      ]
+                                    },
+                                    "type": {
+                                      "type": "string",
+                                      "example": "text/javascript"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "example": [
+                              {
+                                "listen": "test",
+                                "script": {
+                                  "exec": [
+                                    "tests['response code is 200'] = (responseCode.code === 200);"
+                                  ],
+                                  "type": "text/javascript"
+                                }
+                              }
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "A simple GET request"
+                          },
+                          "request": {
+                            "type": "object",
+                            "properties": {
+                              "body": {
+                                "type": "object",
+                                "properties": {
+                                  "mode": {
+                                    "type": "string",
+                                    "example": "raw"
+                                  },
+                                  "raw": {
+                                    "type": "string",
+                                    "example": ""
+                                  }
+                                }
+                              },
+                              "header": {
+                                "type": "array",
+                                "items": {},
+                                "example": []
+                              },
+                              "method": {
+                                "type": "string",
+                                "example": "GET"
+                              },
+                              "url": {
+                                "type": "string",
+                                "example": "https://postman-echo.com/get?source=newman-sample-github-collection"
+                              }
+                            }
+                          },
+                          "response": {
+                            "type": "array",
+                            "items": {},
+                            "example": []
+                          }
+                        }
+                      },
+                      "example": [
+                        {
+                          "event": [
+                            {
+                              "listen": "test",
+                              "script": {
+                                "exec": [
+                                  "tests['response code is 200'] = (responseCode.code === 200);"
+                                ],
+                                "type": "text/javascript"
+                              }
+                            }
+                          ],
+                          "name": "A simple GET request",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": ""
+                            },
+                            "header": [],
+                            "method": "GET",
+                            "url": "https://postman-echo.com/get?source=newman-sample-github-collection"
+                          },
+                          "response": []
+                        },
+                        {
+                          "name": "A simple POST request",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": "Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium..."
+                            },
+                            "header": [
+                              {
+                                "description": "",
+                                "key": "Content-Type",
+                                "value": "text/plain"
+                              }
+                            ],
+                            "method": "POST",
+                            "url": "https://postman-echo.com/post"
+                          },
+                          "response": []
+                        },
+                        {
+                          "name": "A simple POST request with JSON body",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": "{\"text\":\"Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...\"}"
+                            },
+                            "header": [
+                              {
+                                "description": "",
+                                "key": "Content-Type",
+                                "value": "application/json"
+                              }
+                            ],
+                            "method": "POST",
+                            "url": "https://postman-echo.com/post"
+                          },
+                          "response": []
+                        }
+                      ]
                     },
                     "name": {
                       "type": "string",
@@ -2389,6 +2714,11 @@
                           "url": "https://postman-echo.com/post"
                         }
                       ]
+                    },
+                    "variables": {
+                      "type": "array",
+                      "items": {},
+                      "example": []
                     }
                   }
                 },
@@ -2440,6 +2770,81 @@
                           "url": "https://postman-echo.com/post"
                         }
                       ]
+                    }
+                  },
+                  "Sample v2 Response": {
+                    "value": {
+                      "info": {
+                        "_postman_id": "7875be4b-917d-4aff-8cc4-5606c36bf418",
+                        "description": "A sample collection to demonstrate collections as a set of related requests",
+                        "name": "Sample Postman Collection",
+                        "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+                      },
+                      "item": [
+                        {
+                          "event": [
+                            {
+                              "listen": "test",
+                              "script": {
+                                "exec": [
+                                  "tests['response code is 200'] = (responseCode.code === 200);"
+                                ],
+                                "type": "text/javascript"
+                              }
+                            }
+                          ],
+                          "name": "A simple GET request",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": ""
+                            },
+                            "header": [],
+                            "method": "GET",
+                            "url": "https://postman-echo.com/get?source=newman-sample-github-collection"
+                          },
+                          "response": []
+                        },
+                        {
+                          "name": "A simple POST request",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": "Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium..."
+                            },
+                            "header": [
+                              {
+                                "description": "",
+                                "key": "Content-Type",
+                                "value": "text/plain"
+                              }
+                            ],
+                            "method": "POST",
+                            "url": "https://postman-echo.com/post"
+                          },
+                          "response": []
+                        },
+                        {
+                          "name": "A simple POST request with JSON body",
+                          "request": {
+                            "body": {
+                              "mode": "raw",
+                              "raw": "{\"text\":\"Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...\"}"
+                            },
+                            "header": [
+                              {
+                                "description": "",
+                                "key": "Content-Type",
+                                "value": "application/json"
+                              }
+                            ],
+                            "method": "POST",
+                            "url": "https://postman-echo.com/post"
+                          },
+                          "response": []
+                        }
+                      ],
+                      "variables": []
                     }
                   }
                 }
