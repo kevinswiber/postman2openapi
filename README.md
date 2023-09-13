@@ -40,7 +40,7 @@ cargo install postman2openapi-cli
 To install from the latest on GitHub, use:
 
 ```
-cargo install --package postman2openapi-cli --git https://github.com/kevinswiber/postman2openapi
+cargo install --git https://github.com/kevinswiber/postman2openapi postman2openapi-cli
 ```
 
 ### Usage
