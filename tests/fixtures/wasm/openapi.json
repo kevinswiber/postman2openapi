@@ -2204,6 +2204,48 @@
                     "items": {
                       "type": "object",
                       "properties": {
+                        "event": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "listen": {
+                                "type": "string",
+                                "example": "test"
+                              },
+                              "script": {
+                                "type": "object",
+                                "properties": {
+                                  "exec": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "example": "tests['response code is 200'] = (responseCode.code === 200);"
+                                    },
+                                    "example": [
+                                      "tests['response code is 200'] = (responseCode.code === 200);"
+                                    ]
+                                  },
+                                  "type": {
+                                    "type": "string",
+                                    "example": "text/javascript"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "example": [
+                            {
+                              "listen": "test",
+                              "script": {
+                                "exec": [
+                                  "tests['response code is 200'] = (responseCode.code === 200);"
+                                ],
+                                "type": "text/javascript"
+                              }
+                            }
+                          ]
+                        },
                         "name": {
                           "type": "string",
                           "example": "A simple GET request"
@@ -2260,6 +2302,17 @@
                     },
                     "example": [
                       {
+                        "event": [
+                          {
+                            "listen": "test",
+                            "script": {
+                              "exec": [
+                                "tests['response code is 200'] = (responseCode.code === 200);"
+                              ],
+                              "type": "text/javascript"
+                            }
+                          }
+                        ],
                         "name": "A simple GET request",
                         "request": {
                           "method": "GET",
@@ -2282,6 +2335,23 @@
                           "method": "POST",
                           "url": "https://postman-echo.com/post"
                         }
+                      },
+                      {
+                        "name": "A simple POST request with JSON body",
+                        "request": {
+                          "body": {
+                            "mode": "raw",
+                            "raw": "{\"text\":\"Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...\"}"
+                          },
+                          "header": [
+                            {
+                              "key": "Content-Type",
+                              "value": "application/json"
+                            }
+                          ],
+                          "method": "POST",
+                          "url": "https://postman-echo.com/post"
+                        }
                       }
                     ]
                   }
@@ -2296,7 +2366,8 @@
                     "name": "Sample Postman Collection",
                     "order": [
                       "4d9134be-e8bf-4693-9cd7-1c0fc66ae739",
-                      "141ba274-cc50-4377-a59c-e080066f375e"
+                      "141ba274-cc50-4377-a59c-e080066f375e",
+                      "4511ca8b-0bc7-430f-b894-a7ec1036f322"
                     ],
                     "requests": [
                       {
@@ -2321,6 +2392,17 @@
                         "name": "A simple POST request",
                         "rawModeData": "Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...",
                         "url": "https://postman-echo.com/post"
+                      },
+                      {
+                        "collectionId": "877b9dae-a50e-4152-9b89-870c37216f78",
+                        "data": [],
+                        "dataMode": "raw",
+                        "headers": "Content-Type: application/json",
+                        "id": "4511ca8b-0bc7-430f-b894-a7ec1036f322",
+                        "method": "POST",
+                        "name": "A simple POST request with JSON body",
+                        "rawModeData": "{\"text\":\"Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...\"}",
+                        "url": "https://postman-echo.com/post"
                       }
                     ]
                   }
@@ -2334,6 +2416,17 @@
                     },
                     "item": [
                       {
+                        "event": [
+                          {
+                            "listen": "test",
+                            "script": {
+                              "exec": [
+                                "tests['response code is 200'] = (responseCode.code === 200);"
+                              ],
+                              "type": "text/javascript"
+                            }
+                          }
+                        ],
                         "name": "A simple GET request",
                         "request": {
                           "method": "GET",
@@ -2351,6 +2444,23 @@
                             {
                               "key": "Content-Type",
                               "value": "text/plain"
+                            }
+                          ],
+                          "method": "POST",
+                          "url": "https://postman-echo.com/post"
+                        }
+                      },
+                      {
+                        "name": "A simple POST request with JSON body",
+                        "request": {
+                          "body": {
+                            "mode": "raw",
+                            "raw": "{\"text\":\"Duis posuere augue vel cursus pharetra. In luctus a ex nec pretium...\"}"
+                          },
+                          "header": [
+                            {
+                              "key": "Content-Type",
+                              "value": "application/json"
                             }
                           ],
                           "method": "POST",

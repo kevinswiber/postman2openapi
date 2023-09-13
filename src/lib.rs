@@ -416,6 +416,24 @@ impl<'a> Transpiler<'a> {
 
         if let Some(responses) = &item.response {
             for r in responses.iter().flatten() {
+                if let Some(or) = &r.original_request {
+                    if let Some(body) = &or.body {
+                        content_type = Some("text/plain".to_string());
+                        if let Some(options) = body.options.clone() {
+                            if let Some(raw_options) = options.raw {
+                                if raw_options.language.is_some() {
+                                    content_type = match raw_options.language.unwrap().as_str() {
+                                        "xml" => Some("application/xml".to_string()),
+                                        "json" => Some("application/json".to_string()),
+                                        "html" => Some("text/html".to_string()),
+                                        _ => Some("text/plain".to_string()),
+                                    }
+                                }
+                            }
+                        }
+                        self.extract_request_body(body, op, request_name, content_type);
+                    }
+                }
                 let mut oas_response = openapi3::Response::default();
                 let mut response_media_types = BTreeMap::<String, openapi3::MediaType>::new();
 
