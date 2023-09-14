@@ -19,7 +19,7 @@ build-web:
 clippy:
   cargo clippy -- -D warnings
 
-test: test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
+test: build test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
 
 test-lib:
   cargo test --lib
