@@ -298,7 +298,6 @@ name = "postman2openapi"
 version = "1.1.0"
 dependencies = [
  "anyhow",
- "chrono",
  "console_error_panic_hook",
  "convert_case",
  "gloo-utils",
@@ -322,6 +321,7 @@ name = "postman2openapi-cli"
 version = "1.1.0"
 dependencies = [
  "atty",
+ "chrono",
  "clap",
  "lazy_static",
  "postman2openapi",

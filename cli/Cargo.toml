@@ -8,11 +8,15 @@ repository = "https://github.com/kevinswiber/postman2openapi"
 license = "Apache-2.0"
 readme = "README.md"
 documentation = "https://docs.rs/postman2openapi"
+build = "build.rs"
 edition = "2021"
 
 [[bin]]
 name = "postman2openapi"
 path = "src/main.rs"
+
+[build-dependencies]
+chrono = "0.4"
 
 [dependencies]
 atty = "0.2"
