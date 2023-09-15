@@ -1,3 +1,5 @@
+use serde::Deserializer;
+
 extern crate serde_json;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
@@ -552,8 +554,52 @@ pub struct Header {
     pub key: String,
 
     /// The value (or the RHS) of the Header is stored in this field.
-    #[serde(rename = "value")]
+    #[serde(rename = "value", deserialize_with = "deserialize_as_string")]
     pub value: String,
+}
+
+struct DeserializeAnyAsString;
+impl<'de> serde::de::Visitor<'de> for DeserializeAnyAsString {
+    type Value = String;
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+        formatter.write_str("an integer or a string")
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> {
+        Ok(v.to_string())
+    }
+
+    fn visit_string<E>(self, v: String) -> Result<Self::Value, E> {
+        Ok(v)
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v.to_string())
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(v.to_string())
+    }
+}
+
+fn deserialize_as_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(DeserializeAnyAsString)
 }
 
 /// Using the Proxy, you can configure your custom proxy into the postman for particular url
