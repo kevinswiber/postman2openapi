@@ -16,3 +16,21 @@ RUN cargo install wasm-pack
 RUN cargo install just
 
 RUN chmod -R g+w $CARGO_HOME/registry
+
+RUN if [[ `uname -m` = "x86_64" ]]; then apt-get install -y libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+      libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2 jq; fi
+RUN if [[ `uname -m` = "x86_64" ]]; then export CHROME_STABLE_DOWNLOADS=$(curl https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions-with-downloads.json  | jq -r '.channels.Stable.downloads'); fi
+RUN if [[ `uname -m` = "x86_64" ]]; then export CHROME_URL=$(echo $CHROME_STABLE_DOWNLOADS | jq -r '.chrome[] | select(.platform == "linux64").url'); fi
+RUN if [[ `uname -m` = "x86_64" ]]; then export CHROMEDRIVER_URL=$(echo $CHROME_STABLE_DOWNLOADS | jq -r '.chromedriver[] | select(.platform == "linux64").url'); fi
+RUN if [[ `uname -m` = "x86_64" ]]; then wget -N "$CHROME_URL" -P ~/ && \
+      unzip ~/chrome-linux64.zip -d ~/ && \
+      mv ~/chrome-linux64 /opt/chrome && \
+      ln -s /opt/chrome/chrome /usr/local/bin/chrome && \
+      chmod +x /opt/chrome && \
+      rm ~/chrome-linux64.zip; fi
+RUN if [[ `uname -m` = "x86_64" ]]; then wget -N "$CHROMEDRIVER_URL" -P ~/ && \
+      unzip ~/chromedriver-linux64.zip -d ~/ && \
+      mv ~/chromedriver-linux64 /opt/chromedriver && \
+      ln -s /opt/chromedriver/chromedriver /usr/local/bin/chromedriver && \
+      chmod +x /opt/chromedriver && \
+      rm ~/chromedriver-linux64.zip; fi
