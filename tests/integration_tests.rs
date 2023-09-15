@@ -9,7 +9,7 @@ mod integration_tests {
                 let options = postman2openapi::TranspileOptions::default();
                 match postman2openapi::from_path(&filename, options) {
                     Ok(_oas) => assert!(true),
-                    Err(_err) => assert!(false),
+                    Err(err) => assert!(false, "{:?}", err),
                 }
             }
         };
@@ -23,6 +23,7 @@ mod integration_tests {
     test_fixture!(it_parses_fastly_api_collection, "fastly.postman.json");
     test_fixture!(it_parses_users_api_collection, "users.postman.json");
     test_fixture!(it_parses_graphql_api_collection, "graphql.postman.json");
+    test_fixture!(it_parses_todo_api_collection, "todo.postman.json");
     test_fixture!(
         it_parses_gotomeeting_api_collection,
         "gotomeeting.postman.json"
