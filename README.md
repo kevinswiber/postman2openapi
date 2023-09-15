@@ -14,6 +14,7 @@ Convert Postman collections to OpenAPI definitions.
   - [Installation](#installation-1)
   - [Usage](#usage-1)
   - [JavaScript API](#javascript-api)
+- [Build](#build)
 - [License](#license)
 
 ## CLI
@@ -94,6 +95,24 @@ console.log(JSON.stringify(openapi, null, 2));
 
 - collection - An object representing the Postman collection.
 - _returns_ - an OpenAPI definition as a JavaScript object.
+
+## Build
+
+Note: A [Dev Container](https://containers.dev/) is included for convenience.
+
+To take advantage of build recipes, install [just](https://github.com/casey/just#packages).
+
+### `just build`
+
+Builds all projects.
+
+### `just test`
+
+Runs all lint checks (`cargo fmt --check`, `cargo clippy`) and runs all tests, including tests for `wasm32-unknown-unknown` targets (Node.js, Chrome, Firefox).
+
+### `just start-web`
+
+Builds the WebAssembly project and starts a local version of the [postman2openapi site](https://kevinswiber.github.io/postman2openapi/).
 
 ## License
 

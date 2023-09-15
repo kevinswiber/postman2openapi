@@ -15,11 +15,15 @@ build-web:
   wasm-pack build --release --out-dir ./web/wasm --target bundler
   npm install --prefix ./web
   npm run build --prefix ./web
+build-nodejs:
+  wasm-pack build --release --out-dir ./nodejs --target nodejs
 
+fmt-check:
+  cargo fmt --check --all
 clippy:
   cargo clippy -- -D warnings
 
-test: build test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
+test: build fmt-check clippy test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
 
 test-lib:
   cargo test --lib
