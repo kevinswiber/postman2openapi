@@ -1,8 +1,5 @@
 {
-  "name": "Rust",
+  "name": "postman2openapi",
   "dockerFile": "Dockerfile",
-  "postCreateCommand": "rustc --version",
-  "runArgs": [
-    "--network=host"
-  ]
+  "postCreateCommand": "rustc --version && echo \"node $(node --version)\" && just --version",
 }

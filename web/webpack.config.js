@@ -21,7 +21,7 @@ module.exports = {
     new CopyWebpackPlugin([path.resolve(__dirname, 'static')]),
     new WasmPackPlugin({
       crateDirectory: path.resolve(__dirname, '..'),
-      outDir: path.resolve(__dirname, '..', 'pkg'),
+      outDir: path.resolve(__dirname, 'wasm'),
     }),
   ],
   module: {

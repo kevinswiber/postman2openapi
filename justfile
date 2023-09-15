@@ -15,6 +15,8 @@ build-web:
   wasm-pack build --release --out-dir ./web/wasm --target bundler
   npm install --prefix ./web
   npm run build --prefix ./web
+build-nodejs:
+  wasm-pack build --release --out-dir ./nodejs --target nodejs
 
 clippy:
   cargo clippy -- -D warnings

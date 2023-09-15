@@ -4,8 +4,8 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "build": "rimraf dist ../pkg && NODE_OPTIONS=--openssl-legacy-provider webpack --config webpack.config.js --mode production",
-    "start": "rimraf dist ../pkg && NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --mode development",
+    "build": "rimraf dist wasm && NODE_OPTIONS=--openssl-legacy-provider webpack --config webpack.config.js --mode production",
+    "start": "rimraf dist wasm && NODE_OPTIONS=--openssl-legacy-provider webpack-dev-server --mode development",
     "test": "cargo test && wasm-pack test --headless"
   },
   "dependencies": {
