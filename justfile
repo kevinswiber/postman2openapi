@@ -32,8 +32,8 @@ test-unit:
 test-integration:
   cargo test --test integration_tests
 test-wasm-firefox:
-  wasm-pack test --headless --firefox --test wasm_browser
+  (which geckodriver && wasm-pack test --headless --firefox --test wasm_browser) || echo "Install geckodriver to run Firefox tests."
 test-wasm-chrome:
-  wasm-pack test --headless --chrome --test wasm_browser
+  (which chromedriver && wasm-pack test --headless --chrome --test wasm_browser) || echo "Install chromedriver to run Chrome tests."
 test-wasm-node:
   wasm-pack test --node --test wasm_node

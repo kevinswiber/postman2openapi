@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install nodejs -y
 
 RUN rustup target install wasm32-unknown-unknown
 
-USER vscode
 RUN cargo install wasm-bindgen-cli
 RUN cargo install wasm-opt
 RUN cargo install wasm-pack
 RUN cargo install just
+
+RUN chmod -R g+w $CARGO_HOME/registry
