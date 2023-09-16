@@ -35,3 +35,12 @@ RUN if [ `uname -m` = "x86_64" ]; then \
       ln -s /opt/chromedriver/chromedriver /usr/local/bin/chromedriver && \
       chmod +x /opt/chromedriver && \
       rm ~/chromedriver-linux64.zip; fi
+
+RUN apt-get update && apt-get install -y firefox-esr && \
+      GECKODRIVER_NAME=$(if [ `uname -m` = "aarch64" ]; then echo "geckodriver-v0.33.0-linux-aarch64" ; else echo "geckodriver-v0.33.0-linux64"; fi) && \
+      GECKODRIVER_URL="https://github.com/mozilla/geckodriver/releases/download/v0.33.0/$GECKODRIVER_NAME.tar.gz" && \
+      wget -N "$GECKODRIVER_URL" -P ~/ && \
+      tar -zxf ~/$GECKODRIVER_NAME.tar.gz -C ~/ && \
+      mv ~/geckodriver /usr/local/bin/geckodriver && \
+      chmod +x /usr/local/bin/geckodriver && \
+      rm ~/$GECKODRIVER_NAME.tar.gz
