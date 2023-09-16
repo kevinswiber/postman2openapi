@@ -17,6 +17,14 @@ build-web:
   npm run build --prefix ./web
 build-nodejs:
   wasm-pack build --release --out-dir ./nodejs --target nodejs
+build-devcontainer-image:
+  NEEDS_BUILDER=$(docker buildx ls | grep -q postman2openapi; echo $?); \
+  if [[ "$NEEDS_BUILDER" = "1" ]]; then docker buildx create --name postman2openapi --bootstrap --use; \
+    else docker buildx use postman2openapi; fi && \
+  docker buildx build --platform linux/amd64,linux/arm64 --push -f ./.devcontainer/Dockerfile -t ghcr.io/kevinswiber/postman2openapi-devcontainer:latest .
+
+push-devcontainer-image:
+  docker push ghcr.io/kevinswiber/postman2openapi-devcontainer:latest
 
 fmt-check:
   cargo fmt --check --all

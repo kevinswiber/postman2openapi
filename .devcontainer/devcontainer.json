@@ -1,5 +1,5 @@
 {
   "name": "postman2openapi",
-  "dockerFile": "Dockerfile",
-  "postCreateCommand": "rustc --version && echo \"node $(node --version)\" && just --version",
+  "image": "ghcr.io/kevinswiber/postman2openapi-devcontainer",
+  "postCreateCommand": "rustc --version && echo \"node $(node --version)\" && just --version"
 }
