@@ -1,0 +1,605 @@
+{
+  "info": {
+    "_postman_id": "2e45a34d-a41f-49ba-8bee-36f5705f1ecf",
+    "name": "obscured",
+    "description": "more obscured",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "19958874"
+  },
+  "item": [
+    {
+      "name": "v2",
+      "item": [
+        {
+          "name": "Examples",
+          "item": [
+            {
+              "name": "Object.Query - get package keys waiting for approval",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"method\":\"object.query\",\n\"params\":[\"select * from package_keys where status='waiting'\"],\n\"id\":1}"
+                },
+                "url": {
+                  "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+                  "protocol": "http",
+                  "host": [
+                    "{{v2 API domain}}"
+                  ],
+                  "path": [
+                    "v2",
+                    "json-rpc",
+                    "{{site id}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "apikey",
+                      "value": "{{v3 API key}}"
+                    },
+                    {
+                      "key": "sig",
+                      "value": "{{sig}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Object.Query - get package keys created within a given time period",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"method\":\"object.query\",\n\"params\":[\"select * from package_keys where created > '2018-10-01' and created < '2018-10-10'\"],\n\"id\":1}"
+                },
+                "url": {
+                  "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+                  "protocol": "http",
+                  "host": [
+                    "{{v2 API domain}}"
+                  ],
+                  "path": [
+                    "v2",
+                    "json-rpc",
+                    "{{site id}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "apikey",
+                      "value": "{{v3 API key}}"
+                    },
+                    {
+                      "key": "sig",
+                      "value": "{{sig}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Object.Query - get package keys approved in a given timeframe",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"method\":\"object.query\",\n\"params\":[\"select * from package_keys where status = 'active' and updated > '2018-10-01' and updated < '2018-10-10'\"],\n\"id\":1}"
+                },
+                "url": {
+                  "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+                  "protocol": "http",
+                  "host": [
+                    "{{v2 API domain}}"
+                  ],
+                  "path": [
+                    "v2",
+                    "json-rpc",
+                    "{{site id}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "apikey",
+                      "value": "{{v3 API key}}"
+                    },
+                    {
+                      "key": "sig",
+                      "value": "{{sig}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Object.Query - get package keys rejected in a given timeframe",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"method\":\"object.query\",\n\"params\":[\"select * from package_keys where status = 'disabled' and updated > '2018-10-01' and updated < '2018-10-10'\"],\n\"id\":1}"
+                },
+                "url": {
+                  "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+                  "protocol": "http",
+                  "host": [
+                    "{{v2 API domain}}"
+                  ],
+                  "path": [
+                    "v2",
+                    "json-rpc",
+                    "{{site id}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "apikey",
+                      "value": "{{v3 API key}}"
+                    },
+                    {
+                      "key": "sig",
+                      "value": "{{sig}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "Object Query - get package keys with owner Information",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "noauth"
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "name": "Content-Type",
+                    "type": "text",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\"method\":\"object.query\",\n\"params\":[\"select * from package_keys where status='active'\"],\n\"id\":1}"
+                },
+                "url": {
+                  "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+                  "protocol": "http",
+                  "host": [
+                    "{{v2 API domain}}"
+                  ],
+                  "path": [
+                    "v2",
+                    "json-rpc",
+                    "{{site id}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "apikey",
+                      "value": "{{v3 API key}}"
+                    },
+                    {
+                      "key": "sig",
+                      "value": "{{sig}}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Object Query",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "type": "text",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"method\":\"object.query\",\n\"params\":[\"{{v2 object query}}\"],\n\"id\":1}\n"
+            },
+            "url": {
+              "raw": "http://{{v2 API domain}}/v2/json-rpc/{{site id}}?apikey={{v3 API key}}&sig={{sig}}",
+              "protocol": "http",
+              "host": [
+                "{{v2 API domain}}"
+              ],
+              "path": [
+                "v2",
+                "json-rpc",
+                "{{site id}}"
+              ],
+              "query": [
+                {
+                  "key": "apikey",
+                  "value": "{{v3 API key}}"
+                },
+                {
+                  "key": "sig",
+                  "value": "{{sig}}"
+                }
+              ]
+            },
+            "description": "Set your object query in the environment variable 'v2 object query', e.g. select * from package_keys where status='active'."
+          },
+          "response": []
+        }
+      ],
+      "description": "This folder contains useful requests that return data filtered by date/time. This type of filtering is not available in the v3 API.\n\nThe signature is generated automatically for each request.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Access your env variables like this",
+              "var key = pm.globals.get(\"v3 API key\");",
+              "var secret = pm.globals.get(\"v3 API secret\");",
+              "console.log(\"key is \" + key);",
+              "console.log(\"secret is \"+ secret);",
+              "",
+              "const now = new Date();",
+              "var t = now.getTime().toString();",
+              "t = t.substring(0,10);",
+              "",
+              "var sig = CryptoJS.MD5(key + secret + t).toString();",
+              "",
+              "// Set the new environment variable",
+              "pm.globals.set(\"sig\", sig);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.environment.get(\"logResponseCSV\") == \"true\") {",
+              "    console.log(jsonToCsv(responseBody,pm.environment.get(\"logResponseCSVQuote\"),pm.environment.get(\"logResponseCSVHeader\")));",
+              "}",
+              "console.log(responseBody);",
+              "",
+              "function jsonToCsv(responseBody, isQuoted, hasHeader) {",
+              "  var body = JSON.parse(responseBody);",
+              "  if ('result' in body) {",
+              "     if (typeof body.result !== \"boolean\" && 'items' in body.result) {",
+              "      var array = body.result.items;",
+              "      var line = '';",
+              "      var result = '';",
+              "      var columns = [];",
+              "      var quoted = isQuoted;",
+              "      var header = hasHeader;",
+              "      var head = array[0];",
+              "    ",
+              "      var column = 0;",
+              "      for (var key in array[0]) {",
+              "        var keyString = key + \"\";",
+              "        if (quoted) {",
+              "          keyString = '\"' + keyString.replace(/\"/g, '\"\"') + '\",';",
+              "        } else {",
+              "          keyString = key + ',';",
+              "        }",
+              "        columns[column] = key;",
+              "        line += keyString;",
+              "        column++;",
+              "      }",
+              "    ",
+              "      if (header) {",
+              "        line = line.slice(0, -1);",
+              "        result += line + '\\r\\n';",
+              "      }",
+              "    ",
+              "      for (var row = 0; row < array.length; row++) {",
+              "        line = '';",
+              "        var valueString = '';",
+              "        for (column = 0; column < columns.length; column++) {",
+              "          var value = array[row][columns[column]];",
+              "          if (typeof value === 'object') {",
+              "            value = JSON.stringify(value);",
+              "          } else if (typeof value != 'string') {",
+              "            value = String(value);",
+              "          }",
+              "          valueString = quoted ? value + \"\" : value + ',';",
+              "          if (quoted) {",
+              "            line += '\"' + valueString.replace(/\"/g, '\"\"') + '\",';",
+              "          } else {",
+              "            line += valueString;",
+              "          }",
+              "        }",
+              "    ",
+              "        line = line.slice(0, -1);",
+              "        result += line + '\\r\\n';",
+              "      }",
+              "      return result;",
+              "     }",
+              "  } else {",
+              "    return \"No items for CSV\";",
+              "  }",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "postman.setNextRequest(\"Get Token\");"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "limit",
+      "value": "100"
+    },
+    {
+      "key": "method_limit",
+      "value": "100"
+    },
+    {
+      "key": "offset",
+      "value": "0"
+    },
+    {
+      "key": "filter",
+      "value": ""
+    },
+    {
+      "key": "v2 object query",
+      "value": ""
+    },
+    {
+      "key": "logResponseCSV",
+      "value": "true"
+    },
+    {
+      "key": "logResponseCSVHeader",
+      "value": "true"
+    },
+    {
+      "key": "logResponseCSVQuote",
+      "value": "true"
+    },
+    {
+      "key": "application fields",
+      "value": "id,created,updated,username,name,description,type,commercial,ads,adsSystem,usageModel,tags,notes,howDidYouHear,preferredProtocol,preferredOutput,externalId,uri,status,isPackaged,oauthRedirectUri"
+    },
+    {
+      "key": "application package keys",
+      "value": "id,package,plan,*"
+    },
+    {
+      "key": "cors fields",
+      "value": "allDomainsEnabled, cookiesAllowed, domainsAllowed, headersAllowed, headersExposed,  maxAge, subDomainMatchingAllowed"
+    },
+    {
+      "key": "domains fields",
+      "value": "id,created,domain,status"
+    },
+    {
+      "key": "endpoint cache fields",
+      "value": "name,id,cache"
+    },
+    {
+      "key": "endpoints fields",
+      "value": "allowMissingApiKey,apiKeyValueLocationKey,apiKeyValueLocations,apiMethodDetectionKey,apiMethodDetectionLocations,cache,connectionTimeoutForSystemDomainRequest,connectionTimeoutForSystemDomainResponse,cookiesDuringHttpRedirectsEnabled,cors,created,customRequestAuthenticationAdapter,dropApiKeyFromIncomingCall,forceGzipOfBackendCall,forwardedHeaders,gzipPassthroughSupportEnabled,headersToExcludeFromIncomingCall,highSecurity,hostPassthroughIncludedInBackendCallHeader,id,inboundSslRequired,jsonpCallbackParameter,jsonpCallbackParameterValue,methods,methods.responseFilters,name,numberOfHttpRedirectsToFollow,oauthGrantTypes,outboundRequestTargetPath,outboundRequestTargetQueryParameters,outboundTransportProtocol,processor,publicDomains,requestAuthenticationType,requestPathAlias,requestProtocol,returnedHeaders,scheduledMaintenanceEvent,stringsToTrimFromApiKey,supportedHttpMethods,systemDomainAuthentication,systemDomains,trafficManagerDomain,updated,useSystemDomainCredential"
+    },
+    {
+      "key": "error messages fields",
+      "value": "errorMessages.code,errorMessages.status,errorMessages.detailHeader,errorMessages.responseBody"
+    },
+    {
+      "key": "error sets fields",
+      "value": "errorSets"
+    },
+    {
+      "key": "iodocs fields",
+      "value": "definition,createad,ServiceId,defaultApi"
+    },
+    {
+      "key": "member applications fields",
+      "value": "id,created,updated,username,name,description,type,commercial,ads,adsSystem,usageModel,tags,notes,howDidYouHear,preferredProtocol,preferredOutput,externalId,uri,status,isPackaged,oauthRedirectUri"
+    },
+    {
+      "key": "members fields",
+      "value": "id,username,created,updated,email,displayName,uri,blog,im,imsvc,phone,company,address1, address2,locality,region,postalCode,countryCode,firstName, lastName,registrationIpaddr, areaStatus,externalId,passwdNew,applications,packageKeys,roles"
+    },
+    {
+      "key": "methods fields",
+      "value": "id,name,created,updated,sampleJsonResponse,sampleXmlResponse"
+    },
+    {
+      "key": "package fields",
+      "value": "id,name,created,updated,organization,description,notifyDeveloperPeriod,notifyDeveloperNearQuota,notifyDeveloperOverQuota,notifyDeveloperOverThrottle,notifyAdminPeriod,notifyAdminNearQuota,notifyAdminOverQuota,notifyAdminOverThrottle,notifyAdminEmails,nearQuotaThreshold,eav,keyAdapter,keyLength,sharedSecretLength,plans.id,plans.created,plans.updated,plans.name,plans.description,plans.selfServiceKeyProvisioningEnabled,plans.adminKeyProvisioningEnabled,plans.notes,plans.maxNumKeysAllowed,plans.numKeysBeforeReview,plans.qpsLimitCeiling,plans.qpsLimitExempt,plans.qpsLimitKeyOverrideAllowed,plans.rateLimitCeiling, plans.rateLimitExempt, plans.rateLimitKeyOverrideAllowed, plans.rateLimitPeriod,plans.responseFilterOverrideAllowed, plans.status, plans.emailTemplateSetId"
+    },
+    {
+      "key": "package keys fields",
+      "value": "id,apikey,secret,created,updated,rateLimitCeiling,rateLimitExempt,qpsLimitCeiling,qpsLimitExempt,status,limits,package.name,plan.name,application.name"
+    },
+    {
+      "key": "plan fields",
+      "value": "id,name,created,updated,description,eav,selfServiceKeyProvisioningEnabled,adminKeyProvisioningEnabled,notes,maxNumKeysAllowed,numKeysBeforeReview,qpsLimitCeiling,qpsLimitExempt,qpsLimitKeyOverrideAllowed,rateLimitCeiling,rateLimitExempt,rateLimitKeyOverrideAllowed,rateLimitPeriod,responseFilterOverrideAllowed,status,emailTemplateSetId,services"
+    },
+    {
+      "key": "plan services fields",
+      "value": "id,name,endpoints.id,endpoints.name,endpoints.methods.id,endpoints.methods.name,created,updated"
+    },
+    {
+      "key": "public domains fields",
+      "value": "id,method,name,path,domain,created,updated"
+    },
+    {
+      "key": "public hostnames fields",
+      "value": "address"
+    },
+    {
+      "key": "response filters fields",
+      "value": "id,name,created,updated,notes,xmlFilterFields,jsonFilterFields"
+    },
+    {
+      "key": "roles fields",
+      "value": "id,name,created,updated"
+    },
+    {
+      "key": "scheduled maintenance event fields",
+      "value": "id,name,startDateTime,endDateTime,endpoints"
+    },
+    {
+      "key": "security profile fields",
+      "value": "securityProfile"
+    },
+    {
+      "key": "service fields",
+      "value": "cache,created,crossdomainPolicy,description,editorHandle,endpoints.allowMissingApiKey,endpoints.apiKeyValueLocationKey,endpoints.created,endpoints.updated,endpoints.apiKeyValueLocations,endpoints.apiMethodDetectionKey,endpoints.apiMethodDetectionLocations,endpoints.cache.clientSurrogateControlEnabled,endpoints.cache.contentCacheKeyHeaders,endpoints.connectionTimeoutForSystemDomainRequest,endpoints.connectionTimeoutForSystemDomainResponse,endpoints.cookiesDuringHttpRedirectsEnabled,endpoints.cors,endpoints.cors.allDomainsEnabled,endpoints.cors.maxAge,endpoints.customRequestAuthenticationAdapter,endpoints.dropApiKeyFromIncomingCall,endpoints.forceGzipOfBackendCall,endpoints.forceGzipOfBackendCallid,endpoints.forwardedHeaders,endpoints.gzipPassthroughSupportEnabled,endpoints.headersToExcludeFromIncomingCall,endpoints.highSecurity,endpoints.hostPassthroughIncludedInBackendCallHeader,endpoints.inboundSslRequired,endpoints.jsonpCallbackParameter,endpoints.jsonpCallbackParameterValue,endpoints.methods,endpoints.methods.name,endpoints.methods.responseFilters,endpoints.methods.responseFilters.created,endpoints.methods.responseFilters.id,endpoints.methods.responseFilters.jsonFilterFields,endpoints.methods.responseFilters.name,endpoints.methods.responseFilters.notes,endpoints.methods.responseFilters.updated,endpoints.methods.responseFilters.xmlFilterFields,endpoints.methods.sampleJsonResponse,endpoints.methods.sampleXmlResponse,endpoints.name,endpoints.numberOfHttpRedirectsToFollow,endpoints.oauthGrantTypes,endpoints.outboundRequestTargetPath,endpoints.outboundRequestTargetQueryParameters,endpoints.outboundTransportProtocol,endpoints.processor,endpoints.publicDomains,endpoints.requestAuthenticationType,endpoints.requestPathAlias,endpoints.requestProtocol,endpoints.returnedHeaders,endpoints.scheduledMaintenanceEvent,endpoints.scheduledMaintenanceEvent.endDateTime,endpoints.scheduledMaintenanceEvent.endpoints,endpoints.scheduledMaintenanceEvent.id,endpoints.scheduledMaintenanceEvent.name,endpoints.scheduledMaintenanceEvent.startDateTime,endpoints.stringsToTrimFromApiKey,endpoints.supportedHttpMethods,endpoints.systemDomainAuthentication,endpoints.systemDomainAuthentication.certificate,endpoints.systemDomainAuthentication.password,endpoints.systemDomainAuthentication.type,endpoints.systemDomainAuthentication.username,endpoints.systemDomains,endpoints.trafficManagerDomain,endpoints.useSystemDomainCredentials,errorSets,errorSets.errorMessages,errorSets.jsonp,errorSets.jsonpType,errorSets.name,errorSets.type,id,name,qpsLimitOverall,revisionNumber,rfc3986Encode,robotsPolicy,roles,roles.action,roles.created,roles.id,roles.name,roles.updates,securityProfile,updated,version"
+    },
+    {
+      "key": "service roles fields",
+      "value": "id,name,action,created,updated,description"
+    },
+    {
+      "key": "system domain authentication fields",
+      "value": "type,username,certificate,password"
+    },
+    {
+      "key": "system hostnames fields",
+      "value": "address"
+    }
+  ]
+}

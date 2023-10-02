@@ -350,7 +350,25 @@ impl<'a> Transpiler<'a> {
                 match &op.parameters {
                     Some(params) => {
                         let mut cloned = params.clone();
-                        cloned.append(&mut query_params);
+                        for p1 in &mut query_params {
+                            if let ObjectOrReference::Object(p1) = p1 {
+                                let found = cloned.iter_mut().find(|p2| {
+                                    if let ObjectOrReference::Object(p2) = p2 {
+                                        p2.location == p1.location && p2.name == p1.name
+                                    } else {
+                                        false
+                                    }
+                                });
+                                if let Some(ObjectOrReference::Object(p2)) = found {
+                                    p2.schema = Some(Self::merge_schemas(
+                                        p2.schema.clone().unwrap(),
+                                        &p1.schema.clone().unwrap(),
+                                    ));
+                                } else {
+                                    cloned.push(ObjectOrReference::Object(p1.clone()));
+                                }
+                            }
+                        }
                         op.parameters = Some(cloned);
                     }
                     None => op.parameters = Some(query_params),
@@ -1393,6 +1411,56 @@ mod tests {
                         assert!(example.contains_key("variables"));
                     }
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn it_collapses_duplicate_query_params() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("duplicate-query-params.postman.json").as_ref())
+                .unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let query_param_names = oas
+                    .paths
+                    .get("/v2/json-rpc/{site id}")
+                    .unwrap()
+                    .post
+                    .as_ref()
+                    .unwrap()
+                    .parameters
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .filter_map(|p| match p {
+                        ObjectOrReference::Object(p) => {
+                            if p.location == "query" {
+                                Some(p.name.clone())
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    })
+                    .collect::<Vec<String>>();
+
+                assert!(!query_param_names.is_empty());
+
+                let duplicates = (1..query_param_names.len())
+                    .filter_map(|i| {
+                        if query_param_names[i..].contains(&query_param_names[i - 1]) {
+                            Some(query_param_names[i - 1].clone())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<std::collections::HashSet<String>>()
+                    .into_iter()
+                    .collect::<Vec<String>>();
+
+                assert!(duplicates.is_empty(), "duplicates: {:#?}", duplicates);
             }
         }
     }
