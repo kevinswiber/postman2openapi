@@ -2158,22 +2158,6 @@
               "type": "string",
               "example": "2"
             }
-          },
-          {
-            "name": "from",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "example": "2"
-            }
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "example": "1"
-            }
           }
         ],
         "requestBody": {
