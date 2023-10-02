@@ -1456,11 +1456,9 @@ mod tests {
                             None
                         }
                     })
-                    .collect::<std::collections::HashSet<String>>()
-                    .into_iter()
-                    .collect::<Vec<String>>();
+                    .collect::<std::collections::HashSet<String>>();
 
-                assert!(duplicates.is_empty(), "duplicates: {:#?}", duplicates);
+                assert!(duplicates.is_empty(), "duplicates: {duplicates:?}");
             }
         }
     }
