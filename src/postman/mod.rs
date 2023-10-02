@@ -194,7 +194,7 @@ pub struct GraphQlBodyClass {
     pub variables: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct QueryParam {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
@@ -210,7 +210,7 @@ pub struct QueryParam {
     pub value: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Description {
     /// The content of the description goes here, as a raw string.
     #[serde(rename = "content")]
@@ -234,7 +234,7 @@ pub struct Description {
 /// Using variables in your Postman requests eliminates the need to duplicate requests, which
 /// can save a lot of time. Variables can be defined, and referenced to from any part of a
 /// request.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Variable {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
