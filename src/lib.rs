@@ -29,7 +29,6 @@ pub struct TranspileOptions {
     pub format: TargetFormat,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 pub fn from_path(filename: &str, options: TranspileOptions) -> Result<String> {
     let collection = std::fs::read_to_string(filename)?;
     from_str(&collection, options)
@@ -44,6 +43,18 @@ pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
         TargetFormat::Yaml => openapi::to_yaml(&oas_spec),
     }?;
     Ok(oas_definition)
+}
+
+#[cfg(target_arch = "wasm32")]
+pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
+    let postman_spec: postman::Spec = serde_json::from_str(collection)?;
+    let oas_spec = Transpiler::transpile(postman_spec);
+    match options.format {
+        TargetFormat::Json => openapi::to_json(&oas_spec).map_err(|err| err.into()),
+        TargetFormat::Yaml => Err(anyhow::anyhow!(
+            "YAML is not supported for WebAssembly. Please convert from YAML to JSON."
+        )),
+    }
 }
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -100,6 +111,10 @@ struct TranspileState<'a> {
 }
 
 impl<'a> Transpiler<'a> {
+    pub fn new(variable_map: &'a BTreeMap<String, serde_json::value::Value>) -> Self {
+        Self { variable_map }
+    }
+
     pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
         let description = extract_description(&spec.info.description);
 
@@ -700,11 +715,11 @@ impl<'a> Transpiler<'a> {
                             value: Some(example_val),
                         };
 
-                        if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
-                            let mut ex2 = ex.clone();
-                            ex2.insert(name.to_string(), ObjectOrReference::Object(example));
+                        if let openapi3::MediaTypeExample::Examples { examples: mut ex } = examples
+                        {
+                            ex.insert(name.to_string(), ObjectOrReference::Object(example));
                             content.examples =
-                                Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
+                                Some(openapi3::MediaTypeExample::Examples { examples: ex });
                         }
                         *content = content.clone();
                     }
@@ -746,11 +761,11 @@ impl<'a> Transpiler<'a> {
                             value: Some(oas_obj),
                         };
 
-                        if let openapi3::MediaTypeExample::Examples { examples: ex } = examples {
-                            let mut ex2 = ex.clone();
-                            ex2.insert(name.to_string(), ObjectOrReference::Object(example));
+                        if let openapi3::MediaTypeExample::Examples { examples: mut ex } = examples
+                        {
+                            ex.insert(name.to_string(), ObjectOrReference::Object(example));
                             content.examples =
-                                Some(openapi3::MediaTypeExample::Examples { examples: ex2 });
+                                Some(openapi3::MediaTypeExample::Examples { examples: ex });
                         }
                     }
                 }
@@ -1159,5 +1174,237 @@ fn extract_description(description: &Option<postman::DescriptionUnion>) -> Optio
             }
         },
         None => None,
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use openapi::v3_0::{MediaTypeExample, ObjectOrReference, Parameter, Schema};
+    use openapi::OpenApi;
+    use postman::Spec;
+
+    #[test]
+    fn test_extract_description() {
+        let description = Some(postman::DescriptionUnion::String("test".to_string()));
+        assert_eq!(extract_description(&description), Some("test".to_string()));
+
+        let description = Some(postman::DescriptionUnion::Description(
+            postman::Description {
+                content: Some("test".to_string()),
+                ..postman::Description::default()
+            },
+        ));
+        assert_eq!(extract_description(&description), Some("test".to_string()));
+
+        let description = None;
+        assert_eq!(extract_description(&description), None);
+    }
+
+    #[test]
+    fn test_generate_path_parameters() {
+        let empty_map = BTreeMap::<_, _>::new();
+        let transpiler = Transpiler::new(&empty_map);
+        let postman_variables = Some(vec![postman::Variable {
+            key: Some("test".to_string()),
+            value: Some(serde_json::Value::String("test_value".to_string())),
+            description: None,
+            ..postman::Variable::default()
+        }]);
+        let path_params = ["/test/".to_string(), "{{test_value}}".to_string()];
+        let params = transpiler.generate_path_parameters(&path_params, &postman_variables);
+        assert_eq!(params.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_generate_query_parameters() {
+        let empty_map = BTreeMap::<_, _>::new();
+        let transpiler = Transpiler::new(&empty_map);
+        let query_params = vec![postman::QueryParam {
+            key: Some("test".to_string()),
+            value: Some("{{test}}".to_string()),
+            description: None,
+            ..postman::QueryParam::default()
+        }];
+        let params = transpiler.generate_query_parameters(&query_params);
+        assert_eq!(params.unwrap().len(), 1);
+    }
+
+    #[test]
+    fn it_preserves_order_on_paths() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        let ordered_paths = [
+            "/get",
+            "/post",
+            "/put",
+            "/patch",
+            "/delete",
+            "/headers",
+            "/response-headers",
+            "/basic-auth",
+            "/digest-auth",
+            "/auth/hawk",
+            "/oauth1",
+            "/cookies/set",
+            "/cookies",
+            "/cookies/delete",
+            "/status/200",
+            "/stream/5",
+            "/delay/2",
+            "/encoding/utf8",
+            "/gzip",
+            "/deflate",
+            "/ip",
+            "/time/now",
+            "/time/valid",
+            "/time/format",
+            "/time/unit",
+            "/time/add",
+            "/time/subtract",
+            "/time/start",
+            "/time/object",
+            "/time/before",
+            "/time/after",
+            "/time/between",
+            "/time/leap",
+            "/transform/collection",
+            "/{method}/hello",
+        ];
+        let OpenApi::V3_0(s) = oas;
+        let keys = s.paths.keys().enumerate();
+        for (i, k) in keys {
+            assert_eq!(k, ordered_paths[i])
+        }
+    }
+
+    #[test]
+    fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let b = oas
+                    .paths
+                    .get("/post")
+                    .unwrap()
+                    .post
+                    .as_ref()
+                    .unwrap()
+                    .request_body
+                    .as_ref()
+                    .unwrap();
+                if let ObjectOrReference::Object(b) = b {
+                    assert!(b.content.contains_key("application/x-www-form-urlencoded"));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn it_generates_headers_from_the_request() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let params = oas
+                    .paths
+                    .get("/headers")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .parameters
+                    .as_ref()
+                    .unwrap();
+                let header = params
+                    .iter()
+                    .find(|p| {
+                        if let ObjectOrReference::Object(p) = p {
+                            p.location == "header"
+                        } else {
+                            false
+                        }
+                    })
+                    .unwrap();
+                let expected = ObjectOrReference::Object(Parameter {
+                    name: "my-sample-header".to_owned(),
+                    location: "header".to_owned(),
+                    description: Some("My Sample Header".to_owned()),
+                    schema: Some(Schema {
+                        schema_type: Some("string".to_owned()),
+                        example: Some(serde_json::Value::String(
+                            "Lorem ipsum dolor sit amet".to_owned(),
+                        )),
+                        ..Schema::default()
+                    }),
+                    ..Parameter::default()
+                });
+                assert_eq!(header, &expected);
+            }
+        }
+    }
+
+    #[test]
+    fn it_generates_root_path_when_no_path_exists_in_collection() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("only-root-path.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                assert!(oas.paths.contains_key("/"));
+            }
+        }
+    }
+
+    #[test]
+    fn it_parses_graphql_request_bodies() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("graphql.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let body = oas
+                    .paths
+                    .get("/")
+                    .unwrap()
+                    .post
+                    .as_ref()
+                    .unwrap()
+                    .request_body
+                    .as_ref()
+                    .unwrap();
+
+                if let ObjectOrReference::Object(body) = body {
+                    assert!(body.content.contains_key("application/json"));
+                    let content = body.content.get("application/json").unwrap();
+                    let schema = content.schema.as_ref().unwrap();
+                    if let ObjectOrReference::Object(schema) = schema {
+                        let props = schema.properties.as_ref().unwrap();
+                        assert!(props.contains_key("query"));
+                        assert!(props.contains_key("variables"));
+                    }
+                    let examples = content.examples.as_ref().unwrap();
+                    if let MediaTypeExample::Example { example } = examples {
+                        let example: serde_json::Map<String, serde_json::Value> =
+                            serde_json::from_value(example.clone()).unwrap();
+                        assert!(example.contains_key("query"));
+                        assert!(example.contains_key("variables"));
+                    }
+                }
+            }
+        }
+    }
+
+    fn get_fixture(filename: &str) -> String {
+        use std::fs;
+
+        let filename: std::path::PathBuf =
+            [env!("CARGO_MANIFEST_DIR"), "./tests/fixtures/", filename]
+                .iter()
+                .collect();
+        let file = filename.into_os_string().into_string().unwrap();
+        fs::read_to_string(file).unwrap()
     }
 }

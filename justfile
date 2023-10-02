@@ -23,12 +23,10 @@ fmt-check:
 clippy:
   cargo clippy -- -D warnings
 
-test: build fmt-check clippy test-lib test-unit test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
+test: build fmt-check clippy test-lib test-integration test-wasm-node test-wasm-chrome test-wasm-firefox
 
 test-lib:
   cargo test --lib
-test-unit:
-  cargo test --test unit_tests
 test-integration:
   cargo test --test integration_tests
 test-wasm-firefox:

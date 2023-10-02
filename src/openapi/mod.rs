@@ -67,8 +67,8 @@ pub fn to_json(spec: &OpenApi) -> Result<String> {
     Ok(serde_json::to_string_pretty(spec)?)
 }
 
-#[cfg(test)]
 #[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::{
