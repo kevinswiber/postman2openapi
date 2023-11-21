@@ -577,7 +577,8 @@ impl<'a> Transpiler<'a> {
                             existing_response.headers = Some(cloned_headers);
                         }
 
-                        let mut existing_content = existing_response.content.clone().unwrap();
+                        let mut existing_content =
+                            existing_response.content.clone().unwrap_or_default();
                         for (media_type, new_content) in new_response.content.unwrap() {
                             if let Some(existing_response_content) =
                                 existing_content.get_mut(&media_type)
