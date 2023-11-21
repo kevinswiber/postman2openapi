@@ -671,7 +671,7 @@ pub struct ResponseClass {
 pub struct Cookie {
     /// The domain for which this cookie is valid.
     #[serde(rename = "domain")]
-    pub domain: String,
+    pub domain: Option<String>,
 
     /// When the cookie expires.
     #[serde(rename = "expires")]
@@ -701,7 +701,7 @@ pub struct Cookie {
 
     /// The path associated with the Cookie.
     #[serde(rename = "path")]
-    pub path: String,
+    pub path: Option<String>,
 
     /// Indicates if the 'secure' flag is set on the Cookie, meaning that it is transmitted over
     /// secure connections only. (typically HTTPS)
