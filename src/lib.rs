@@ -11,7 +11,8 @@ use convert_case::{Case, Casing};
 #[cfg(target_arch = "wasm32")]
 use gloo_utils::format::JsValueSerdeExt;
 use indexmap::{IndexMap, IndexSet};
-use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter};
+use openapi::v3_0::{self as openapi3, ObjectOrReference, Parameter, SecurityRequirement};
+use postman::AuthType;
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -107,6 +108,7 @@ pub struct Transpiler<'a> {
 struct TranspileState<'a> {
     oas: &'a mut openapi3::Spec,
     operation_ids: &'a mut BTreeMap<String, usize>,
+    auth_stack: &'a mut Vec<SecurityRequirement>,
     hierarchy: &'a mut Vec<String>,
 }
 
@@ -131,6 +133,7 @@ impl<'a> Transpiler<'a> {
             components: None,
             external_docs: None,
             paths: IndexMap::new(),
+            security: None,
             servers: Some(Vec::<openapi3::Server>::new()),
             tags: Some(IndexSet::<openapi3::Tag>::new()),
         };
@@ -154,11 +157,25 @@ impl<'a> Transpiler<'a> {
             oas: &mut oas,
             operation_ids: &mut operation_ids,
             hierarchy: &mut hierarchy,
+            auth_stack: &mut Vec::<SecurityRequirement>::new(),
         };
 
         let transpiler = Transpiler {
             variable_map: &mut variable_map,
         };
+
+        if let Some(auth) = spec.auth {
+            let security = transpiler.transform_security(&mut state, &auth);
+            if let Some(pair) = security {
+                if let Some((name, scopes)) = pair {
+                    state.oas.security = Some(vec![SecurityRequirement {
+                        requirement: Some(BTreeMap::from([(name, scopes)])),
+                    }]);
+                } else {
+                    state.oas.security = Some(vec![SecurityRequirement { requirement: None }]);
+                }
+            }
+        }
 
         transpiler.transform(&mut state, &spec.item);
 
@@ -174,7 +191,7 @@ impl<'a> Transpiler<'a> {
                 };
                 let description = extract_description(&item.description);
 
-                self.transform_folder(state, i, name, description);
+                self.transform_folder(state, i, name, description, &item.auth);
             } else {
                 let name = match &item.name {
                     Some(n) => n,
@@ -191,7 +208,11 @@ impl<'a> Transpiler<'a> {
         items: &[postman::Items],
         name: &str,
         description: Option<String>,
+        auth: &Option<postman::Auth>,
     ) {
+        let mut pushed_tag = false;
+        let mut pushed_auth = false;
+
         if let Some(t) = &mut state.oas.tags {
             let mut tag = openapi3::Tag {
                 name: name.to_string(),
@@ -208,9 +229,35 @@ impl<'a> Transpiler<'a> {
             t.insert(tag);
 
             state.hierarchy.push(name);
-            self.transform(state, items);
-            state.hierarchy.pop();
+
+            pushed_tag = true;
         };
+
+        if let Some(auth) = auth {
+            let security = self.transform_security(state, auth);
+            if let Some(pair) = security {
+                if let Some((name, scopes)) = pair {
+                    state.auth_stack.push(SecurityRequirement {
+                        requirement: Some(BTreeMap::from([(name, scopes)])),
+                    });
+                } else {
+                    state
+                        .auth_stack
+                        .push(SecurityRequirement { requirement: None });
+                }
+                pushed_auth = true;
+            }
+        }
+
+        self.transform(state, items);
+
+        if pushed_tag {
+            state.hierarchy.pop();
+        }
+
+        if pushed_auth {
+            state.auth_stack.pop();
+        }
     }
 
     fn transform_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str) {
@@ -226,7 +273,26 @@ impl<'a> Transpiler<'a> {
                     _ => &root_path,
                 };
 
-                self.transform_paths(state, item, request, name, u, paths)
+                let security_requirement = if let Some(auth) = &request.auth {
+                    let security = self.transform_security(state, auth);
+                    if let Some(pair) = security {
+                        if let Some((name, scopes)) = pair {
+                            Some(vec![SecurityRequirement {
+                                requirement: Some(BTreeMap::from([(name, scopes)])),
+                            }])
+                        } else {
+                            Some(vec![SecurityRequirement { requirement: None }])
+                        }
+                    } else {
+                        None
+                    }
+                } else if !state.auth_stack.is_empty() {
+                    Some(vec![state.auth_stack.last().unwrap().clone()])
+                } else {
+                    None
+                };
+
+                self.transform_paths(state, item, request, name, u, paths, security_requirement)
             }
         }
     }
@@ -256,6 +322,7 @@ impl<'a> Transpiler<'a> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn transform_paths(
         &self,
         state: &mut TranspileState,
@@ -264,6 +331,7 @@ impl<'a> Transpiler<'a> {
         request_name: &str,
         url: &postman::UrlClass,
         paths: &[postman::PathElement],
+        security_requirement: Option<Vec<SecurityRequirement>>,
     ) {
         let resolved_segments = paths
             .iter()
@@ -318,6 +386,18 @@ impl<'a> Transpiler<'a> {
             *op_ref = Some(openapi3::Operation::default());
         }
         let op = op_ref.as_mut().unwrap();
+
+        if let Some(security_requirement) = security_requirement {
+            if let Some(security) = &mut op.security {
+                for sr in security_requirement {
+                    if !security.contains(&sr) {
+                        security.push(sr);
+                    }
+                }
+            } else {
+                op.security = Some(security_requirement);
+            }
+        }
 
         path.parameters = self.generate_path_parameters(&resolved_segments, &url.variable);
 
@@ -639,6 +719,169 @@ impl<'a> Transpiler<'a> {
                 },
             );
         }
+    }
+
+    fn transform_security(
+        &self,
+        state: &mut TranspileState,
+        auth: &postman::Auth,
+    ) -> Option<Option<(String, Vec<String>)>> {
+        if state.oas.components.is_none() {
+            state.oas.components = Some(openapi3::Components::default());
+        }
+        if state
+            .oas
+            .components
+            .as_ref()
+            .unwrap()
+            .security_schemes
+            .is_none()
+        {
+            state.oas.components.as_mut().unwrap().security_schemes = Some(BTreeMap::new());
+        }
+        let security_schemes = state
+            .oas
+            .components
+            .as_mut()
+            .unwrap()
+            .security_schemes
+            .as_mut()
+            .unwrap();
+        let security = match auth.auth_type {
+            AuthType::Noauth => Some(None),
+            AuthType::Basic => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "basic".to_string(),
+                    bearer_format: None,
+                };
+                let name = "basicAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Digest => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "digest".to_string(),
+                    bearer_format: None,
+                };
+                let name = "digestAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Bearer => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "bearer".to_string(),
+                    bearer_format: None,
+                };
+                let name = "bearerAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Jwt => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "bearer".to_string(),
+                    bearer_format: Some("jwt".to_string()),
+                };
+                let name = "jwtBearerAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Apikey => {
+                let name = "apiKey".to_string();
+                if let Some(apikey) = &auth.apikey {
+                    let scheme = openapi3::SecurityScheme::ApiKey {
+                        name: self.resolve_variables(
+                            apikey.key.as_ref().unwrap_or(&"Authorization".to_string()),
+                            VAR_REPLACE_CREDITS,
+                        ),
+                        location: match apikey.location {
+                            postman::ApiKeyLocation::Header => "header".to_string(),
+                            postman::ApiKeyLocation::Query => "query".to_string(),
+                        },
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                } else {
+                    let scheme = openapi3::SecurityScheme::ApiKey {
+                        name: "Authorization".to_string(),
+                        location: "header".to_string(),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                }
+                Some(Some((name, vec![])))
+            }
+            AuthType::Oauth2 => {
+                let name = "oauth2".to_string();
+                if let Some(oauth2) = &auth.oauth2 {
+                    let mut flows: openapi3::Flows = Default::default();
+                    let scopes = BTreeMap::from_iter(
+                        oauth2
+                            .scope
+                            .clone()
+                            .unwrap_or_default()
+                            .iter()
+                            .map(|s| self.resolve_variables(s, VAR_REPLACE_CREDITS))
+                            .map(|s| (s.to_string(), s.to_string())),
+                    );
+                    let authorization_url = self.resolve_variables(
+                        oauth2.auth_url.as_ref().unwrap_or(&"".to_string()),
+                        VAR_REPLACE_CREDITS,
+                    );
+                    let token_url = self.resolve_variables(
+                        oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()),
+                        VAR_REPLACE_CREDITS,
+                    );
+                    let refresh_url = oauth2
+                        .refresh_token_url
+                        .as_ref()
+                        .map(|url| self.resolve_variables(url, VAR_REPLACE_CREDITS));
+                    match oauth2.grant_type {
+                        postman::Oauth2GrantType::AuthorizationCode
+                        | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
+                            flows.authorization_code = Some(openapi3::AuthorizationCodeFlow {
+                                authorization_url,
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::ClientCredentials => {
+                            flows.client_credentials = Some(openapi3::ClientCredentialsFlow {
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::PasswordCredentials => {
+                            flows.password = Some(openapi3::PasswordFlow {
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::Implicit => {
+                            flows.implicit = Some(openapi3::ImplicitFlow {
+                                authorization_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                    }
+                    let scheme = openapi3::SecurityScheme::OAuth2 {
+                        flows: Box::new(flows),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                    Some(Some((name, oauth2.scope.clone().unwrap_or_default())))
+                } else {
+                    let scheme = openapi3::SecurityScheme::OAuth2 {
+                        flows: Default::default(),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                    Some(Some((name, vec![])))
+                }
+            }
+            _ => None,
+        };
+
+        security
     }
 
     fn extract_request_body(
@@ -1460,6 +1703,74 @@ mod tests {
                     .collect::<std::collections::HashSet<String>>();
 
                 assert!(duplicates.is_empty(), "duplicates: {duplicates:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn it_uses_the_security_requirement_on_operations() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let sr1 = oas
+                    .paths
+                    .get("/basic-auth")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .security
+                    .as_ref()
+                    .unwrap();
+                assert_eq!(
+                    sr1.get(0)
+                        .unwrap()
+                        .requirement
+                        .as_ref()
+                        .unwrap()
+                        .get("basicAuth"),
+                    Some(&vec![])
+                );
+                let sr1 = oas
+                    .paths
+                    .get("/digest-auth")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .security
+                    .as_ref()
+                    .unwrap();
+                assert_eq!(
+                    sr1.get(0)
+                        .unwrap()
+                        .requirement
+                        .as_ref()
+                        .unwrap()
+                        .get("digestAuth"),
+                    Some(&vec![])
+                );
+
+                let schemes = oas.components.unwrap().security_schemes.unwrap();
+                let basic = schemes.get("basicAuth").unwrap();
+                if let ObjectOrReference::Object(basic) = basic {
+                    match basic {
+                        openapi3::SecurityScheme::Http { scheme, .. } => {
+                            assert_eq!(scheme, "basic");
+                        }
+                        _ => panic!("Expected Http Security Scheme"),
+                    }
+                }
+                let digest = schemes.get("digestAuth").unwrap();
+                if let ObjectOrReference::Object(digest) = digest {
+                    match digest {
+                        openapi3::SecurityScheme::Http { scheme, .. } => {
+                            assert_eq!(scheme, "digest");
+                        }
+                        _ => panic!("Expected Http Security Scheme"),
+                    }
+                }
             }
         }
     }

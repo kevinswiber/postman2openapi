@@ -1,0 +1,31 @@
+{
+  "info": {
+    "_postman_id": "2a763711-fdbf-4c82-a7eb-f27c3db887e7",
+    "name": "OAuth Example",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "updatedAt": "2023-11-22T17:23:18.000Z",
+    "uid": "10354132-2a763711-fdbf-4c82-a7eb-f27c3db887e7"
+  },
+  "item": [],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "bbaa0257-914e-4fc3-bb54-422263e7da80",
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "d5bbc401-c441-4db1-b80c-23e5fd06b8d3",
+        "type": "text/javascript",
+        "exec": [""]
+      }
+    }
+  ]
+}

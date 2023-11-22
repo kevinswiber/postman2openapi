@@ -1,4 +1,4 @@
-use serde::Deserializer;
+use serde::{Deserialize, Deserializer};
 
 extern crate serde_json;
 
@@ -41,6 +41,9 @@ pub struct Auth {
     #[serde(rename = "bearer")]
     pub bearer: Option<AuthAttributeUnion>,
 
+    #[serde(rename = "jwt")]
+    pub jwt: Option<AuthAttributeUnion>,
+
     /// The attributes for [Digest
     /// Authentication](https://en.wikipedia.org/wiki/Digest_access_authentication).
     #[serde(rename = "digest")]
@@ -58,16 +61,153 @@ pub struct Auth {
     #[serde(rename = "ntlm")]
     pub ntlm: Option<AuthAttributeUnion>,
 
-    /// The attributes for [OAuth2](https://oauth.net/1/)
+    /// The attributes for [Oauth2](https://oauth.net/1/)
     #[serde(rename = "oauth1")]
     pub oauth1: Option<AuthAttributeUnion>,
 
-    /// Helper attributes for [OAuth2](https://oauth.net/2/)
+    /// Helper attributes for [Oauth2](https://oauth.net/2/)
     #[serde(rename = "oauth2")]
-    pub oauth2: Option<AuthAttributeUnion>,
+    pub oauth2: Option<Oauth2>,
+
+    #[serde(rename = "apikey")]
+    pub apikey: Option<ApiKey>,
 
     #[serde(rename = "type")]
     pub auth_type: AuthType,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub struct ApiKey {
+    pub key: Option<String>,
+    pub location: ApiKeyLocation,
+    pub value: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub enum ApiKeyLocation {
+    Header,
+    Query,
+}
+
+impl<'de> Deserialize<'de> for ApiKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let mut key = None;
+        let mut location = ApiKeyLocation::Header;
+        let mut value = None;
+
+        let deserialized = AuthAttributeUnion::deserialize(deserializer)?;
+        if let AuthAttributeUnion::AuthAttribute21(v) = deserialized {
+            for item in v {
+                if let Some(serde_json::Value::String(str)) = item.value {
+                    match item.key.as_str() {
+                        "key" => key = Some(str),
+                        "in" => {
+                            location = match str.as_str() {
+                                "query" => ApiKeyLocation::Query,
+                                "header" => ApiKeyLocation::Header,
+                                _ => ApiKeyLocation::Header,
+                            }
+                        }
+                        "value" => value = Some(str),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        Ok(ApiKey {
+            key,
+            location,
+            value,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+pub struct Oauth2 {
+    pub grant_type: Oauth2GrantType,
+    pub access_token_url: Option<String>,
+    pub add_token_to: Option<String>,
+    pub auth_url: Option<String>,
+    pub client_id: Option<String>,
+    pub client_secret: Option<String>,
+    pub refresh_token_url: Option<String>,
+    pub scope: Option<Vec<String>>,
+    pub state: Option<String>,
+    pub token_name: Option<String>,
+}
+
+impl<'de> Deserialize<'de> for Oauth2 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let mut grant_type = Oauth2GrantType::AuthorizationCode;
+        let mut access_token_url = None;
+        let mut add_token_to = None;
+        let mut auth_url = None;
+        let mut client_id = None;
+        let mut client_secret = None;
+        let mut refresh_token_url = None;
+        let mut scope = None;
+        let mut state = None;
+        let mut token_name = None;
+
+        let deserialized = AuthAttributeUnion::deserialize(deserializer)?;
+        if let AuthAttributeUnion::AuthAttribute21(v) = deserialized {
+            for item in v {
+                if let Some(serde_json::Value::String(str)) = item.value {
+                    match item.key.as_str() {
+                        "grantType" => {
+                            grant_type = match str.as_str() {
+                                "authorization_code" => Oauth2GrantType::AuthorizationCode,
+                                "authorization_code_with_pkce" => {
+                                    Oauth2GrantType::AuthorizationCodeWithPkce
+                                }
+                                "client_credentials" => Oauth2GrantType::ClientCredentials,
+                                "implicit" => Oauth2GrantType::Implicit,
+                                "password_credentials" => Oauth2GrantType::PasswordCredentials,
+                                _ => Oauth2GrantType::AuthorizationCode,
+                            }
+                        }
+                        "accessTokenUrl" => access_token_url = Some(str),
+                        "addTokenTo" => add_token_to = Some(str),
+                        "authUrl" => auth_url = Some(str),
+                        "clientId" => client_id = Some(str),
+                        "clientSecret" => client_secret = Some(str),
+                        "refreshTokenUrl" => refresh_token_url = Some(str),
+                        "scope" => scope = Some(str.split(' ').map(|s| s.to_string()).collect()),
+                        "state" => state = Some(str),
+                        "tokenName" => token_name = Some(str),
+                        _ => {}
+                    }
+                }
+            }
+        }
+        Ok(Oauth2 {
+            grant_type,
+            access_token_url,
+            add_token_to,
+            auth_url,
+            client_id,
+            client_secret,
+            refresh_token_url,
+            scope,
+            state,
+            token_name,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub enum Oauth2GrantType {
+    AuthorizationCodeWithPkce,
+    ClientCredentials,
+    Implicit,
+    PasswordCredentials,
+    AuthorizationCode,
 }
 
 /// Represents an attribute for any authorization method provided by Postman. For example
@@ -87,8 +227,8 @@ pub struct AuthAttribute {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AuthAttributeUnion {
-    AuthAttribute20(Option<serde_json::Value>),
     AuthAttribute21(Vec<AuthAttribute>),
+    AuthAttribute20(Option<serde_json::Value>),
 }
 
 /// Postman allows you to configure scripts to run when specific events occur. These scripts
@@ -860,6 +1000,9 @@ pub enum AuthType {
     #[serde(rename = "digest")]
     Digest,
 
+    #[serde(rename = "jwt")]
+    Jwt,
+
     #[serde(rename = "hawk")]
     Hawk,
 
@@ -919,4 +1062,49 @@ pub enum Mode {
 
     #[serde(rename = "graphql")]
     GraphQl,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserializes_oauth2() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("oauth2-code.postman.json").as_ref()).unwrap();
+        let oauth2 = spec.auth.unwrap().oauth2.unwrap();
+
+        assert_eq!(oauth2.grant_type, Oauth2GrantType::AuthorizationCode);
+        assert_eq!(
+            oauth2.auth_url,
+            Some("https://example.com/oauth2/authorization".to_string())
+        );
+        assert_eq!(
+            oauth2.access_token_url,
+            Some("https://example.com/oauth2/token".to_string())
+        );
+    }
+
+    #[test]
+    fn deserializes_apikey() {
+        let spec: Spec =
+            serde_json::from_str(get_fixture("api-key.postman.json").as_ref()).unwrap();
+        let apikey = spec.auth.unwrap().apikey.unwrap();
+
+        assert_eq!(apikey.key, Some("Authorization".to_string()));
+        assert_eq!(apikey.location, ApiKeyLocation::Header);
+        assert_eq!(apikey.value, None);
+    }
+
+    fn get_fixture(filename: &str) -> String {
+        use std::fs;
+
+        let filename: std::path::PathBuf =
+            [env!("CARGO_MANIFEST_DIR"), "./tests/fixtures/", filename]
+                .iter()
+                .collect();
+        let file = filename.into_os_string().into_string().unwrap();
+        fs::read_to_string(file).unwrap()
+    }
 }
