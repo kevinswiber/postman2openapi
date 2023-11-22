@@ -62,13 +62,13 @@ pub struct Spec {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub components: Option<Components>,
 
-    // FIXME: Implement
-    // /// A declaration of which security mechanisms can be used across the API.
-    // /// The list of  values includes alternative security requirement objects that can be used.
-    // /// Only one of the security requirement objects need to be satisfied to authorize a request.
-    // /// Individual operations can override this definition.
-    // #[serde(skip_serializing_if = "Option::is_none")]
-    // pub security: Option<SecurityRequirement>,
+    /// A declaration of which security mechanisms can be used across the API.
+    /// The list of  values includes alternative security requirement objects that can be used.
+    /// Only one of the security requirement objects need to be satisfied to authorize a request.
+    /// Individual operations can override this definition.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security: Option<SecurityRequirement>,
+
     /// A list of tags used by the specification with additional metadata.
     ///The order of the tags can be used to reflect on their order by the parsing tools.
     /// Not all tags that are used by the
@@ -328,14 +328,15 @@ pub struct Operation {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deprecated: Option<bool>,
 
-    // FIXME: Implement
-    // /// A declaration of which security mechanisms can be used for this operation. The list of
-    // /// values includes alternative security requirement objects that can be used. Only one
-    // /// of the security requirement objects need to be satisfied to authorize a request.
-    // /// This definition overrides any declared top-level
-    // /// [`security`](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oasSecurity).
-    // /// To remove a top-level security declaration, an empty array can be used.
-    // pub security: Option<SecurityRequirement>,
+    /// A declaration of which security mechanisms can be used for this operation. The list of
+    /// values includes alternative security requirement objects that can be used. Only one
+    /// of the security requirement objects need to be satisfied to authorize a request.
+    /// This definition overrides any declared top-level
+    /// [`security`](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oasSecurity).
+    /// To remove a top-level security declaration, an empty array can be used.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security: Option<SecurityRequirement>,
+
     /// An alternative `server` array to service this operation. If an alternative `server`
     /// object is specified at the Path Item Object or Root level, it will be overridden by
     /// this value.
@@ -874,8 +875,8 @@ pub enum SecurityScheme {
     #[serde(rename = "http")]
     Http {
         scheme: String,
-        #[serde(rename = "bearerFormat")]
-        bearer_format: String,
+        #[serde(rename = "bearerFormat", skip_serializing_if = "Option::is_none")]
+        bearer_format: Option<String>,
     },
     #[serde(rename = "oauth2")]
     OAuth2 { flows: Box<Flows> },
@@ -889,7 +890,7 @@ pub enum SecurityScheme {
 /// Allows configuration of the supported OAuth Flows.
 /// See [link]
 /// [link][https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oauth-flows-object]
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Flows {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -920,7 +921,7 @@ pub struct ImplicitFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct PasswordFlow {
-    token_url: String,
+    pub token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
@@ -932,7 +933,7 @@ pub struct PasswordFlow {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
-    token_url: String,
+    pub token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
@@ -945,7 +946,7 @@ pub struct ClientCredentialsFlow {
 #[serde(rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
     pub authorization_url: String,
-    token_url: String,
+    pub token_url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub refresh_url: Option<String>,
     pub scopes: BTreeMap<String, String>,
@@ -965,12 +966,10 @@ pub struct Callback(
     serde_json::Value, // TODO: Add "Specification Extensions" https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions}
 );
 
-// FIXME: Implement
-// /// Allows configuration of the supported OAuth Flows.
-// /// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oauthFlowsObject
-// #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
-// pub struct OAuthFlows {
-// }
+/// Allows configuration of the supported OAuth Flows.
+/// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oauthFlowsObject
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
+pub struct OAuthFlows {}
 
 /// Adds metadata to a single tag that is used by the
 /// [Operation Object](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#operationObject).
@@ -1004,6 +1003,8 @@ impl PartialEq for Tag {
     }
 }
 impl Eq for Tag {}
+
+type SecurityRequirement = BTreeMap<String, Vec<String>>;
 
 /// Allows referencing an external resource for extended documentation.
 ///
@@ -1046,7 +1047,7 @@ mod tests {
             }
           }
         }"#;
-        let obj: SecurityScheme = serde_json::from_str(&IMPLICIT_OAUTH2_SAMPLE).unwrap();
+        let obj: SecurityScheme = serde_json::from_str(IMPLICIT_OAUTH2_SAMPLE).unwrap();
         match obj {
             SecurityScheme::OAuth2 { flows } => {
                 assert!(flows.implicit.is_some());
@@ -1071,7 +1072,7 @@ mod tests {
                 assert!(implicit.scopes.contains_key("write:pets"));
                 assert!(implicit.scopes.contains_key("read:pets"));
             }
-            _ => assert!(false, "wrong security scheme type"),
+            _ => panic!("wrong security scheme type"),
         }
     }
 }
