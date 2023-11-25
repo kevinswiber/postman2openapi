@@ -67,7 +67,7 @@ pub struct Spec {
     /// Only one of the security requirement objects need to be satisfied to authorize a request.
     /// Individual operations can override this definition.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub security: Option<SecurityRequirement>,
+    pub security: Option<Vec<SecurityRequirement>>,
 
     /// A list of tags used by the specification with additional metadata.
     ///The order of the tags can be used to reflect on their order by the parsing tools.
@@ -335,7 +335,7 @@ pub struct Operation {
     /// [`security`](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#oasSecurity).
     /// To remove a top-level security declaration, an empty array can be used.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub security: Option<SecurityRequirement>,
+    pub security: Option<Vec<SecurityRequirement>>,
 
     /// An alternative `server` array to service this operation. If an alternative `server`
     /// object is specified at the Path Item Object or Root level, it will be overridden by
@@ -1004,7 +1004,11 @@ impl PartialEq for Tag {
 }
 impl Eq for Tag {}
 
-type SecurityRequirement = BTreeMap<String, Vec<String>>;
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+pub struct SecurityRequirement {
+    #[serde(flatten, skip_serializing_if = "Option::is_none")]
+    pub requirement: Option<BTreeMap<String, Vec<String>>>,
+}
 
 /// Allows referencing an external resource for extended documentation.
 ///
