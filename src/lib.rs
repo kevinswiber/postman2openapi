@@ -1707,6 +1707,74 @@ mod tests {
         }
     }
 
+    #[test]
+    fn it_uses_the_security_requirement_on_operations() {
+        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let oas = Transpiler::transpile(spec);
+        match oas {
+            OpenApi::V3_0(oas) => {
+                let sr1 = oas
+                    .paths
+                    .get("/basic-auth")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .security
+                    .as_ref()
+                    .unwrap();
+                assert_eq!(
+                    sr1.get(0)
+                        .unwrap()
+                        .requirement
+                        .as_ref()
+                        .unwrap()
+                        .get("basicAuth"),
+                    Some(&vec![])
+                );
+                let sr1 = oas
+                    .paths
+                    .get("/digest-auth")
+                    .unwrap()
+                    .get
+                    .as_ref()
+                    .unwrap()
+                    .security
+                    .as_ref()
+                    .unwrap();
+                assert_eq!(
+                    sr1.get(0)
+                        .unwrap()
+                        .requirement
+                        .as_ref()
+                        .unwrap()
+                        .get("digestAuth"),
+                    Some(&vec![])
+                );
+
+                let schemes = oas.components.unwrap().security_schemes.unwrap();
+                let basic = schemes.get("basicAuth").unwrap();
+                if let ObjectOrReference::Object(basic) = basic {
+                    match basic {
+                        openapi3::SecurityScheme::Http { scheme, .. } => {
+                            assert_eq!(scheme, "basic");
+                        }
+                        _ => panic!("Expected Http Security Scheme"),
+                    }
+                }
+                let digest = schemes.get("digestAuth").unwrap();
+                if let ObjectOrReference::Object(digest) = digest {
+                    match digest {
+                        openapi3::SecurityScheme::Http { scheme, .. } => {
+                            assert_eq!(scheme, "digest");
+                        }
+                        _ => panic!("Expected Http Security Scheme"),
+                    }
+                }
+            }
+        }
+    }
+
     fn get_fixture(filename: &str) -> String {
         use std::fs;
 
