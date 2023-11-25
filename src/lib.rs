@@ -205,7 +205,10 @@ impl<'a> Transpiler<'a> {
                     let name = "apiKey".to_string();
                     if let Some(apikey) = auth.apikey {
                         let scheme = openapi3::SecurityScheme::ApiKey {
-                            name: apikey.key.unwrap_or("Authorization".to_string()),
+                            name: transpiler.resolve_variables(
+                                &apikey.key.unwrap_or("Authorization".to_string()),
+                                VAR_REPLACE_CREDITS,
+                            ),
                             location: match apikey.location {
                                 postman::ApiKeyLocation::Header => "header".to_string(),
                                 postman::ApiKeyLocation::Query => "query".to_string(),
@@ -231,36 +234,48 @@ impl<'a> Transpiler<'a> {
                                 .clone()
                                 .unwrap_or_default()
                                 .iter()
+                                .map(|s| transpiler.resolve_variables(s, VAR_REPLACE_CREDITS))
                                 .map(|s| (s.to_string(), s.to_string())),
                         );
+                        let authorization_url = transpiler.resolve_variables(
+                            &oauth2.auth_url.unwrap_or("".to_string()),
+                            VAR_REPLACE_CREDITS,
+                        );
+                        let token_url = transpiler.resolve_variables(
+                            &oauth2.access_token_url.unwrap_or("".to_string()),
+                            VAR_REPLACE_CREDITS,
+                        );
+                        let refresh_url = oauth2
+                            .refresh_token_url
+                            .map(|url| transpiler.resolve_variables(&url, VAR_REPLACE_CREDITS));
                         match oauth2.grant_type {
                             postman::Oauth2GrantType::AuthorizationCode
                             | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
                                 flows.authorization_code = Some(openapi3::AuthorizationCodeFlow {
-                                    authorization_url: oauth2.auth_url.unwrap_or("".to_string()),
-                                    token_url: oauth2.access_token_url.unwrap_or("".to_string()),
-                                    refresh_url: oauth2.refresh_token_url,
+                                    authorization_url,
+                                    token_url,
+                                    refresh_url,
                                     scopes,
                                 });
                             }
                             postman::Oauth2GrantType::ClientCredentials => {
                                 flows.client_credentials = Some(openapi3::ClientCredentialsFlow {
-                                    token_url: oauth2.access_token_url.unwrap_or("".to_string()),
-                                    refresh_url: oauth2.refresh_token_url,
+                                    token_url,
+                                    refresh_url,
                                     scopes,
                                 });
                             }
                             postman::Oauth2GrantType::PasswordCredentials => {
                                 flows.password = Some(openapi3::PasswordFlow {
-                                    token_url: oauth2.access_token_url.unwrap_or("".to_string()),
-                                    refresh_url: oauth2.refresh_token_url,
+                                    token_url,
+                                    refresh_url,
                                     scopes,
                                 });
                             }
                             postman::Oauth2GrantType::Implicit => {
                                 flows.implicit = Some(openapi3::ImplicitFlow {
-                                    authorization_url: oauth2.auth_url.unwrap_or("".to_string()),
-                                    refresh_url: oauth2.refresh_token_url,
+                                    authorization_url,
+                                    refresh_url,
                                     scopes,
                                 });
                             }
