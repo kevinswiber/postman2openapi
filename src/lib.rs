@@ -108,6 +108,7 @@ pub struct Transpiler<'a> {
 struct TranspileState<'a> {
     oas: &'a mut openapi3::Spec,
     operation_ids: &'a mut BTreeMap<String, usize>,
+    auth_stack: &'a mut Vec<SecurityRequirement>,
     hierarchy: &'a mut Vec<String>,
 }
 
@@ -156,6 +157,7 @@ impl<'a> Transpiler<'a> {
             oas: &mut oas,
             operation_ids: &mut operation_ids,
             hierarchy: &mut hierarchy,
+            auth_stack: &mut Vec::<SecurityRequirement>::new(),
         };
 
         let transpiler = Transpiler {
@@ -189,7 +191,7 @@ impl<'a> Transpiler<'a> {
                 };
                 let description = extract_description(&item.description);
 
-                self.transform_folder(state, i, name, description);
+                self.transform_folder(state, i, name, description, &item.auth);
             } else {
                 let name = match &item.name {
                     Some(n) => n,
@@ -206,7 +208,11 @@ impl<'a> Transpiler<'a> {
         items: &[postman::Items],
         name: &str,
         description: Option<String>,
+        auth: &Option<postman::Auth>,
     ) {
+        let mut pushed_tag = false;
+        let mut pushed_auth = false;
+
         if let Some(t) = &mut state.oas.tags {
             let mut tag = openapi3::Tag {
                 name: name.to_string(),
@@ -223,9 +229,35 @@ impl<'a> Transpiler<'a> {
             t.insert(tag);
 
             state.hierarchy.push(name);
-            self.transform(state, items);
-            state.hierarchy.pop();
+
+            pushed_tag = true;
         };
+
+        if let Some(auth) = auth {
+            let security = self.transform_security(state, auth);
+            if let Some(pair) = security {
+                if let Some((name, scopes)) = pair {
+                    state.auth_stack.push(SecurityRequirement {
+                        requirement: Some(BTreeMap::from([(name, scopes)])),
+                    });
+                } else {
+                    state
+                        .auth_stack
+                        .push(SecurityRequirement { requirement: None });
+                }
+                pushed_auth = true;
+            }
+        }
+
+        self.transform(state, items);
+
+        if pushed_tag {
+            state.hierarchy.pop();
+        }
+
+        if pushed_auth {
+            state.auth_stack.pop();
+        }
     }
 
     fn transform_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str) {
@@ -241,7 +273,26 @@ impl<'a> Transpiler<'a> {
                     _ => &root_path,
                 };
 
-                self.transform_paths(state, item, request, name, u, paths)
+                let security_requirement = if let Some(auth) = &request.auth {
+                    let security = self.transform_security(state, auth);
+                    if let Some(pair) = security {
+                        if let Some((name, scopes)) = pair {
+                            Some(vec![SecurityRequirement {
+                                requirement: Some(BTreeMap::from([(name, scopes)])),
+                            }])
+                        } else {
+                            Some(vec![SecurityRequirement { requirement: None }])
+                        }
+                    } else {
+                        None
+                    }
+                } else if !state.auth_stack.is_empty() {
+                    Some(vec![state.auth_stack.last().unwrap().clone()])
+                } else {
+                    None
+                };
+
+                self.transform_paths(state, item, request, name, u, paths, security_requirement)
             }
         }
     }
@@ -271,6 +322,7 @@ impl<'a> Transpiler<'a> {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn transform_paths(
         &self,
         state: &mut TranspileState,
@@ -279,6 +331,7 @@ impl<'a> Transpiler<'a> {
         request_name: &str,
         url: &postman::UrlClass,
         paths: &[postman::PathElement],
+        security_requirement: Option<Vec<SecurityRequirement>>,
     ) {
         let resolved_segments = paths
             .iter()
@@ -333,6 +386,18 @@ impl<'a> Transpiler<'a> {
             *op_ref = Some(openapi3::Operation::default());
         }
         let op = op_ref.as_mut().unwrap();
+
+        if let Some(security_requirement) = security_requirement {
+            if let Some(security) = &mut op.security {
+                for sr in security_requirement {
+                    if !security.contains(&sr) {
+                        security.push(sr);
+                    }
+                }
+            } else {
+                op.security = Some(security_requirement);
+            }
+        }
 
         path.parameters = self.generate_path_parameters(&resolved_segments, &url.variable);
 
