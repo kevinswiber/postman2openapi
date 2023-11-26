@@ -6,16 +6,16 @@ Convert Postman collections to OpenAPI definitions.
 
 **Try it on the Web: https://kevinswiber.github.io/postman2openapi/**
 
-- [CLI](#cli)
-  - [Installation](#installation)
-  - [Usage](#usage)
-    - [Examples](#examples)
-- [JavaScript Library](#javascript-library)
-  - [Installation](#installation-1)
-  - [Usage](#usage-1)
-  - [JavaScript API](#javascript-api)
-- [Build](#build)
-- [License](#license)
+-   [CLI](#cli)
+    -   [Installation](#installation)
+    -   [Usage](#usage)
+        -   [Examples](#examples)
+-   [JavaScript Library](#javascript-library)
+    -   [Installation](#installation-1)
+    -   [Usage](#usage-1)
+    -   [JavaScript API](#javascript-api)
+-   [Build](#build)
+-   [License](#license)
 
 ## CLI
 
@@ -80,8 +80,8 @@ npm install postman2openapi
 ### Usage
 
 ```js
-const collection = require('./collection'); // any Postman collection JSON file
-const { transpile } = require('postman2openapi');
+const collection = require("./collection"); // any Postman collection JSON file
+const { transpile } = require("postman2openapi");
 
 // Returns a JavaScript object representation of the OpenAPI definition.
 const openapi = transpile(collection);
@@ -93,8 +93,8 @@ console.log(JSON.stringify(openapi, null, 2));
 
 #### transpile(collection: object): object
 
-- collection - An object representing the Postman collection.
-- _returns_ - an OpenAPI definition as a JavaScript object.
+-   collection - An object representing the Postman collection.
+-   _returns_ - an OpenAPI definition as a JavaScript object.
 
 ## Build
 
@@ -104,7 +104,7 @@ To take advantage of build recipes, install [just](https://github.com/casey/just
 
 ### `just build`
 
-Builds all projects.
+Builds the Rust library and the CLI packages.
 
 ### `just test`
 
@@ -113,6 +113,10 @@ Runs all lint checks (`cargo fmt --check`, `cargo clippy`) and runs all tests, i
 ### `just start-web`
 
 Builds the WebAssembly project and starts a local version of the [postman2openapi site](https://kevinswiber.github.io/postman2openapi/).
+
+### `just prepare`
+
+Builds the Rust library, the CLI, the Node.js library, and the Web site. Then all tests are run.
 
 ## License
 

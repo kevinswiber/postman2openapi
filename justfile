@@ -1,3 +1,5 @@
+prepare: build-release build-nodejs build-web test
+
 build: 
   cargo build --all
 
