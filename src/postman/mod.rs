@@ -905,6 +905,19 @@ pub enum DescriptionUnion {
     String(String),
 }
 
+impl From<&DescriptionUnion> for String {
+    fn from(description: &DescriptionUnion) -> Self {
+        match description {
+            DescriptionUnion::Description(desc) => desc
+                .content
+                .as_ref()
+                .map(|s| s.to_string())
+                .unwrap_or_default(),
+            DescriptionUnion::String(str) => str.to_string(),
+        }
+    }
+}
+
 /// Postman allows you to version your collections as they grow, and this field holds the
 /// version number. While optional, it is recommended that you use this field to its fullest
 /// extent!

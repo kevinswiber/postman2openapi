@@ -102,7 +102,7 @@ impl std::str::FromStr for TargetFormat {
 }
 
 pub struct Transpiler<'a> {
-    variable_map: &'a BTreeMap<String, serde_json::value::Value>,
+    variables: Variables<'a>,
 }
 
 struct TranspileState<'a> {
@@ -112,13 +112,116 @@ struct TranspileState<'a> {
     hierarchy: &'a mut Vec<String>,
 }
 
+struct CreateOperationParams<'a, 'b> {
+    state: &'a mut TranspileState<'b>,
+    item: &'a postman::Items,
+    request: &'a postman::RequestClass,
+    request_name: &'a str,
+    url: &'a postman::UrlClass,
+    path_elements: &'a [postman::PathElement],
+    security_requirement: Option<Vec<SecurityRequirement>>,
+}
+
+struct Variables<'a> {
+    map: &'a BTreeMap<String, serde_json::value::Value>,
+    replace_credits: usize,
+}
+
+impl<'a> Variables<'a> {
+    fn resolve(&self, segment: &str) -> String {
+        self.resolve_with_credits(segment, self.replace_credits)
+    }
+
+    fn resolve_with_credits(&self, segment: &str, sub_replace_credits: usize) -> String {
+        self.resolve_with_credits_and_replace_fn(segment, sub_replace_credits, |s| s)
+    }
+
+    fn resolve_with_credits_and_replace_fn(
+        &self,
+        segment: &str,
+        sub_replace_credits: usize,
+        replace_fn: fn(String) -> String,
+    ) -> String {
+        let s = segment.to_string();
+
+        if sub_replace_credits == 0 {
+            return s;
+        }
+
+        if let Some(cap) = VARIABLE_RE.captures(&s) {
+            if cap.len() > 1 {
+                for n in 1..cap.len() {
+                    let capture = &cap[n].to_string();
+                    if let Some(v) = self.map.get(capture) {
+                        if let Some(v2) = v.as_str() {
+                            let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
+                            return self.resolve_with_credits(
+                                &re.replace_all(&s, v2),
+                                sub_replace_credits - 1,
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        replace_fn(s)
+    }
+}
+
+trait Frontend {
+    fn convert(&self, state: &mut TranspileState, items: &[postman::Items]);
+    fn convert_folder(
+        &self,
+        state: &mut TranspileState,
+        items: &[postman::Items],
+        name: &str,
+        description: Option<String>,
+        auth: &Option<postman::Auth>,
+    );
+    fn convert_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str);
+}
+
+trait Backend {
+    fn create_server(&self, state: &mut TranspileState, url: &postman::UrlClass, parts: &[String]);
+    fn create_operation(&self, params: CreateOperationParams);
+    fn create_security(
+        &self,
+        state: &mut TranspileState,
+        auth: &postman::Auth,
+    ) -> Option<Option<(String, Vec<String>)>>;
+    fn extract_request_body(
+        &self,
+        body: &postman::Body,
+        op: &mut openapi3::Operation,
+        name: &str,
+        ct: Option<String>,
+    );
+    fn create_schema(value: &serde_json::Value) -> Option<openapi3::Schema>;
+    fn merge_schemas(original: openapi3::Schema, new: &openapi3::Schema) -> openapi3::Schema;
+    fn create_path_parameters(
+        &self,
+        resolved_segments: &[String],
+        postman_variables: &Option<Vec<postman::Variable>>,
+    ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>>;
+    fn create_query_parameters(
+        &self,
+        query_params: &[postman::QueryParam],
+    ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>>;
+}
+
 impl<'a> Transpiler<'a> {
     pub fn new(variable_map: &'a BTreeMap<String, serde_json::value::Value>) -> Self {
-        Self { variable_map }
+        Self {
+            variables: Variables {
+                map: variable_map,
+                replace_credits: VAR_REPLACE_CREDITS,
+            },
+        }
     }
 
     pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
-        let description = extract_description(&spec.info.description);
+        let description: Option<String> = spec.info.description.as_ref().map(|d| d.into());
 
         let mut oas = openapi3::Spec {
             openapi: String::from("3.0.3"),
@@ -161,11 +264,14 @@ impl<'a> Transpiler<'a> {
         };
 
         let transpiler = Transpiler {
-            variable_map: &mut variable_map,
+            variables: Variables {
+                map: &mut variable_map,
+                replace_credits: VAR_REPLACE_CREDITS,
+            },
         };
 
         if let Some(auth) = spec.auth {
-            let security = transpiler.transform_security(&mut state, &auth);
+            let security = transpiler.create_security(&mut state, &auth);
             if let Some(pair) = security {
                 if let Some((name, scopes)) = pair {
                     state.oas.security = Some(vec![SecurityRequirement {
@@ -177,32 +283,34 @@ impl<'a> Transpiler<'a> {
             }
         }
 
-        transpiler.transform(&mut state, &spec.item);
+        transpiler.convert(&mut state, &spec.item);
 
         openapi::OpenApi::V3_0(Box::new(oas))
     }
+}
 
-    fn transform(&self, state: &mut TranspileState, items: &[postman::Items]) {
+impl<'a> Frontend for Transpiler<'a> {
+    fn convert(&self, state: &mut TranspileState, items: &[postman::Items]) {
         for item in items {
             if let Some(i) = &item.item {
                 let name = match &item.name {
                     Some(n) => n,
                     None => "<folder>",
                 };
-                let description = extract_description(&item.description);
+                let description: Option<String> = item.description.as_ref().map(|d| d.into());
 
-                self.transform_folder(state, i, name, description, &item.auth);
+                self.convert_folder(state, i, name, description, &item.auth);
             } else {
                 let name = match &item.name {
                     Some(n) => n,
                     None => "<request>",
                 };
-                self.transform_request(state, item, name);
+                self.convert_request(state, item, name);
             }
         }
     }
 
-    fn transform_folder(
+    fn convert_folder(
         &self,
         state: &mut TranspileState,
         items: &[postman::Items],
@@ -234,7 +342,7 @@ impl<'a> Transpiler<'a> {
         };
 
         if let Some(auth) = auth {
-            let security = self.transform_security(state, auth);
+            let security = self.create_security(state, auth);
             if let Some(pair) = security {
                 if let Some((name, scopes)) = pair {
                     state.auth_stack.push(SecurityRequirement {
@@ -249,7 +357,7 @@ impl<'a> Transpiler<'a> {
             }
         }
 
-        self.transform(state, items);
+        self.convert(state, items);
 
         if pushed_tag {
             state.hierarchy.pop();
@@ -260,21 +368,21 @@ impl<'a> Transpiler<'a> {
         }
     }
 
-    fn transform_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str) {
+    fn convert_request(&self, state: &mut TranspileState, item: &postman::Items, name: &str) {
         if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
             if let Some(postman::Url::UrlClass(u)) = &request.url {
                 if let Some(postman::Host::StringArray(parts)) = &u.host {
-                    self.transform_server(state, u, parts);
+                    self.create_server(state, u, parts);
                 }
 
                 let root_path: Vec<postman::PathElement> = vec![];
-                let paths = match &u.path {
+                let path_elements = match &u.path {
                     Some(postman::UrlPath::UnionArray(p)) => p,
                     _ => &root_path,
                 };
 
                 let security_requirement = if let Some(auth) = &request.auth {
-                    let security = self.transform_security(state, auth);
+                    let security = self.create_security(state, auth);
                     if let Some(pair) = security {
                         if let Some((name, scopes)) = pair {
                             Some(vec![SecurityRequirement {
@@ -292,17 +400,23 @@ impl<'a> Transpiler<'a> {
                     None
                 };
 
-                self.transform_paths(state, item, request, name, u, paths, security_requirement)
+                let params = CreateOperationParams {
+                    state,
+                    item,
+                    request,
+                    request_name: name,
+                    url: u,
+                    path_elements,
+                    security_requirement,
+                };
+                self.create_operation(params)
             }
         }
     }
+}
 
-    fn transform_server(
-        &self,
-        state: &mut TranspileState,
-        url: &postman::UrlClass,
-        parts: &[String],
-    ) {
+impl<'a> Backend for Transpiler<'a> {
+    fn create_server(&self, state: &mut TranspileState, url: &postman::UrlClass, parts: &[String]) {
         let host = parts.join(".");
         let mut proto = "".to_string();
         if let Some(protocol) = &url.protocol {
@@ -310,7 +424,7 @@ impl<'a> Transpiler<'a> {
         }
         if let Some(s) = &mut state.oas.servers {
             let mut server_url = format!("{proto}{host}");
-            server_url = self.resolve_variables(&server_url, VAR_REPLACE_CREDITS);
+            server_url = self.variables.resolve(&server_url);
             if !s.iter_mut().any(|srv| srv.url == server_url) {
                 let server = openapi3::Server {
                     url: server_url,
@@ -322,17 +436,17 @@ impl<'a> Transpiler<'a> {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
-    fn transform_paths(
-        &self,
-        state: &mut TranspileState,
-        item: &postman::Items,
-        request: &postman::RequestClass,
-        request_name: &str,
-        url: &postman::UrlClass,
-        paths: &[postman::PathElement],
-        security_requirement: Option<Vec<SecurityRequirement>>,
-    ) {
+    fn create_operation(&self, params: CreateOperationParams) {
+        let CreateOperationParams {
+            state,
+            item,
+            request,
+            request_name,
+            url,
+            path_elements: paths,
+            security_requirement,
+        } = params;
+
         let resolved_segments = paths
             .iter()
             .map(|segment| {
@@ -340,9 +454,11 @@ impl<'a> Transpiler<'a> {
                     postman::PathElement::PathClass(c) => c.clone().value.unwrap_or_default(),
                     postman::PathElement::String(c) => c.to_string(),
                 };
-                seg = self.resolve_variables_with_replace_fn(&seg, VAR_REPLACE_CREDITS, |s| {
-                    VARIABLE_RE.replace_all(&s, "{$1}").to_string()
-                });
+                seg = self.variables.resolve_with_credits_and_replace_fn(
+                    &seg,
+                    self.variables.replace_credits,
+                    |s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
+                );
                 if !seg.is_empty() {
                     match &seg[0..1] {
                         ":" => format!("{{{}}}", &seg[1..]),
@@ -399,7 +515,7 @@ impl<'a> Transpiler<'a> {
             }
         }
 
-        path.parameters = self.generate_path_parameters(&resolved_segments, &url.variable);
+        path.parameters = self.create_path_parameters(&resolved_segments, &url.variable);
 
         if !is_merge {
             let mut op_id = request_name
@@ -426,7 +542,7 @@ impl<'a> Transpiler<'a> {
         }
 
         if let Some(qp) = &url.query {
-            if let Some(mut query_params) = self.generate_query_parameters(qp) {
+            if let Some(mut query_params) = self.create_query_parameters(qp) {
                 match &op.parameters {
                     Some(params) => {
                         let mut cloned = params.clone();
@@ -471,7 +587,7 @@ impl<'a> Transpiler<'a> {
                     let param = Parameter {
                         location: "header".to_owned(),
                         name: header.key.to_owned(),
-                        description: extract_description(&header.description),
+                        description: header.description.as_ref().map(|d| d.into()),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_owned()),
                             example: Some(serde_json::Value::String(header.value.to_owned())),
@@ -514,7 +630,7 @@ impl<'a> Transpiler<'a> {
         }
 
         if !is_merge {
-            let description = match extract_description(&request.description) {
+            let description = match request.description.as_ref().map(|d| d.into()) {
                 Some(desc) => Some(desc),
                 None => Some(request_name.to_string()),
             };
@@ -582,14 +698,14 @@ impl<'a> Transpiler<'a> {
                 let mut response_content = openapi3::MediaType::default();
                 if let Some(raw) = &r.body {
                     let mut response_content_type: Option<String> = None;
-                    let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
+                    let resolved_body = self.variables.resolve(raw);
                     let example_val;
 
                     match serde_json::from_str(&resolved_body) {
                         Ok(v) => match v {
                             serde_json::Value::Object(_) | serde_json::Value::Array(_) => {
                                 response_content_type = Some("application/json".to_string());
-                                if let Some(schema) = Self::generate_schema(&v) {
+                                if let Some(schema) = Self::create_schema(&v) {
                                     response_content.schema =
                                         Some(openapi3::ObjectOrReference::Object(schema));
                                 }
@@ -721,7 +837,7 @@ impl<'a> Transpiler<'a> {
         }
     }
 
-    fn transform_security(
+    fn create_security(
         &self,
         state: &mut TranspileState,
         auth: &postman::Auth,
@@ -789,10 +905,9 @@ impl<'a> Transpiler<'a> {
                 let name = "apiKey".to_string();
                 if let Some(apikey) = &auth.apikey {
                     let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: self.resolve_variables(
-                            apikey.key.as_ref().unwrap_or(&"Authorization".to_string()),
-                            VAR_REPLACE_CREDITS,
-                        ),
+                        name: self
+                            .variables
+                            .resolve(apikey.key.as_ref().unwrap_or(&"Authorization".to_string())),
                         location: match apikey.location {
                             postman::ApiKeyLocation::Header => "header".to_string(),
                             postman::ApiKeyLocation::Query => "query".to_string(),
@@ -818,21 +933,19 @@ impl<'a> Transpiler<'a> {
                             .clone()
                             .unwrap_or_default()
                             .iter()
-                            .map(|s| self.resolve_variables(s, VAR_REPLACE_CREDITS))
+                            .map(|s| self.variables.resolve(s))
                             .map(|s| (s.to_string(), s.to_string())),
                     );
-                    let authorization_url = self.resolve_variables(
-                        oauth2.auth_url.as_ref().unwrap_or(&"".to_string()),
-                        VAR_REPLACE_CREDITS,
-                    );
-                    let token_url = self.resolve_variables(
-                        oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()),
-                        VAR_REPLACE_CREDITS,
-                    );
+                    let authorization_url = self
+                        .variables
+                        .resolve(oauth2.auth_url.as_ref().unwrap_or(&"".to_string()));
+                    let token_url = self
+                        .variables
+                        .resolve(oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()));
                     let refresh_url = oauth2
                         .refresh_token_url
                         .as_ref()
-                        .map(|url| self.resolve_variables(url, VAR_REPLACE_CREDITS));
+                        .map(|url| self.variables.resolve(url));
                     match oauth2.grant_type {
                         postman::Oauth2GrantType::AuthorizationCode
                         | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
@@ -906,7 +1019,7 @@ impl<'a> Transpiler<'a> {
                 postman::Mode::Raw => {
                     content_type = Some("application/octet-stream".to_string());
                     if let Some(raw) = &body.raw {
-                        let resolved_body = self.resolve_variables(raw, VAR_REPLACE_CREDITS);
+                        let resolved_body = self.variables.resolve(raw);
                         let example_val;
 
                         //set content type based on options or inference.
@@ -925,7 +1038,7 @@ impl<'a> Transpiler<'a> {
                                         request_body.content.get_mut(ct).unwrap()
                                     };
 
-                                    if let Some(schema) = Self::generate_schema(&v) {
+                                    if let Some(schema) = Self::create_schema(&v) {
                                         content.schema =
                                             Some(openapi3::ObjectOrReference::Object(schema));
                                     }
@@ -1007,7 +1120,7 @@ impl<'a> Transpiler<'a> {
                             }
                         }
                         let oas_obj = serde_json::Value::Object(oas_data);
-                        if let Some(schema) = Self::generate_schema(&oas_obj) {
+                        if let Some(schema) = Self::create_schema(&oas_obj) {
                             content.schema = Some(openapi3::ObjectOrReference::Object(schema));
                         }
 
@@ -1056,19 +1169,19 @@ impl<'a> Transpiler<'a> {
                                 let is_binary = t.as_str() == "file";
                                 if let Some(v) = &i.value {
                                     let value = serde_json::Value::String(v.to_string());
-                                    let prop_schema = Self::generate_schema(&value);
+                                    let prop_schema = Self::create_schema(&value);
                                     if let Some(mut prop_schema) = prop_schema {
                                         if is_binary {
                                             prop_schema.format = Some("binary".to_string());
                                         }
                                         prop_schema.description =
-                                            extract_description(&i.description);
+                                            i.description.as_ref().map(|d| d.into());
                                         properties.insert(i.key.clone(), prop_schema);
                                     }
                                 } else {
                                     let mut prop_schema = openapi3::Schema {
                                         schema_type: Some("string".to_string()),
-                                        description: extract_description(&i.description),
+                                        description: i.description.as_ref().map(|d| d.into()),
                                         ..Default::default()
                                     };
                                     if is_binary {
@@ -1150,43 +1263,7 @@ impl<'a> Transpiler<'a> {
         op.request_body = Some(openapi3::ObjectOrReference::Object(request_body));
     }
 
-    fn resolve_variables(&self, segment: &str, sub_replace_credits: usize) -> String {
-        self.resolve_variables_with_replace_fn(segment, sub_replace_credits, |s| s)
-    }
-
-    fn resolve_variables_with_replace_fn(
-        &self,
-        segment: &str,
-        sub_replace_credits: usize,
-        replace_fn: fn(String) -> String,
-    ) -> String {
-        let s = segment.to_string();
-
-        if sub_replace_credits == 0 {
-            return s;
-        }
-
-        if let Some(cap) = VARIABLE_RE.captures(&s) {
-            if cap.len() > 1 {
-                for n in 1..cap.len() {
-                    let capture = &cap[n].to_string();
-                    if let Some(v) = self.variable_map.get(capture) {
-                        if let Some(v2) = v.as_str() {
-                            let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
-                            return self.resolve_variables(
-                                &re.replace_all(&s, v2),
-                                sub_replace_credits - 1,
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        replace_fn(s)
-    }
-
-    fn generate_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
+    fn create_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
         match value {
             serde_json::Value::Object(m) => {
                 let mut schema = openapi3::Schema {
@@ -1197,7 +1274,7 @@ impl<'a> Transpiler<'a> {
                 let mut properties = BTreeMap::<String, openapi3::Schema>::new();
 
                 for (key, val) in m.iter() {
-                    if let Some(v) = Self::generate_schema(val) {
+                    if let Some(v) = Self::create_schema(val) {
                         properties.insert(key.to_string(), v);
                     }
                 }
@@ -1215,7 +1292,7 @@ impl<'a> Transpiler<'a> {
 
                 for n in 0..a.len() {
                     if let Some(i) = a.get(n) {
-                        if let Some(i) = Self::generate_schema(i) {
+                        if let Some(i) = Self::create_schema(i) {
                             if n == 0 {
                                 item_schema = i;
                             } else {
@@ -1332,7 +1409,7 @@ impl<'a> Transpiler<'a> {
         original
     }
 
-    fn generate_path_parameters(
+    fn create_path_parameters(
         &self,
         resolved_segments: &[String],
         postman_variables: &Option<Vec<postman::Variable>>,
@@ -1360,11 +1437,11 @@ impl<'a> Transpiler<'a> {
                                 Some(k) => k == var,
                                 _ => false,
                             }) {
-                                param.description = extract_description(&p.description);
+                                param.description = p.description.as_ref().map(|d| d.into());
                                 if let Some(pval) = &p.value {
                                     if let Some(pval_val) = pval.as_str() {
                                         schema.example = Some(serde_json::Value::String(
-                                            self.resolve_variables(pval_val, VAR_REPLACE_CREDITS),
+                                            self.variables.resolve(pval_val),
                                         ));
                                     }
                                 }
@@ -1383,7 +1460,7 @@ impl<'a> Transpiler<'a> {
         }
     }
 
-    fn generate_query_parameters(
+    fn create_query_parameters(
         &self,
         query_params: &[postman::QueryParam],
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
@@ -1399,14 +1476,12 @@ impl<'a> Transpiler<'a> {
                     keys.push(key);
                     let param = Parameter {
                         name: key.to_owned(),
-                        description: extract_description(&qp.description),
+                        description: qp.description.as_ref().map(|d| d.into()),
                         location: "query".to_owned(),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_string()),
                             example: qp.value.as_ref().map(|pval| {
-                                serde_json::Value::String(
-                                    self.resolve_variables(pval, VAR_REPLACE_CREDITS),
-                                )
+                                serde_json::Value::String(self.variables.resolve(pval))
                             }),
                             ..openapi3::Schema::default()
                         }),
@@ -1427,18 +1502,6 @@ impl<'a> Transpiler<'a> {
     }
 }
 
-fn extract_description(description: &Option<postman::DescriptionUnion>) -> Option<String> {
-    match description {
-        Some(d) => match d {
-            postman::DescriptionUnion::String(s) => Some(s.to_string()),
-            postman::DescriptionUnion::Description(desc) => {
-                desc.content.as_ref().map(|c| c.to_string())
-            }
-        },
-        None => None,
-    }
-}
-
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
@@ -1446,23 +1509,6 @@ mod tests {
     use openapi::v3_0::{MediaTypeExample, ObjectOrReference, Parameter, Schema};
     use openapi::OpenApi;
     use postman::Spec;
-
-    #[test]
-    fn test_extract_description() {
-        let description = Some(postman::DescriptionUnion::String("test".to_string()));
-        assert_eq!(extract_description(&description), Some("test".to_string()));
-
-        let description = Some(postman::DescriptionUnion::Description(
-            postman::Description {
-                content: Some("test".to_string()),
-                ..postman::Description::default()
-            },
-        ));
-        assert_eq!(extract_description(&description), Some("test".to_string()));
-
-        let description = None;
-        assert_eq!(extract_description(&description), None);
-    }
 
     #[test]
     fn test_generate_path_parameters() {
@@ -1475,7 +1521,7 @@ mod tests {
             ..postman::Variable::default()
         }]);
         let path_params = ["/test/".to_string(), "{{test_value}}".to_string()];
-        let params = transpiler.generate_path_parameters(&path_params, &postman_variables);
+        let params = transpiler.create_path_parameters(&path_params, &postman_variables);
         assert_eq!(params.unwrap().len(), 1);
     }
 
@@ -1489,7 +1535,7 @@ mod tests {
             description: None,
             ..postman::QueryParam::default()
         }];
-        let params = transpiler.generate_query_parameters(&query_params);
+        let params = transpiler.create_query_parameters(&query_params);
         assert_eq!(params.unwrap().len(), 1);
     }
 

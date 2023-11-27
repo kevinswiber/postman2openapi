@@ -84,7 +84,7 @@ mod tests {
         println!("    Saving string to {:?}...", path);
         std::fs::create_dir_all(&path).unwrap();
         let full_filename = path.as_ref().to_path_buf().join(filename);
-        let mut f = File::create(&full_filename).unwrap();
+        let mut f = File::create(full_filename).unwrap();
         f.write_all(data.as_bytes()).unwrap();
     }
 
@@ -114,7 +114,7 @@ mod tests {
         //     File -> `String` -> `serde_yaml::Value` -> `serde_json::Value` -> `String`
 
         // Read the original file to string
-        let spec_yaml_str = read_to_string(&input_file)
+        let spec_yaml_str = read_to_string(input_file)
             .unwrap_or_else(|e| panic!("failed to read contents of {:?}: {}", input_file, e));
         // Convert YAML string to JSON string
         let spec_json_str = convert_yaml_str_to_json(&spec_yaml_str);
@@ -123,7 +123,7 @@ mod tests {
         //     File -> `Spec` -> `serde_json::Value` -> `String`
 
         // Parse the input file
-        let parsed_spec = from_path(&input_file).unwrap();
+        let parsed_spec = from_path(input_file).unwrap();
         // Convert to serde_json::Value
         let parsed_spec_json = serde_json::to_value(parsed_spec).unwrap();
         // Convert to a JSON string
