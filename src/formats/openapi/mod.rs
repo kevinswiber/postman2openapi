@@ -152,7 +152,7 @@ mod tests {
     // Just tests if the deserialization does not blow up. But does not test correctness
     #[test]
     fn can_deserialize() {
-        for entry in fs::read_dir("src/openapi/data/v3.0").unwrap() {
+        for entry in fs::read_dir("src/formats/openapi/data/v3.0").unwrap() {
             let path = entry.unwrap().path();
             // cargo test -- --nocapture to see this message
             println!("Testing if {:?} is deserializable", path);
@@ -167,7 +167,7 @@ mod tests {
                 .iter()
                 .collect();
 
-        for entry in fs::read_dir("src/openapi/data/v3.0").unwrap() {
+        for entry in fs::read_dir("src/formats/openapi/data/v3.0").unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
 
@@ -187,7 +187,7 @@ mod tests {
 
     #[test]
     fn can_deserialize_one_of_v3() {
-        let openapi = from_path("src/openapi/data/v3.0/petstore-expanded.yaml").unwrap();
+        let openapi = from_path("src/formats/openapi/data/v3.0/petstore-expanded.yaml").unwrap();
         let OpenApi::V3_0(spec) = openapi;
         let components = spec.components.unwrap();
         let schemas = components.schemas.unwrap();
