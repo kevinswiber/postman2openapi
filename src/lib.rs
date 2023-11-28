@@ -187,7 +187,7 @@ impl Frontend for Transpiler {
     ) {
         let mut pushed_auth = false;
 
-        backend.create_tag(state, name.clone(), description);
+        backend.create_tag(state, name, description);
         state.hierarchy.push(name.to_string());
 
         if let Some(auth) = auth {
