@@ -133,11 +133,15 @@ impl<'a> OpenApi30Backend<'a> {
         ct: Option<String>,
     ) {
         let mut content_type = ct;
-        let mut request_body = if let Some(ObjectOrReference::Object(rb)) = op.request_body.as_mut()
-        {
-            rb.clone()
-        } else {
-            openapi3::RequestBody::default()
+        let request_body = match op.request_body.as_mut() {
+            Some(ObjectOrReference::Object(request_body)) => request_body,
+            _ => {
+                op.request_body = Some(ObjectOrReference::Object(openapi3::RequestBody::default()));
+                match op.request_body.as_mut() {
+                    Some(ObjectOrReference::Object(request_body)) => request_body,
+                    _ => unreachable!(),
+                }
+            }
         };
 
         let default_media_type = openapi3::MediaType::default();
@@ -224,7 +228,6 @@ impl<'a> OpenApi30Backend<'a> {
                             content.examples =
                                 Some(openapi3::MediaTypeExample::Examples { examples: ex });
                         }
-                        *content = content.clone();
                     }
                 }
                 postman::Mode::Urlencoded => {
@@ -387,8 +390,6 @@ impl<'a> OpenApi30Backend<'a> {
                 .content
                 .insert(content_type.unwrap(), default_media_type);
         }
-
-        op.request_body = Some(openapi3::ObjectOrReference::Object(request_body));
     }
 
     pub(crate) fn create_schema(value: &serde_json::Value) -> Option<openapi3::Schema> {
