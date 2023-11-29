@@ -125,7 +125,7 @@ impl Transpiler {
         };
 
         let hierarchy = Vec::<String>::new();
-        let auth_stack = Vec::<postman::Auth>::new();
+        let auth_stack = Vec::<&postman::Auth>::new();
 
         let state = &mut State {
             auth_stack,
@@ -140,9 +140,9 @@ impl Transpiler {
         };
         let mut transpiler = Transpiler {};
 
-        if let Some(auth) = spec.auth {
-            state.auth_stack.push(auth.clone());
-            backend.create_security(state, auth, true);
+        if let Some(auth) = spec.auth.as_ref() {
+            state.auth_stack.push(auth);
+            backend.create_security(state, auth);
         }
 
         transpiler.convert(&mut backend, state, &spec.item);
@@ -151,21 +151,29 @@ impl Transpiler {
 }
 
 impl Frontend for Transpiler {
-    fn convert<T: Backend>(
+    fn convert<'a, T: Backend>(
         &mut self,
         backend: &mut T,
-        state: &mut State,
-        items: &[postman::Items],
+        state: &mut State<'a>,
+        items: &'a [postman::Items],
     ) {
         for item in items {
-            if let Some(i) = &item.item {
+            if let Some(sub_items) = &item.item {
                 let name = match &item.name {
                     Some(n) => n,
                     None => "<folder>",
                 };
                 let description: Option<String> = item.description.as_ref().map(|d| d.into());
 
-                self.convert_folder(backend, state, i, name, description, &item.auth);
+                if let Some(auth) = item.auth.as_ref() {
+                    state.auth_stack.push(auth);
+                }
+
+                self.convert_folder(backend, state, sub_items, name, description);
+
+                if item.auth.is_some() {
+                    state.auth_stack.pop();
+                }
             } else {
                 let name = match &item.name {
                     Some(n) => n,
@@ -176,39 +184,27 @@ impl Frontend for Transpiler {
         }
     }
 
-    fn convert_folder<T: Backend>(
+    fn convert_folder<'a, T: Backend>(
         &mut self,
         backend: &mut T,
-        state: &mut State,
-        items: &[postman::Items],
+        state: &mut State<'a>,
+        items: &'a [postman::Items],
         name: &str,
         description: Option<String>,
-        auth: &Option<postman::Auth>,
     ) {
-        let mut pushed_auth = false;
-
         backend.create_tag(state, name, description);
         state.hierarchy.push(name.to_string());
-
-        if let Some(auth) = auth {
-            state.auth_stack.push(auth.clone());
-            pushed_auth = true;
-        }
 
         self.convert(backend, state, items);
 
         state.hierarchy.pop();
-
-        if pushed_auth {
-            state.auth_stack.pop();
-        }
     }
 
-    fn convert_request<T: Backend>(
+    fn convert_request<'a, T: Backend>(
         &mut self,
         backend: &mut T,
-        state: &mut State,
-        item: &postman::Items,
+        state: &mut State<'a>,
+        item: &'a postman::Items,
         name: &str,
     ) {
         if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
@@ -224,9 +220,9 @@ impl Frontend for Transpiler {
                 };
 
                 let auth = if let Some(auth) = &request.auth {
-                    Some(auth.clone())
+                    Some(auth)
                 } else if !state.auth_stack.is_empty() {
-                    Some(state.auth_stack.last().unwrap().clone())
+                    state.auth_stack.last().copied()
                 } else {
                     None
                 };

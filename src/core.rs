@@ -11,15 +11,15 @@ lazy_static! {
 }
 
 #[derive(Default)]
-pub struct State {
-    pub auth_stack: Vec<postman::Auth>,
+pub struct State<'a> {
+    pub auth_stack: Vec<&'a postman::Auth>,
     pub hierarchy: Vec<String>,
     pub variables: Variables,
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateOperationParams<'a> {
-    pub auth: Option<postman::Auth>,
+    pub auth: Option<&'a postman::Auth>,
     pub item: &'a postman::Items,
     pub request: &'a postman::RequestClass,
     pub request_name: &'a str,
@@ -76,21 +76,25 @@ impl Variables {
 }
 
 pub trait Frontend {
-    fn convert<T: Backend>(&mut self, backend: &mut T, state: &mut State, items: &[postman::Items]);
-    fn convert_folder<T: Backend>(
+    fn convert<'a, T: Backend>(
         &mut self,
         backend: &mut T,
-        state: &mut State,
-        items: &[postman::Items],
+        state: &mut State<'a>,
+        items: &'a [postman::Items],
+    );
+    fn convert_folder<'a, T: Backend>(
+        &mut self,
+        backend: &mut T,
+        state: &mut State<'a>,
+        items: &'a [postman::Items],
         name: &str,
         description: Option<String>,
-        auth: &Option<postman::Auth>,
     );
-    fn convert_request<T: Backend>(
+    fn convert_request<'a, T: Backend>(
         &mut self,
         backend: &mut T,
-        state: &mut State,
-        item: &postman::Items,
+        state: &mut State<'a>,
+        item: &'a postman::Items,
         name: &str,
     );
 }
@@ -99,10 +103,5 @@ pub trait Backend {
     fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[String]);
     fn create_tag(&mut self, state: &mut State, name: &str, description: Option<String>);
     fn create_operation(&mut self, state: &mut State, params: CreateOperationParams);
-    fn create_security(
-        &mut self,
-        state: &mut State,
-        auth: postman::Auth,
-        add_to_root: bool,
-    ) -> Option<Option<(String, Vec<String>)>>;
+    fn create_security(&mut self, state: &mut State, auth: &postman::Auth);
 }

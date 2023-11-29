@@ -539,6 +539,197 @@ impl<'a> OpenApi30Backend<'a> {
 
         original
     }
+
+    fn create_operation_security(
+        &mut self,
+        state: &mut State,
+        auth: &postman::Auth,
+    ) -> Option<Option<(String, Vec<String>)>> {
+        self.create_security_items(state, auth, false)
+    }
+
+    fn create_security_items(
+        &mut self,
+        state: &mut State,
+        auth: &postman::Auth,
+        add_to_root: bool,
+    ) -> Option<Option<(String, Vec<String>)>> {
+        if self.oas.components.is_none() {
+            self.oas.components = Some(openapi3::Components::default());
+        }
+        if self
+            .oas
+            .components
+            .as_ref()
+            .unwrap()
+            .security_schemes
+            .is_none()
+        {
+            self.oas.components.as_mut().unwrap().security_schemes = Some(BTreeMap::new());
+        }
+        let security_schemes = self
+            .oas
+            .components
+            .as_mut()
+            .unwrap()
+            .security_schemes
+            .as_mut()
+            .unwrap();
+        let security = match auth.auth_type {
+            AuthType::Noauth => Some(None),
+            AuthType::Basic => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "basic".to_string(),
+                    bearer_format: None,
+                };
+                let name = "basicAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Digest => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "digest".to_string(),
+                    bearer_format: None,
+                };
+                let name = "digestAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Bearer => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "bearer".to_string(),
+                    bearer_format: None,
+                };
+                let name = "bearerAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Jwt => {
+                let scheme = openapi3::SecurityScheme::Http {
+                    scheme: "bearer".to_string(),
+                    bearer_format: Some("jwt".to_string()),
+                };
+                let name = "jwtBearerAuth".to_string();
+                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                Some(Some((name, vec![])))
+            }
+            AuthType::Apikey => {
+                let name = "apiKey".to_string();
+                if let Some(apikey) = &auth.apikey {
+                    let scheme = openapi3::SecurityScheme::ApiKey {
+                        name: state
+                            .variables
+                            .resolve(apikey.key.as_ref().unwrap_or(&"Authorization".to_string())),
+                        location: match apikey.location {
+                            postman::ApiKeyLocation::Header => "header".to_string(),
+                            postman::ApiKeyLocation::Query => "query".to_string(),
+                        },
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                } else {
+                    let scheme = openapi3::SecurityScheme::ApiKey {
+                        name: "Authorization".to_string(),
+                        location: "header".to_string(),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                }
+                Some(Some((name, vec![])))
+            }
+            AuthType::Oauth2 => {
+                let name = "oauth2".to_string();
+                if let Some(oauth2) = &auth.oauth2 {
+                    let mut flows: openapi3::Flows = Default::default();
+                    let scopes = BTreeMap::from_iter(
+                        oauth2
+                            .scope
+                            .clone()
+                            .unwrap_or_default()
+                            .iter()
+                            .map(|s| state.variables.resolve(s))
+                            .map(|s| (s.to_string(), s.to_string())),
+                    );
+                    let authorization_url = state
+                        .variables
+                        .resolve(oauth2.auth_url.as_ref().unwrap_or(&"".to_string()));
+                    let token_url = state
+                        .variables
+                        .resolve(oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()));
+                    let refresh_url = oauth2
+                        .refresh_token_url
+                        .as_ref()
+                        .map(|url| state.variables.resolve(url));
+                    match oauth2.grant_type {
+                        postman::Oauth2GrantType::AuthorizationCode
+                        | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
+                            flows.authorization_code = Some(openapi3::AuthorizationCodeFlow {
+                                authorization_url,
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::ClientCredentials => {
+                            flows.client_credentials = Some(openapi3::ClientCredentialsFlow {
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::PasswordCredentials => {
+                            flows.password = Some(openapi3::PasswordFlow {
+                                token_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                        postman::Oauth2GrantType::Implicit => {
+                            flows.implicit = Some(openapi3::ImplicitFlow {
+                                authorization_url,
+                                refresh_url,
+                                scopes,
+                            });
+                        }
+                    }
+                    let scheme = openapi3::SecurityScheme::OAuth2 {
+                        flows: Box::new(flows),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                    Some(Some((name, oauth2.scope.clone().unwrap_or_default())))
+                } else {
+                    let scheme = openapi3::SecurityScheme::OAuth2 {
+                        flows: Default::default(),
+                    };
+                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
+                    Some(Some((name, vec![])))
+                }
+            }
+            _ => None,
+        };
+
+        let security_requirement = match security.clone() {
+            Some(Some((name, scopes))) => Some(SecurityRequirement {
+                requirement: Some(BTreeMap::from([(name, scopes)])),
+            }),
+            Some(None) => Some(SecurityRequirement { requirement: None }),
+            _ => None,
+        };
+
+        if add_to_root {
+            if let Some(security_requirement) = security_requirement {
+                if self.oas.security.is_none() {
+                    self.oas.security = Some(vec![security_requirement]);
+                } else {
+                    self.oas
+                        .security
+                        .as_mut()
+                        .unwrap()
+                        .push(security_requirement);
+                }
+            }
+        }
+
+        security
+    }
 }
 
 impl<'a> Backend for OpenApi30Backend<'a> {
@@ -590,7 +781,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         } = params;
 
         let sr = if let Some(auth) = auth {
-            let security = self.create_security(state, auth.clone(), false);
+            let security = self.create_operation_security(state, auth);
             match security {
                 Some(Some((name, scopes))) => Some(SecurityRequirement {
                     requirement: Some(BTreeMap::from([(name, scopes)])),
@@ -988,187 +1179,8 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
     }
 
-    fn create_security(
-        &mut self,
-        state: &mut State,
-        auth: postman::Auth,
-        add_to_root: bool,
-    ) -> Option<Option<(String, Vec<String>)>> {
-        if self.oas.components.is_none() {
-            self.oas.components = Some(openapi3::Components::default());
-        }
-        if self
-            .oas
-            .components
-            .as_ref()
-            .unwrap()
-            .security_schemes
-            .is_none()
-        {
-            self.oas.components.as_mut().unwrap().security_schemes = Some(BTreeMap::new());
-        }
-        let security_schemes = self
-            .oas
-            .components
-            .as_mut()
-            .unwrap()
-            .security_schemes
-            .as_mut()
-            .unwrap();
-        let security = match auth.auth_type {
-            AuthType::Noauth => Some(None),
-            AuthType::Basic => {
-                let scheme = openapi3::SecurityScheme::Http {
-                    scheme: "basic".to_string(),
-                    bearer_format: None,
-                };
-                let name = "basicAuth".to_string();
-                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                Some(Some((name, vec![])))
-            }
-            AuthType::Digest => {
-                let scheme = openapi3::SecurityScheme::Http {
-                    scheme: "digest".to_string(),
-                    bearer_format: None,
-                };
-                let name = "digestAuth".to_string();
-                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                Some(Some((name, vec![])))
-            }
-            AuthType::Bearer => {
-                let scheme = openapi3::SecurityScheme::Http {
-                    scheme: "bearer".to_string(),
-                    bearer_format: None,
-                };
-                let name = "bearerAuth".to_string();
-                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                Some(Some((name, vec![])))
-            }
-            AuthType::Jwt => {
-                let scheme = openapi3::SecurityScheme::Http {
-                    scheme: "bearer".to_string(),
-                    bearer_format: Some("jwt".to_string()),
-                };
-                let name = "jwtBearerAuth".to_string();
-                security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                Some(Some((name, vec![])))
-            }
-            AuthType::Apikey => {
-                let name = "apiKey".to_string();
-                if let Some(apikey) = &auth.apikey {
-                    let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: state
-                            .variables
-                            .resolve(apikey.key.as_ref().unwrap_or(&"Authorization".to_string())),
-                        location: match apikey.location {
-                            postman::ApiKeyLocation::Header => "header".to_string(),
-                            postman::ApiKeyLocation::Query => "query".to_string(),
-                        },
-                    };
-                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                } else {
-                    let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: "Authorization".to_string(),
-                        location: "header".to_string(),
-                    };
-                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                }
-                Some(Some((name, vec![])))
-            }
-            AuthType::Oauth2 => {
-                let name = "oauth2".to_string();
-                if let Some(oauth2) = &auth.oauth2 {
-                    let mut flows: openapi3::Flows = Default::default();
-                    let scopes = BTreeMap::from_iter(
-                        oauth2
-                            .scope
-                            .clone()
-                            .unwrap_or_default()
-                            .iter()
-                            .map(|s| state.variables.resolve(s))
-                            .map(|s| (s.to_string(), s.to_string())),
-                    );
-                    let authorization_url = state
-                        .variables
-                        .resolve(oauth2.auth_url.as_ref().unwrap_or(&"".to_string()));
-                    let token_url = state
-                        .variables
-                        .resolve(oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()));
-                    let refresh_url = oauth2
-                        .refresh_token_url
-                        .as_ref()
-                        .map(|url| state.variables.resolve(url));
-                    match oauth2.grant_type {
-                        postman::Oauth2GrantType::AuthorizationCode
-                        | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
-                            flows.authorization_code = Some(openapi3::AuthorizationCodeFlow {
-                                authorization_url,
-                                token_url,
-                                refresh_url,
-                                scopes,
-                            });
-                        }
-                        postman::Oauth2GrantType::ClientCredentials => {
-                            flows.client_credentials = Some(openapi3::ClientCredentialsFlow {
-                                token_url,
-                                refresh_url,
-                                scopes,
-                            });
-                        }
-                        postman::Oauth2GrantType::PasswordCredentials => {
-                            flows.password = Some(openapi3::PasswordFlow {
-                                token_url,
-                                refresh_url,
-                                scopes,
-                            });
-                        }
-                        postman::Oauth2GrantType::Implicit => {
-                            flows.implicit = Some(openapi3::ImplicitFlow {
-                                authorization_url,
-                                refresh_url,
-                                scopes,
-                            });
-                        }
-                    }
-                    let scheme = openapi3::SecurityScheme::OAuth2 {
-                        flows: Box::new(flows),
-                    };
-                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                    Some(Some((name, oauth2.scope.clone().unwrap_or_default())))
-                } else {
-                    let scheme = openapi3::SecurityScheme::OAuth2 {
-                        flows: Default::default(),
-                    };
-                    security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                    Some(Some((name, vec![])))
-                }
-            }
-            _ => None,
-        };
-
-        let security_requirement = match security.clone() {
-            Some(Some((name, scopes))) => Some(SecurityRequirement {
-                requirement: Some(BTreeMap::from([(name, scopes)])),
-            }),
-            Some(None) => Some(SecurityRequirement { requirement: None }),
-            _ => None,
-        };
-
-        if add_to_root {
-            if let Some(security_requirement) = security_requirement {
-                if self.oas.security.is_none() {
-                    self.oas.security = Some(vec![security_requirement]);
-                } else {
-                    self.oas
-                        .security
-                        .as_mut()
-                        .unwrap()
-                        .push(security_requirement);
-                }
-            }
-        }
-
-        security
+    fn create_security(&mut self, state: &mut State, auth: &postman::Auth) {
+        self.create_security_items(state, auth, true);
     }
 }
 
