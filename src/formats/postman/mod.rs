@@ -217,7 +217,7 @@ pub struct AuthAttribute<'a> {
     #[serde(rename = "key")]
     pub key: &'a str,
 
-    #[serde(rename = "type")]
+    #[serde(borrow, rename = "type")]
     pub auth_type: Option<&'a str>,
 
     #[serde(rename = "value")]
@@ -227,8 +227,7 @@ pub struct AuthAttribute<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum AuthAttributeUnion<'a> {
-    #[serde(borrow)]
-    AuthAttribute21(Vec<AuthAttribute<'a>>),
+    AuthAttribute21(#[serde(borrow)] Vec<AuthAttribute<'a>>),
     AuthAttribute20(Option<serde_json::Value>),
 }
 
@@ -243,14 +242,14 @@ pub struct Event<'a> {
     pub disabled: Option<bool>,
 
     /// A unique identifier for the enclosing event.
-    #[serde(rename = "id")]
+    #[serde(borrow, rename = "id")]
     pub id: Option<&'a str>,
 
     /// Can be set to `test` or `prerequest` for test scripts or pre-request scripts respectively.
     #[serde(rename = "listen")]
     pub listen: &'a str,
 
-    #[serde(rename = "script")]
+    #[serde(borrow, rename = "script")]
     pub script: Option<Script<'a>>,
 }
 
@@ -258,22 +257,22 @@ pub struct Event<'a> {
 /// operations on a particular response.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Script<'a> {
-    #[serde(rename = "exec")]
+    #[serde(borrow, rename = "exec")]
     pub exec: Option<Host<'a>>,
 
     /// A unique, user defined identifier that can  be used to refer to this script from requests.
-    #[serde(rename = "id")]
+    #[serde(borrow, rename = "id")]
     pub id: Option<&'a str>,
 
     /// Script name
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
-    #[serde(rename = "src")]
+    #[serde(borrow, rename = "src")]
     pub src: Option<Url<'a>>,
 
     /// Type of the script. E.g: 'text/javascript'
-    #[serde(rename = "type")]
+    #[serde(borrow, rename = "type")]
     pub script_type: Option<&'a str>,
 }
 
@@ -281,86 +280,86 @@ pub struct Script<'a> {
 pub struct UrlClass<'a> {
     /// Contains the URL fragment (if any). Usually this is not transmitted over the network, but
     /// it could be useful to store this in some cases.
-    #[serde(rename = "hash")]
+    #[serde(borrow, rename = "hash")]
     pub hash: Option<&'a str>,
 
     /// The host for the URL, E.g: api.yourdomain.com. Can be stored as a string or as an array
     /// of strings.
-    #[serde(rename = "host")]
+    #[serde(borrow, rename = "host")]
     pub host: Option<Host<'a>>,
 
-    #[serde(rename = "path")]
+    #[serde(borrow, rename = "path")]
     pub path: Option<UrlPath<'a>>,
 
     /// The port number present in this URL. An empty value implies 80/443 depending on whether
     /// the protocol field contains http/https.
-    #[serde(rename = "port")]
+    #[serde(borrow, rename = "port")]
     pub port: Option<&'a str>,
 
     /// The protocol associated with the request, E.g: 'http'
-    #[serde(rename = "protocol")]
+    #[serde(borrow, rename = "protocol")]
     pub protocol: Option<&'a str>,
 
     /// An array of QueryParams, which is basically the query string part of the URL, parsed into
     /// separate variables
-    #[serde(rename = "query")]
+    #[serde(borrow, rename = "query")]
     pub query: Option<Vec<QueryParam<'a>>>,
 
     /// The string representation of the request URL, including the protocol, host, path, hash,
     /// query parameter(s) and path variable(s).
-    #[serde(rename = "raw")]
+    #[serde(borrow, rename = "raw")]
     pub raw: Option<&'a str>,
 
     /// Postman supports path variables with the syntax `/path/:variableName/to/somewhere`. These
     /// variables are stored in this field.
-    #[serde(rename = "variable")]
+    #[serde(borrow, rename = "variable")]
     pub variable: Option<Vec<Variable<'a>>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PathClass<'a> {
-    #[serde(rename = "type")]
+    #[serde(borrow, rename = "type")]
     pub path_type: Option<&'a str>,
 
-    #[serde(rename = "value")]
+    #[serde(borrow, rename = "value")]
     pub value: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct GraphQlBodyClass<'a> {
-    #[serde(rename = "query")]
+    #[serde(borrow, rename = "query")]
     pub query: Option<&'a str>,
 
-    #[serde(rename = "variables")]
+    #[serde(borrow, rename = "variables")]
     pub variables: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct QueryParam<'a> {
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     /// If set to true, the current query parameter will not be sent with the request.
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
 
-    #[serde(rename = "key")]
+    #[serde(borrow, rename = "key")]
     pub key: Option<&'a str>,
 
-    #[serde(rename = "value")]
+    #[serde(borrow, rename = "value")]
     pub value: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Description<'a> {
     /// The content of the description goes here, as a raw string.
-    #[serde(rename = "content")]
+    #[serde(borrow, rename = "content")]
     pub content: Option<&'a str>,
 
     /// Holds the mime type of the raw description content. E.g: 'text/markdown' or 'text/html'.
     /// The type is used to correctly render the description when generating documentation, or in
     /// the Postman app.
-    #[serde(rename = "type")]
+    #[serde(borrow, rename = "type")]
     pub description_type: Option<&'a str>,
 
     /// Description can have versions associated with it, which should be put in this property.
@@ -377,7 +376,7 @@ pub struct Description<'a> {
 /// request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Variable<'a> {
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     #[serde(rename = "disabled")]
@@ -385,16 +384,16 @@ pub struct Variable<'a> {
 
     /// A variable ID is a unique user-defined value that identifies the variable within a
     /// collection. In traditional terms, this would be a variable name.
-    #[serde(rename = "id")]
+    #[serde(borrow, rename = "id")]
     pub id: Option<&'a str>,
 
     /// A variable key is a human friendly value that identifies the variable within a
     /// collection. In traditional terms, this would be a variable name.
-    #[serde(rename = "key")]
+    #[serde(borrow, rename = "key")]
     pub key: Option<&'a str>,
 
     /// Variable name
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
     /// When set to true, indicates that this variable has been set by Postman
@@ -419,13 +418,13 @@ pub struct Information<'a> {
     /// collection, it is recommended that you maintain the same id since changing the id usually
     /// implies that is a different collection than it was originally.
     /// *Note: This field exists for compatibility reasons with Collection Format V1.*
-    #[serde(rename = "_postman_id")]
+    #[serde(borrow, rename = "_postman_id")]
     pub postman_id: Option<&'a str>,
 
-    #[serde(rename = "_exporter_id")]
+    #[serde(borrow, rename = "_exporter_id")]
     pub exporter_id: Option<&'a str>,
 
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     /// A collection's friendly name is defined by this field. You would want to set this field
@@ -439,14 +438,14 @@ pub struct Information<'a> {
     #[serde(rename = "schema")]
     pub schema: &'a str,
 
-    #[serde(rename = "version")]
+    #[serde(borrow, rename = "version")]
     pub version: Option<CollectionVersion<'a>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CollectionVersionClass<'a> {
     /// A human friendly identifier to make sense of the version numbers. E.g: 'beta-3'
-    #[serde(rename = "identifier")]
+    #[serde(borrow, rename = "identifier")]
     pub identifier: Option<&'a str>,
 
     /// Increment this number if you make changes to the collection that changes its behaviour.
@@ -475,42 +474,42 @@ pub struct CollectionVersionClass<'a> {
 /// 'Folders'. A folder just is an ordered set of requests.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Items<'a> {
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
-    #[serde(rename = "event")]
+    #[serde(borrow, rename = "event")]
     pub event: Option<Vec<Event<'a>>>,
 
     /// A unique ID that is used to identify collections internally
-    #[serde(rename = "id")]
+    #[serde(borrow, rename = "id")]
     pub id: Option<&'a str>,
 
     /// A human readable identifier for the current item.
     ///
     /// A folder's friendly name is defined by this field. You would want to set this field to a
     /// value that would allow you to easily identify this folder.
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
     /// Set of configurations used to alter the usual behavior of sending the request
     #[serde(rename = "protocolProfileBehavior")]
     pub protocol_profile_behavior: Option<ProtocolProfileBehavior>,
 
-    #[serde(rename = "request")]
+    #[serde(borrow, rename = "request")]
     pub request: Option<RequestUnion<'a>>,
 
-    #[serde(rename = "response")]
+    #[serde(borrow, rename = "response")]
     pub response: Option<Vec<Option<ResponseClass<'a>>>>,
 
-    #[serde(rename = "variable")]
+    #[serde(borrow, rename = "variable")]
     pub variable: Option<Vec<Variable<'a>>>,
 
-    #[serde(rename = "auth")]
+    #[serde(borrow, rename = "auth")]
     pub auth: Option<Auth<'a>>,
 
     /// Items are entities which contain an actual HTTP request, and sample responses attached to
     /// it. Folders may contain many items.
-    #[serde(rename = "item")]
+    #[serde(borrow, rename = "item")]
     pub item: Option<Vec<Items<'a>>>,
 }
 
@@ -524,28 +523,28 @@ pub struct ProtocolProfileBehavior {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RequestClass<'a> {
-    #[serde(rename = "auth")]
+    #[serde(borrow, rename = "auth")]
     pub auth: Option<Auth<'a>>,
 
-    #[serde(rename = "body")]
+    #[serde(borrow, rename = "body")]
     pub body: Option<Body<'a>>,
 
-    #[serde(rename = "certificate")]
+    #[serde(borrow, rename = "certificate")]
     pub certificate: Option<Certificate<'a>>,
 
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
-    #[serde(rename = "header")]
+    #[serde(borrow, rename = "header")]
     pub header: Option<HeaderUnion<'a>>,
 
-    #[serde(rename = "method")]
+    #[serde(borrow, rename = "method")]
     pub method: Option<&'a str>,
 
-    #[serde(rename = "proxy")]
+    #[serde(borrow, rename = "proxy")]
     pub proxy: Option<ProxyConfig<'a>>,
 
-    #[serde(rename = "url")]
+    #[serde(borrow, rename = "url")]
     pub url: Option<Url<'a>>,
 }
 
@@ -556,26 +555,26 @@ pub struct Body<'a> {
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
 
-    #[serde(rename = "file")]
+    #[serde(borrow, rename = "file")]
     pub file: Option<File<'a>>,
 
-    #[serde(rename = "formdata")]
+    #[serde(borrow, rename = "formdata")]
     pub formdata: Option<Vec<FormParameter<'a>>>,
 
     /// Postman stores the type of data associated with this request in this field.
     #[serde(rename = "mode")]
     pub mode: Option<Mode>,
 
-    #[serde(rename = "raw")]
+    #[serde(borrow, rename = "raw")]
     pub raw: Option<&'a str>,
 
-    #[serde(rename = "options")]
+    #[serde(borrow, rename = "options")]
     pub options: Option<BodyOptions<'a>>,
 
-    #[serde(rename = "urlencoded")]
+    #[serde(borrow, rename = "urlencoded")]
     pub urlencoded: Option<Vec<UrlEncodedParameter<'a>>>,
 
-    #[serde(rename = "graphql")]
+    #[serde(borrow, rename = "graphql")]
     pub graphql: Option<GraphQlBody<'a>>,
 }
 
@@ -587,26 +586,26 @@ pub struct BodyOptions<'a> {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RawOptions<'a> {
-    #[serde(rename = "language")]
+    #[serde(borrow, rename = "language")]
     pub language: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct File<'a> {
-    #[serde(rename = "content")]
+    #[serde(borrow, rename = "content")]
     pub content: Option<&'a str>,
 
-    #[serde(rename = "src")]
+    #[serde(borrow, rename = "src")]
     pub src: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct FormParameter<'a> {
     /// Override Content-Type header of this form data entity.
-    #[serde(rename = "contentType")]
+    #[serde(borrow, rename = "contentType")]
     pub content_type: Option<&'a str>,
 
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     /// When set to true, prevents this form data entity from being sent.
@@ -616,16 +615,16 @@ pub struct FormParameter<'a> {
     #[serde(rename = "key")]
     pub key: &'a str,
 
-    #[serde(rename = "type")]
+    #[serde(borrow, rename = "type")]
     pub form_parameter_type: Option<&'a str>,
 
-    #[serde(rename = "value")]
+    #[serde(borrow, rename = "value")]
     pub value: Option<&'a str>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct UrlEncodedParameter<'a> {
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     #[serde(rename = "disabled")]
@@ -634,7 +633,7 @@ pub struct UrlEncodedParameter<'a> {
     #[serde(rename = "key")]
     pub key: &'a str,
 
-    #[serde(rename = "value")]
+    #[serde(borrow, rename = "value")]
     pub value: Option<&'a str>,
 }
 
@@ -654,11 +653,11 @@ pub struct Certificate<'a> {
     pub matches: Option<Vec<Option<serde_json::Value>>>,
 
     /// A name for the certificate for user reference
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
     /// The passphrase for the certificate
-    #[serde(rename = "passphrase")]
+    #[serde(borrow, rename = "passphrase")]
     pub passphrase: Option<&'a str>,
 }
 
@@ -683,7 +682,7 @@ pub struct Key {
 /// Represents a single HTTP Header
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Header<'a> {
-    #[serde(rename = "description")]
+    #[serde(borrow, rename = "description")]
     pub description: Option<DescriptionUnion<'a>>,
 
     /// If set to true, the current header will not be sent with requests.
@@ -752,11 +751,11 @@ pub struct ProxyConfig<'a> {
     pub disabled: Option<bool>,
 
     /// The proxy server host
-    #[serde(rename = "host")]
+    #[serde(borrow, rename = "host")]
     pub host: Option<&'a str>,
 
     /// The Url match for which the proxy config is defined
-    #[serde(rename = "match")]
+    #[serde(borrow, rename = "match")]
     pub proxy_config_match: Option<&'a str>,
 
     /// The proxy server port
@@ -771,38 +770,38 @@ pub struct ProxyConfig<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct ResponseClass<'a> {
     /// The name of the response.
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
     /// The raw text of the response.
-    #[serde(rename = "body")]
+    #[serde(borrow, rename = "body")]
     pub body: Option<&'a str>,
 
     /// The numerical response code, example: 200, 201, 404, etc.
     #[serde(rename = "code")]
     pub code: Option<i64>,
 
-    #[serde(rename = "cookie")]
+    #[serde(borrow, rename = "cookie")]
     pub cookie: Option<Vec<Cookie<'a>>>,
 
-    #[serde(rename = "header")]
+    #[serde(borrow, rename = "header")]
     pub header: Option<Headers<'a>>,
 
     /// A unique, user defined identifier that can  be used to refer to this response from
     /// requests.
-    #[serde(rename = "id")]
+    #[serde(borrow, rename = "id")]
     pub id: Option<&'a str>,
 
-    #[serde(rename = "originalRequest")]
+    #[serde(borrow, rename = "originalRequest")]
     pub original_request: Option<RequestClass<'a>>,
 
     /// The time taken by the request to complete. If a number, the unit is milliseconds. If the
     /// response is manually created, this can be set to `null`.
-    #[serde(rename = "responseTime")]
+    #[serde(borrow, rename = "responseTime")]
     pub response_time: Option<ResponseTime<'a>>,
 
     /// The response status, e.g: '200 OK'
-    #[serde(rename = "status")]
+    #[serde(borrow, rename = "status")]
     pub status: Option<&'a str>,
 }
 
@@ -811,11 +810,11 @@ pub struct ResponseClass<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Cookie<'a> {
     /// The domain for which this cookie is valid.
-    #[serde(rename = "domain")]
+    #[serde(borrow, rename = "domain")]
     pub domain: Option<&'a str>,
 
     /// When the cookie expires.
-    #[serde(rename = "expires")]
+    #[serde(borrow, rename = "expires")]
     pub expires: Option<&'a str>,
 
     /// Custom attributes for a cookie go here, such as the [Priority
@@ -833,15 +832,15 @@ pub struct Cookie<'a> {
     #[serde(rename = "httpOnly")]
     pub http_only: Option<bool>,
 
-    #[serde(rename = "maxAge")]
+    #[serde(borrow, rename = "maxAge")]
     pub max_age: Option<&'a str>,
 
     /// This is the name of the Cookie.
-    #[serde(rename = "name")]
+    #[serde(borrow, rename = "name")]
     pub name: Option<&'a str>,
 
     /// The path associated with the Cookie.
-    #[serde(rename = "path")]
+    #[serde(borrow, rename = "path")]
     pub path: Option<&'a str>,
 
     /// Indicates if the 'secure' flag is set on the Cookie, meaning that it is transmitted over
@@ -854,7 +853,7 @@ pub struct Cookie<'a> {
     pub session: Option<bool>,
 
     /// The value of the Cookie.
-    #[serde(rename = "value")]
+    #[serde(borrow, rename = "value")]
     pub value: Option<&'a str>,
 }
 
@@ -863,9 +862,9 @@ pub struct Cookie<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Host<'a> {
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 
-    StringArray(Vec<&'a str>),
+    StringArray(#[serde(borrow)] Vec<&'a str>),
 }
 
 /// If object, contains the complete broken-down URL for this request. If string, contains
@@ -873,17 +872,17 @@ pub enum Host<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Url<'a> {
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 
-    UrlClass(UrlClass<'a>),
+    UrlClass(#[serde(borrow)] UrlClass<'a>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum UrlPath<'a> {
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 
-    UnionArray(Vec<PathElement<'a>>),
+    UnionArray(#[serde(borrow)] Vec<PathElement<'a>>),
 }
 
 /// The complete path of the current url, broken down into segments. A segment could be a
@@ -891,9 +890,9 @@ pub enum UrlPath<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum PathElement<'a> {
-    PathClass(PathClass<'a>),
+    PathClass(#[serde(borrow)] PathClass<'a>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 /// A Description can be a raw text, or be an object, which holds the description along with
@@ -901,10 +900,8 @@ pub enum PathElement<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum DescriptionUnion<'a> {
-    #[serde(borrow)]
-    Description(Description<'a>),
-
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
+    Description(#[serde(borrow)] Description<'a>),
 }
 
 impl<'a> From<&'a DescriptionUnion<'a>> for &'a str {
@@ -933,9 +930,9 @@ impl<'a> From<&'a DescriptionUnion<'a>> for String {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum CollectionVersion<'a> {
-    CollectionVersionClass(CollectionVersionClass<'a>),
+    CollectionVersionClass(#[serde(borrow)] CollectionVersionClass<'a>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 /// A request represents an HTTP request. If a string, the string is assumed to be the
@@ -943,17 +940,17 @@ pub enum CollectionVersion<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum RequestUnion<'a> {
-    RequestClass(Box<RequestClass<'a>>),
+    RequestClass(#[serde(borrow)] Box<RequestClass<'a>>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HeaderUnion<'a> {
-    HeaderArray(Vec<Header<'a>>),
+    HeaderArray(#[serde(borrow)] Vec<Header<'a>>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 /// A response represents an HTTP response.
@@ -967,17 +964,17 @@ pub enum Response<'a> {
     //Double(f64),
 
     //Integer(i64),
-    ResponseClass(Box<ResponseClass<'a>>),
+    ResponseClass(#[serde(borrow)] Box<ResponseClass<'a>>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Headers<'a> {
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 
-    UnionArray(Vec<HeaderElement<'a>>),
+    UnionArray(#[serde(borrow)] Vec<HeaderElement<'a>>),
 }
 
 /// No HTTP request is complete without its headers, and the same is true for a Postman
@@ -985,9 +982,9 @@ pub enum Headers<'a> {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum HeaderElement<'a> {
-    Header(Header<'a>),
+    Header(#[serde(borrow)] Header<'a>),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 /// The time taken by the request to complete. If a number, the unit is milliseconds. If the
@@ -997,15 +994,15 @@ pub enum HeaderElement<'a> {
 pub enum ResponseTime<'a> {
     Number(u64),
 
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum GraphQlBody<'a> {
-    String(&'a str),
+    String(#[serde(borrow)] &'a str),
 
-    GraphQlBodyClass(GraphQlBodyClass<'a>),
+    GraphQlBodyClass(#[serde(borrow)] GraphQlBodyClass<'a>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
