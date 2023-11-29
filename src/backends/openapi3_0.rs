@@ -13,16 +13,16 @@ pub(crate) struct OpenApi30Backend<'a> {
 }
 
 impl<'a> OpenApi30Backend<'a> {
-    pub(crate) fn generate(name: String, description: Option<String>) -> openapi3::Spec {
+    pub(crate) fn generate(name: &str, description: Option<&str>) -> openapi3::Spec {
         openapi3::Spec {
             openapi: String::from("3.0.3"),
             info: openapi3::Info {
                 license: None,
                 contact: Some(openapi3::Contact::default()),
-                description,
+                description: description.map(|s| s.to_string()),
                 terms_of_service: None,
                 version: String::from("1.0.0"),
-                title: name,
+                title: name.to_string(),
             },
             components: None,
             external_docs: None,
@@ -57,7 +57,7 @@ impl<'a> OpenApi30Backend<'a> {
                             ..Default::default()
                         };
                         if let Some(path_val) = &postman_variables {
-                            if let Some(p) = path_val.iter().find(|p| match &p.key {
+                            if let Some(p) = path_val.iter().find(|p| match p.key {
                                 Some(k) => k == var,
                                 _ => false,
                             }) {
@@ -93,15 +93,15 @@ impl<'a> OpenApi30Backend<'a> {
             .iter()
             .filter_map(|qp| match qp.key {
                 Some(ref key) => {
-                    if keys.contains(&key.as_str()) {
+                    if keys.contains(&key) {
                         return None;
                     }
 
                     keys.push(key);
                     let param = Parameter {
-                        name: key.to_owned(),
+                        name: key.to_string(),
                         description: qp.description.as_ref().map(|d| d.into()),
-                        location: "query".to_owned(),
+                        location: "query".to_string(),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_string()),
                             example: qp.value.as_ref().map(|pval| {
@@ -185,13 +185,12 @@ impl<'a> OpenApi30Backend<'a> {
                                 if let Some(options) = body.options.clone() {
                                     if let Some(raw_options) = options.raw {
                                         if raw_options.language.is_some() {
-                                            content_type =
-                                                match raw_options.language.unwrap().as_str() {
-                                                    "xml" => Some("application/xml".to_string()),
-                                                    "json" => Some("application/json".to_string()),
-                                                    "html" => Some("text/html".to_string()),
-                                                    _ => Some("text/plain".to_string()),
-                                                }
+                                            content_type = match raw_options.language.unwrap() {
+                                                "xml" => Some("application/xml".to_string()),
+                                                "json" => Some("application/json".to_string()),
+                                                "html" => Some("text/html".to_string()),
+                                                _ => Some("text/plain".to_string()),
+                                            }
                                         }
                                     }
                                 }
@@ -247,7 +246,7 @@ impl<'a> OpenApi30Backend<'a> {
                         for i in urlencoded {
                             if let Some(v) = &i.value {
                                 let value = serde_json::Value::String(v.to_string());
-                                oas_data.insert(i.key.clone(), value);
+                                oas_data.insert(i.key.to_string(), value);
                             }
                         }
                         let oas_obj = serde_json::Value::Object(oas_data);
@@ -296,8 +295,8 @@ impl<'a> OpenApi30Backend<'a> {
 
                     if let Some(formdata) = &body.formdata {
                         for i in formdata {
-                            if let Some(t) = &i.form_parameter_type {
-                                let is_binary = t.as_str() == "file";
+                            if let Some(t) = i.form_parameter_type {
+                                let is_binary = t == "file";
                                 if let Some(v) = &i.value {
                                     let value = serde_json::Value::String(v.to_string());
                                     let prop_schema = Self::create_schema(&value);
@@ -307,7 +306,7 @@ impl<'a> OpenApi30Backend<'a> {
                                         }
                                         prop_schema.description =
                                             i.description.as_ref().map(|d| d.into());
-                                        properties.insert(i.key.clone(), prop_schema);
+                                        properties.insert(i.key.to_string(), prop_schema);
                                     }
                                 } else {
                                     let mut prop_schema = openapi3::Schema {
@@ -318,7 +317,7 @@ impl<'a> OpenApi30Backend<'a> {
                                     if is_binary {
                                         prop_schema.format = Some("binary".to_string());
                                     }
-                                    properties.insert(i.key.clone(), prop_schema);
+                                    properties.insert(i.key.to_string(), prop_schema);
                                 }
                             }
                             // NOTE: Postman doesn't store the content type of multipart files. :(
@@ -618,9 +617,13 @@ impl<'a> OpenApi30Backend<'a> {
                 let name = "apiKey".to_string();
                 if let Some(apikey) = &auth.apikey {
                     let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: state
-                            .variables
-                            .resolve(apikey.key.as_ref().unwrap_or(&"Authorization".to_string())),
+                        name: state.variables.resolve(
+                            apikey
+                                .key
+                                .clone()
+                                .unwrap_or("Authorization".to_string())
+                                .as_str(),
+                        ),
                         location: match apikey.location {
                             postman::ApiKeyLocation::Header => "header".to_string(),
                             postman::ApiKeyLocation::Query => "query".to_string(),
@@ -734,11 +737,11 @@ impl<'a> OpenApi30Backend<'a> {
 }
 
 impl<'a> Backend for OpenApi30Backend<'a> {
-    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[String]) {
+    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[&str]) {
         let host = parts.join(".");
         let mut proto = "".to_string();
         if let Some(protocol) = &url.protocol {
-            proto = format!("{protocol}://", protocol = protocol.clone());
+            proto = format!("{protocol}://", protocol = protocol);
         }
         if let Some(s) = &mut self.oas.servers {
             let mut server_url = format!("{proto}{host}");
@@ -754,11 +757,11 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
     }
 
-    fn create_tag(&mut self, _state: &mut State, name: &str, description: Option<String>) {
+    fn create_tag(&mut self, _state: &mut State, name: &str, description: Option<&str>) {
         if let Some(t) = &mut self.oas.tags {
             let mut tag = openapi3::Tag {
                 name: name.to_string(),
-                description,
+                description: description.map(|d| d.into()),
             };
 
             let mut i: usize = 0;
@@ -798,7 +801,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
             .iter()
             .map(|segment| {
                 let mut seg = match segment {
-                    postman::PathElement::PathClass(c) => c.clone().value.unwrap_or_default(),
+                    postman::PathElement::PathClass(c) => c.value.unwrap_or_default().to_string(),
                     postman::PathElement::String(c) => c.to_string(),
                 };
                 seg = state.variables.resolve_with_credits_and_replace_fn(
@@ -812,7 +815,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                         _ => seg.to_string(),
                     }
                 } else {
-                    seg
+                    seg.to_string()
                 }
             })
             .collect::<Vec<String>>();
@@ -983,7 +986,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
 
         if !state.hierarchy.is_empty() {
-            op.tags = Some(state.hierarchy.clone());
+            op.tags = Some(state.hierarchy.iter().map(|s| s.to_string()).collect());
         }
 
         if let Some(responses) = &item.response {
@@ -994,7 +997,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                         if let Some(options) = body.options.clone() {
                             if let Some(raw_options) = options.raw {
                                 if raw_options.language.is_some() {
-                                    content_type = match raw_options.language.unwrap().as_str() {
+                                    content_type = match raw_options.language.unwrap() {
                                         "xml" => Some("application/xml".to_string()),
                                         "json" => Some("application/json".to_string()),
                                         "html" => Some("text/html".to_string()),
@@ -1010,7 +1013,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                 let mut response_media_types = BTreeMap::<String, openapi3::MediaType>::new();
 
                 if let Some(name) = &r.name {
-                    oas_response.description = Some(name.clone());
+                    oas_response.description = Some(name.to_string());
                 }
                 if let Some(postman::Headers::UnionArray(headers)) = &r.header {
                     let mut oas_headers =
@@ -1029,7 +1032,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                             oas_header.schema = Some(header_schema);
 
                             oas_headers.insert(
-                                hdr.key.clone(),
+                                hdr.key.to_string(),
                                 openapi3::ObjectOrReference::Object(oas_header),
                             );
                         }
@@ -1194,7 +1197,7 @@ mod tests {
     fn test_generate_path_parameters() {
         let mut state = State::default();
         let postman_variables = Some(vec![postman::Variable {
-            key: Some("test".to_string()),
+            key: Some("test"),
             value: Some(serde_json::Value::String("test_value".to_string())),
             description: None,
             ..postman::Variable::default()
@@ -1209,8 +1212,8 @@ mod tests {
     fn test_generate_query_parameters() {
         let mut state = State::default();
         let query_params = vec![postman::QueryParam {
-            key: Some("test".to_string()),
-            value: Some("{{test}}".to_string()),
+            key: Some("test"),
+            value: Some("{{test}}"),
             description: None,
             ..postman::QueryParam::default()
         }];

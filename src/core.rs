@@ -12,28 +12,28 @@ lazy_static! {
 
 #[derive(Default)]
 pub struct State<'a> {
-    pub auth_stack: Vec<&'a postman::Auth>,
-    pub hierarchy: Vec<String>,
-    pub variables: Variables,
+    pub auth_stack: Vec<&'a postman::Auth<'a>>,
+    pub hierarchy: Vec<&'a str>,
+    pub variables: Variables<'a>,
 }
 
 #[derive(Debug, Clone)]
 pub struct CreateOperationParams<'a> {
-    pub auth: Option<&'a postman::Auth>,
-    pub item: &'a postman::Items,
-    pub request: &'a postman::RequestClass,
+    pub auth: Option<&'a postman::Auth<'a>>,
+    pub item: &'a postman::Items<'a>,
+    pub request: &'a postman::RequestClass<'a>,
     pub request_name: &'a str,
-    pub path_elements: &'a [postman::PathElement],
-    pub url: &'a postman::UrlClass,
+    pub path_elements: &'a [postman::PathElement<'a>],
+    pub url: &'a postman::UrlClass<'a>,
 }
 
 #[derive(Debug, Default, Clone)]
-pub struct Variables {
-    pub map: BTreeMap<String, serde_json::value::Value>,
+pub struct Variables<'a> {
+    pub map: BTreeMap<&'a str, serde_json::value::Value>,
     pub replace_credits: usize,
 }
 
-impl Variables {
+impl<'a> Variables<'a> {
     pub fn resolve(&self, segment: &str) -> String {
         self.resolve_with_credits(segment, self.replace_credits)
     }
@@ -57,7 +57,7 @@ impl Variables {
         if let Some(cap) = VARIABLE_RE.captures(&s) {
             if cap.len() > 1 {
                 for n in 1..cap.len() {
-                    let capture = &cap[n].to_string();
+                    let capture = &cap[n];
                     if let Some(v) = self.map.get(capture) {
                         if let Some(v2) = v.as_str() {
                             let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
@@ -87,8 +87,8 @@ pub trait Frontend {
         backend: &mut T,
         state: &mut State<'a>,
         items: &'a [postman::Items],
-        name: &str,
-        description: Option<String>,
+        name: &'a str,
+        description: Option<&str>,
     );
     fn convert_request<'a, T: Backend>(
         &mut self,
@@ -100,8 +100,8 @@ pub trait Frontend {
 }
 
 pub trait Backend {
-    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[String]);
-    fn create_tag(&mut self, state: &mut State, name: &str, description: Option<String>);
+    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[&str]);
+    fn create_tag(&mut self, state: &mut State, name: &str, description: Option<&str>);
     fn create_operation(&mut self, state: &mut State, params: CreateOperationParams);
     fn create_security(&mut self, state: &mut State, auth: &postman::Auth);
 }

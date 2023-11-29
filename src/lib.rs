@@ -104,9 +104,9 @@ impl Transpiler {
     }
 
     pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
-        let description: Option<String> = spec.info.description.as_ref().map(|d| d.into());
+        let description: Option<&str> = spec.info.description.as_ref().map(|d| d.into());
 
-        let mut variable_map = BTreeMap::<String, serde_json::value::Value>::new();
+        let mut variable_map = BTreeMap::<&str, serde_json::value::Value>::new();
         if let Some(var) = spec.variable {
             for v in var {
                 if let Some(v_name) = v.key {
@@ -124,7 +124,7 @@ impl Transpiler {
             replace_credits: VAR_REPLACE_CREDITS,
         };
 
-        let hierarchy = Vec::<String>::new();
+        let hierarchy = Vec::<&str>::new();
         let auth_stack = Vec::<&postman::Auth>::new();
 
         let state = &mut State {
@@ -163,7 +163,7 @@ impl Frontend for Transpiler {
                     Some(n) => n,
                     None => "<folder>",
                 };
-                let description: Option<String> = item.description.as_ref().map(|d| d.into());
+                let description: Option<&str> = item.description.as_ref().map(|d| d.into());
 
                 if let Some(auth) = item.auth.as_ref() {
                     state.auth_stack.push(auth);
@@ -189,11 +189,11 @@ impl Frontend for Transpiler {
         backend: &mut T,
         state: &mut State<'a>,
         items: &'a [postman::Items],
-        name: &str,
-        description: Option<String>,
+        name: &'a str,
+        description: Option<&str>,
     ) {
         backend.create_tag(state, name, description);
-        state.hierarchy.push(name.to_string());
+        state.hierarchy.push(name);
 
         self.convert(backend, state, items);
 
@@ -251,7 +251,8 @@ mod tests {
 
     #[test]
     fn it_preserves_order_on_paths() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("echo.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         let ordered_paths = [
             "/get",
@@ -299,7 +300,8 @@ mod tests {
 
     #[test]
     fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("echo.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -322,7 +324,8 @@ mod tests {
 
     #[test]
     fn it_generates_headers_from_the_request() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("echo.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -366,8 +369,8 @@ mod tests {
 
     #[test]
     fn it_generates_root_path_when_no_path_exists_in_collection() {
-        let spec: Spec =
-            serde_json::from_str(get_fixture("only-root-path.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("only-root-path.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -378,8 +381,8 @@ mod tests {
 
     #[test]
     fn it_parses_graphql_request_bodies() {
-        let spec: Spec =
-            serde_json::from_str(get_fixture("graphql.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("graphql.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -417,9 +420,8 @@ mod tests {
 
     #[test]
     fn it_collapses_duplicate_query_params() {
-        let spec: Spec =
-            serde_json::from_str(get_fixture("duplicate-query-params.postman.json").as_ref())
-                .unwrap();
+        let fixture = get_fixture("duplicate-query-params.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -465,7 +467,8 @@ mod tests {
 
     #[test]
     fn it_uses_the_security_requirement_on_operations() {
-        let spec: Spec = serde_json::from_str(get_fixture("echo.postman.json").as_ref()).unwrap();
+        let fixture = get_fixture("echo.postman.json");
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
