@@ -12,8 +12,6 @@ use crate::core::{Backend, CreateOperationParams, Frontend, State, Variables};
 use crate::formats::openapi;
 use crate::formats::postman;
 use core::VAR_REPLACE_CREDITS;
-#[cfg(target_arch = "wasm32")]
-use gloo_utils::format::JsValueSerdeExt;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
@@ -74,9 +72,9 @@ pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);
-            let oas_definition = JsValue::from_serde(&oas_spec);
-            match oas_definition {
-                Ok(val) => Ok(val),
+            let s = serde_json::to_string(&oas_spec);
+            match s {
+                Ok(s) => Ok(js_sys::JSON::parse(&s).unwrap_throw()),
                 Err(err) => Err(JsValue::from_str(&err.to_string())),
             }
         }
