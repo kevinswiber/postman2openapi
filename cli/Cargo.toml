@@ -1,7 +1,7 @@
 [package]
 name = "postman2openapi-cli"
 authors = ["Kevin Swiber <kswiber@gmail.com>"]
-version = "1.1.1"
+version = "1.2.0"
 description = "Convert a Postman collection to an OpenAPI definition. "
 homepage = "https://github.com/kevinswiber/postman2openapi"
 repository = "https://github.com/kevinswiber/postman2openapi"
