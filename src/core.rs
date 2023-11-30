@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{borrow::Cow, collections::BTreeMap};
 
 use crate::formats::postman;
 
@@ -13,7 +13,7 @@ lazy_static! {
 #[derive(Default)]
 pub struct State<'a> {
     pub auth_stack: Vec<&'a postman::Auth<'a>>,
-    pub hierarchy: Vec<&'a str>,
+    pub hierarchy: Vec<Cow<'a, str>>,
     pub variables: Variables<'a>,
 }
 
@@ -22,29 +22,33 @@ pub struct CreateOperationParams<'a> {
     pub auth: Option<&'a postman::Auth<'a>>,
     pub item: &'a postman::Items<'a>,
     pub request: &'a postman::RequestClass<'a>,
-    pub request_name: &'a str,
-    pub path_elements: &'a [postman::PathElement<'a>],
+    pub request_name: Cow<'a, str>,
+    pub path_elements: Option<&'a Vec<postman::PathElement<'a>>>,
     pub url: &'a postman::UrlClass<'a>,
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct Variables<'a> {
-    pub map: BTreeMap<&'a str, serde_json::value::Value>,
+    pub map: BTreeMap<Cow<'a, str>, serde_json::value::Value>,
     pub replace_credits: usize,
 }
 
 impl<'a> Variables<'a> {
-    pub fn resolve(&self, segment: &str) -> String {
+    pub fn resolve(&self, segment: Cow<'a, str>) -> String {
         self.resolve_with_credits(segment, self.replace_credits)
     }
 
-    pub fn resolve_with_credits(&self, segment: &str, sub_replace_credits: usize) -> String {
+    pub fn resolve_with_credits(
+        &self,
+        segment: Cow<'a, str>,
+        sub_replace_credits: usize,
+    ) -> String {
         self.resolve_with_credits_and_replace_fn(segment, sub_replace_credits, |s| s)
     }
 
     pub fn resolve_with_credits_and_replace_fn(
         &self,
-        segment: &str,
+        segment: Cow<'a, str>,
         sub_replace_credits: usize,
         replace_fn: fn(String) -> String,
     ) -> String {
@@ -62,7 +66,7 @@ impl<'a> Variables<'a> {
                         if let Some(v2) = v.as_str() {
                             let re = regex::Regex::new(&regex::escape(&cap[0])).unwrap();
                             return self.resolve_with_credits(
-                                &re.replace_all(&s, v2),
+                                re.replace_all(&s, v2),
                                 sub_replace_credits - 1,
                             );
                         }
@@ -76,32 +80,32 @@ impl<'a> Variables<'a> {
 }
 
 pub trait Frontend {
-    fn convert<'a, T: Backend>(
+    fn convert<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
         items: &'a [postman::Items],
     );
-    fn convert_folder<'a, T: Backend>(
+    fn convert_folder<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
         items: &'a [postman::Items],
-        name: &'a str,
-        description: Option<&str>,
+        name: Cow<'a, str>,
+        description: Option<Cow<'a, str>>,
     );
-    fn convert_request<'a, T: Backend>(
+    fn convert_request<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
         item: &'a postman::Items,
-        name: &str,
+        name: Cow<'a, str>,
     );
 }
 
-pub trait Backend {
-    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[&str]);
-    fn create_tag(&mut self, state: &mut State, name: &str, description: Option<&str>);
-    fn create_operation(&mut self, state: &mut State, params: CreateOperationParams);
+pub trait Backend<'a> {
+    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[Cow<str>]);
+    fn create_tag(&mut self, state: &mut State, name: Cow<str>, description: Option<Cow<str>>);
+    fn create_operation<'cp: 'a>(&mut self, state: &mut State, params: CreateOperationParams<'cp>);
     fn create_security(&mut self, state: &mut State, auth: &postman::Auth);
 }

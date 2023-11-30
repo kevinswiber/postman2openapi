@@ -1,7 +1,6 @@
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate serde_derive;
 
 mod backends;
 pub mod core;
@@ -15,6 +14,7 @@ use crate::formats::postman;
 use core::VAR_REPLACE_CREDITS;
 #[cfg(target_arch = "wasm32")]
 use gloo_utils::format::JsValueSerdeExt;
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
@@ -104,9 +104,9 @@ impl Transpiler {
     }
 
     pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
-        let description: Option<&str> = spec.info.description.as_ref().map(|d| d.into());
+        let description: Option<Cow<str>> = spec.info.description.as_ref().map(|d| d.into());
 
-        let mut variable_map = BTreeMap::<&str, serde_json::value::Value>::new();
+        let mut variable_map = BTreeMap::<Cow<str>, serde_json::value::Value>::new();
         if let Some(var) = spec.variable {
             for v in var {
                 if let Some(v_name) = v.key {
@@ -124,7 +124,7 @@ impl Transpiler {
             replace_credits: VAR_REPLACE_CREDITS,
         };
 
-        let hierarchy = Vec::<&str>::new();
+        let hierarchy = Vec::<Cow<str>>::new();
         let auth_stack = Vec::<&postman::Auth>::new();
 
         let state = &mut State {
@@ -151,7 +151,7 @@ impl Transpiler {
 }
 
 impl Frontend for Transpiler {
-    fn convert<'a, T: Backend>(
+    fn convert<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
@@ -161,38 +161,38 @@ impl Frontend for Transpiler {
             if let Some(sub_items) = &item.item {
                 let name = match &item.name {
                     Some(n) => n,
-                    None => "<folder>",
+                    None => &Cow::Borrowed("<folder>"),
                 };
-                let description: Option<&str> = item.description.as_ref().map(|d| d.into());
+                let description: Option<Cow<'a, str>> = item.description.as_ref().map(|d| d.into());
 
                 if let Some(auth) = item.auth.as_ref() {
                     state.auth_stack.push(auth);
                 }
 
-                self.convert_folder(backend, state, sub_items, name, description);
+                self.convert_folder(backend, state, sub_items, name.clone(), description);
 
                 if item.auth.is_some() {
                     state.auth_stack.pop();
                 }
             } else {
                 let name = match &item.name {
-                    Some(n) => n,
-                    None => "<request>",
+                    Some(n) => n.clone(),
+                    None => Cow::Borrowed("<request>"),
                 };
                 self.convert_request(backend, state, item, name);
             }
         }
     }
 
-    fn convert_folder<'a, T: Backend>(
+    fn convert_folder<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
         items: &'a [postman::Items],
-        name: &'a str,
-        description: Option<&str>,
+        name: Cow<'a, str>,
+        description: Option<Cow<'a, str>>,
     ) {
-        backend.create_tag(state, name, description);
+        backend.create_tag(state, name.clone(), description);
         state.hierarchy.push(name);
 
         self.convert(backend, state, items);
@@ -200,12 +200,12 @@ impl Frontend for Transpiler {
         state.hierarchy.pop();
     }
 
-    fn convert_request<'a, T: Backend>(
+    fn convert_request<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
         item: &'a postman::Items,
-        name: &str,
+        name: Cow<'a, str>,
     ) {
         if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
             if let Some(postman::Url::UrlClass(u)) = &request.url {
@@ -213,10 +213,9 @@ impl Frontend for Transpiler {
                     backend.create_server(state, u, parts);
                 }
 
-                let root_path: Vec<postman::PathElement> = vec![];
                 let path_elements = match &u.path {
-                    Some(postman::UrlPath::UnionArray(p)) => p,
-                    _ => &root_path,
+                    Some(postman::UrlPath::UnionArray(p)) => Some(p),
+                    _ => None,
                 };
 
                 let auth = if let Some(auth) = &request.auth {
@@ -230,7 +229,7 @@ impl Frontend for Transpiler {
                 let params = CreateOperationParams {
                     item,
                     request,
-                    request_name: name,
+                    request_name: name.clone(),
                     url: u,
                     path_elements,
                     auth,

@@ -20,6 +20,7 @@ pub mod error;
 pub mod v3_0;
 
 pub use error::Error;
+use serde::{Deserialize, Serialize};
 
 const MINIMUM_OPENAPI30_VERSION: &str = ">= 3.0";
 

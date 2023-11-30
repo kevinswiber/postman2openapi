@@ -5,6 +5,7 @@ use crate::formats::openapi::v3_0::{
 use crate::formats::postman::{self, AuthType};
 use convert_case::{Case, Casing};
 use indexmap::{IndexMap, IndexSet};
+use std::borrow::Cow;
 use std::collections::BTreeMap;
 
 pub(crate) struct OpenApi30Backend<'a> {
@@ -13,7 +14,10 @@ pub(crate) struct OpenApi30Backend<'a> {
 }
 
 impl<'a> OpenApi30Backend<'a> {
-    pub(crate) fn generate(name: &str, description: Option<&str>) -> openapi3::Spec {
+    pub(crate) fn generate(
+        name: Cow<'a, str>,
+        description: Option<Cow<'a, str>>,
+    ) -> openapi3::Spec {
         openapi3::Spec {
             openapi: String::from("3.0.3"),
             info: openapi3::Info {
@@ -57,7 +61,7 @@ impl<'a> OpenApi30Backend<'a> {
                             ..Default::default()
                         };
                         if let Some(path_val) = &postman_variables {
-                            if let Some(p) = path_val.iter().find(|p| match p.key {
+                            if let Some(p) = path_val.iter().find(|p| match &p.key {
                                 Some(k) => k == var,
                                 _ => false,
                             }) {
@@ -65,7 +69,7 @@ impl<'a> OpenApi30Backend<'a> {
                                 if let Some(pval) = &p.value {
                                     if let Some(pval_val) = pval.as_str() {
                                         schema.example = Some(serde_json::Value::String(
-                                            state.variables.resolve(pval_val),
+                                            state.variables.resolve(Cow::Borrowed(pval_val)),
                                         ));
                                     }
                                 }
@@ -91,8 +95,8 @@ impl<'a> OpenApi30Backend<'a> {
         let mut keys = vec![];
         let params = query_params
             .iter()
-            .filter_map(|qp| match qp.key {
-                Some(ref key) => {
+            .filter_map(|qp| match &qp.key {
+                Some(key) => {
                     if keys.contains(&key) {
                         return None;
                     }
@@ -104,7 +108,7 @@ impl<'a> OpenApi30Backend<'a> {
                         location: "query".to_string(),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_string()),
-                            example: qp.value.as_ref().map(|pval| {
+                            example: qp.value.clone().map(|pval| {
                                 serde_json::Value::String(state.variables.resolve(pval))
                             }),
                             ..openapi3::Schema::default()
@@ -129,7 +133,7 @@ impl<'a> OpenApi30Backend<'a> {
         state: &mut State,
         body: &postman::Body,
         op: &mut openapi3::Operation,
-        name: &str,
+        name: Cow<'a, str>,
         ct: Option<String>,
     ) {
         let mut content_type = ct;
@@ -150,7 +154,7 @@ impl<'a> OpenApi30Backend<'a> {
             match mode {
                 postman::Mode::Raw => {
                     content_type = Some("application/octet-stream".to_string());
-                    if let Some(raw) = &body.raw {
+                    if let Some(raw) = body.raw.clone() {
                         let resolved_body = state.variables.resolve(raw);
                         let example_val;
 
@@ -186,9 +190,15 @@ impl<'a> OpenApi30Backend<'a> {
                                     if let Some(raw_options) = options.raw {
                                         if raw_options.language.is_some() {
                                             content_type = match raw_options.language.unwrap() {
-                                                "xml" => Some("application/xml".to_string()),
-                                                "json" => Some("application/json".to_string()),
-                                                "html" => Some("text/html".to_string()),
+                                                Cow::Borrowed("xml") => {
+                                                    Some("application/xml".to_string())
+                                                }
+                                                Cow::Borrowed("json") => {
+                                                    Some("application/json".to_string())
+                                                }
+                                                Cow::Borrowed("html") => {
+                                                    Some("text/html".to_string())
+                                                }
                                                 _ => Some("text/plain".to_string()),
                                             }
                                         }
@@ -295,7 +305,7 @@ impl<'a> OpenApi30Backend<'a> {
 
                     if let Some(formdata) = &body.formdata {
                         for i in formdata {
-                            if let Some(t) = i.form_parameter_type {
+                            if let Some(t) = i.form_parameter_type.clone() {
                                 let is_binary = t == "file";
                                 if let Some(v) = &i.value {
                                     let value = serde_json::Value::String(v.to_string());
@@ -365,7 +375,8 @@ impl<'a> OpenApi30Backend<'a> {
                     if let Some(postman::GraphQlBody::GraphQlBodyClass(graphql)) = &body.graphql {
                         if let Some(query) = &graphql.query {
                             let mut example_map = serde_json::Map::new();
-                            example_map.insert("query".to_owned(), query.to_owned().into());
+                            example_map
+                                .insert("query".to_owned(), query.clone().to_string().into());
                             if let Some(vars) = &graphql.variables {
                                 if let Ok(vars) = serde_json::from_str::<serde_json::Value>(vars) {
                                     example_map.insert("variables".to_owned(), vars);
@@ -617,13 +628,13 @@ impl<'a> OpenApi30Backend<'a> {
                 let name = "apiKey".to_string();
                 if let Some(apikey) = &auth.apikey {
                     let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: state.variables.resolve(
+                        name: state.variables.resolve(Cow::Borrowed(
                             apikey
                                 .key
                                 .clone()
                                 .unwrap_or("Authorization".to_string())
                                 .as_str(),
-                        ),
+                        )),
                         location: match apikey.location {
                             postman::ApiKeyLocation::Header => "header".to_string(),
                             postman::ApiKeyLocation::Query => "query".to_string(),
@@ -649,19 +660,19 @@ impl<'a> OpenApi30Backend<'a> {
                             .clone()
                             .unwrap_or_default()
                             .iter()
-                            .map(|s| state.variables.resolve(s))
+                            .map(|s| state.variables.resolve(Cow::Borrowed(s)))
                             .map(|s| (s.to_string(), s.to_string())),
                     );
-                    let authorization_url = state
-                        .variables
-                        .resolve(oauth2.auth_url.as_ref().unwrap_or(&"".to_string()));
-                    let token_url = state
-                        .variables
-                        .resolve(oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()));
+                    let authorization_url = state.variables.resolve(Cow::Borrowed(
+                        oauth2.auth_url.as_ref().unwrap_or(&"".to_string()),
+                    ));
+                    let token_url = state.variables.resolve(Cow::Borrowed(
+                        oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()),
+                    ));
                     let refresh_url = oauth2
                         .refresh_token_url
                         .as_ref()
-                        .map(|url| state.variables.resolve(url));
+                        .map(|url| state.variables.resolve(Cow::Borrowed(url)));
                     match oauth2.grant_type {
                         postman::Oauth2GrantType::AuthorizationCode
                         | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
@@ -736,8 +747,8 @@ impl<'a> OpenApi30Backend<'a> {
     }
 }
 
-impl<'a> Backend for OpenApi30Backend<'a> {
-    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[&str]) {
+impl<'a> Backend<'a> for OpenApi30Backend<'a> {
+    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[Cow<str>]) {
         let host = parts.join(".");
         let mut proto = "".to_string();
         if let Some(protocol) = &url.protocol {
@@ -745,7 +756,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
         if let Some(s) = &mut self.oas.servers {
             let mut server_url = format!("{proto}{host}");
-            server_url = state.variables.resolve(&server_url);
+            server_url = state.variables.resolve(Cow::Borrowed(&server_url));
             if !s.iter_mut().any(|srv| srv.url == server_url) {
                 let server = openapi3::Server {
                     url: server_url,
@@ -757,7 +768,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
     }
 
-    fn create_tag(&mut self, _state: &mut State, name: &str, description: Option<&str>) {
+    fn create_tag(&mut self, _state: &mut State, name: Cow<str>, description: Option<Cow<str>>) {
         if let Some(t) = &mut self.oas.tags {
             let mut tag = openapi3::Tag {
                 name: name.to_string(),
@@ -774,7 +785,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         };
     }
 
-    fn create_operation(&mut self, state: &mut State, params: CreateOperationParams) {
+    fn create_operation<'cp: 'a>(&mut self, state: &mut State, params: CreateOperationParams<'cp>) {
         let CreateOperationParams {
             auth,
             item,
@@ -797,18 +808,20 @@ impl<'a> Backend for OpenApi30Backend<'a> {
             None
         };
 
+        let empty_paths = vec![];
         let resolved_segments = paths
+            .unwrap_or(&empty_paths)
             .iter()
             .map(|segment| {
                 let mut seg = match segment {
-                    postman::PathElement::PathClass(c) => c.value.unwrap_or_default().to_string(),
-                    postman::PathElement::String(c) => c.to_string(),
+                    postman::PathElement::PathClass(c) => c.value.clone().unwrap_or_default(),
+                    postman::PathElement::String(c) => c.clone(),
                 };
-                seg = state.variables.resolve_with_credits_and_replace_fn(
-                    &seg,
+                seg = Cow::Owned(state.variables.resolve_with_credits_and_replace_fn(
+                    seg,
                     state.variables.replace_credits,
                     |s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
-                );
+                ));
                 if !seg.is_empty() {
                     match &seg[0..1] {
                         ":" => format!("{{{}}}", &seg[1..]),
@@ -932,7 +945,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                 } else {
                     let param = Parameter {
                         location: "header".to_owned(),
-                        name: header.key.to_owned(),
+                        name: header.key.to_string(),
                         description: header.description.as_ref().map(|d| d.into()),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_owned()),
@@ -972,7 +985,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
         }
 
         if let Some(body) = &request.body {
-            Self::create_request_body(state, body, op, request_name, content_type);
+            Self::create_request_body(state, body, op, request_name.clone(), content_type);
         }
 
         if !is_merge {
@@ -998,15 +1011,23 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                             if let Some(raw_options) = options.raw {
                                 if raw_options.language.is_some() {
                                     content_type = match raw_options.language.unwrap() {
-                                        "xml" => Some("application/xml".to_string()),
-                                        "json" => Some("application/json".to_string()),
-                                        "html" => Some("text/html".to_string()),
+                                        Cow::Borrowed("xml") => Some("application/xml".to_string()),
+                                        Cow::Borrowed("json") => {
+                                            Some("application/json".to_string())
+                                        }
+                                        Cow::Borrowed("html") => Some("text/html".to_string()),
                                         _ => Some("text/plain".to_string()),
                                     }
                                 }
                             }
                         }
-                        Self::create_request_body(state, body, op, request_name, content_type);
+                        Self::create_request_body(
+                            state,
+                            body,
+                            op,
+                            request_name.clone(),
+                            content_type,
+                        );
                     }
                 }
                 let mut oas_response = openapi3::Response::default();
@@ -1044,7 +1065,7 @@ impl<'a> Backend for OpenApi30Backend<'a> {
                 let mut response_content = openapi3::MediaType::default();
                 if let Some(raw) = &r.body {
                     let mut response_content_type: Option<String> = None;
-                    let resolved_body = state.variables.resolve(raw);
+                    let resolved_body = state.variables.resolve(raw.clone());
                     let example_val;
 
                     match serde_json::from_str(&resolved_body) {
@@ -1197,7 +1218,7 @@ mod tests {
     fn test_generate_path_parameters() {
         let mut state = State::default();
         let postman_variables = Some(vec![postman::Variable {
-            key: Some("test"),
+            key: Some(Cow::Borrowed("test")),
             value: Some(serde_json::Value::String("test_value".to_string())),
             description: None,
             ..postman::Variable::default()
@@ -1212,8 +1233,8 @@ mod tests {
     fn test_generate_query_parameters() {
         let mut state = State::default();
         let query_params = vec![postman::QueryParam {
-            key: Some("test"),
-            value: Some("{{test}}"),
+            key: Some(Cow::Borrowed("test")),
+            value: Some(Cow::Borrowed("{{test}}")),
             description: None,
             ..postman::QueryParam::default()
         }];
