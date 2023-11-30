@@ -25,7 +25,7 @@ fn main() {
                 .long("output-format")
                 .help("The output format")
                 .value_name("format")
-                .possible_values(&["yaml", "json"])
+                .possible_values(["yaml", "json"])
                 .default_value("yaml"),
         )
         .arg(

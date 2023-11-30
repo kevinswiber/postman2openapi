@@ -62,8 +62,15 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
+    let s = if collection.is_undefined() {
+        String::from("null")
+    } else {
+        js_sys::JSON::stringify(&collection)
+            .map(String::from)
+            .unwrap_throw()
+    };
     let postman_spec: std::result::Result<postman::Spec, serde_json::Error> =
-        collection.into_serde();
+        serde_json::from_str(&s);
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);
