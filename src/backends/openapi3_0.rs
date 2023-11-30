@@ -628,13 +628,9 @@ impl<'a> OpenApi30Backend<'a> {
                 let name = "apiKey".to_string();
                 if let Some(apikey) = &auth.apikey {
                     let scheme = openapi3::SecurityScheme::ApiKey {
-                        name: state.variables.resolve(Cow::Borrowed(
-                            apikey
-                                .key
-                                .clone()
-                                .unwrap_or("Authorization".to_string())
-                                .as_str(),
-                        )),
+                        name: state
+                            .variables
+                            .resolve(apikey.key.clone().unwrap_or(Cow::Borrowed("Authorization"))),
                         location: match apikey.location {
                             postman::ApiKeyLocation::Header => "header".to_string(),
                             postman::ApiKeyLocation::Query => "query".to_string(),

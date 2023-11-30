@@ -69,18 +69,20 @@ pub struct Auth<'a> {
     #[serde(rename = "oauth2")]
     pub oauth2: Option<Oauth2>,
 
-    #[serde(rename = "apikey")]
-    pub apikey: Option<ApiKey>,
+    #[serde(borrow, rename = "apikey")]
+    pub apikey: Option<ApiKey<'a>>,
 
     #[serde(rename = "type")]
     pub auth_type: AuthType,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct ApiKey {
-    pub key: Option<String>,
+pub struct ApiKey<'a> {
+    #[serde(borrow)]
+    pub key: Option<Cow<'a, str>>,
     pub location: ApiKeyLocation,
-    pub value: Option<String>,
+    #[serde(borrow)]
+    pub value: Option<Cow<'a, str>>,
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq, Eq)]
@@ -89,7 +91,7 @@ pub enum ApiKeyLocation {
     Query,
 }
 
-impl<'de> Deserialize<'de> for ApiKey {
+impl<'de: 'a, 'a> Deserialize<'de> for ApiKey<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -103,7 +105,7 @@ impl<'de> Deserialize<'de> for ApiKey {
             for item in v {
                 if let Some(serde_json::Value::String(str)) = item.value {
                     match item.key {
-                        Cow::Borrowed("key") => key = Some(str),
+                        Cow::Borrowed("key") => key = Some(Cow::Owned(str)),
                         Cow::Borrowed("in") => {
                             location = match str.as_str() {
                                 "query" => ApiKeyLocation::Query,
@@ -111,7 +113,7 @@ impl<'de> Deserialize<'de> for ApiKey {
                                 _ => ApiKeyLocation::Header,
                             }
                         }
-                        Cow::Borrowed("value") => value = Some(str.to_string()),
+                        Cow::Borrowed("value") => value = Some(Cow::Owned(str)),
                         _ => {}
                     }
                 }
@@ -216,7 +218,7 @@ pub enum Oauth2GrantType {
 /// `username` and `password` are set as auth attributes for Basic Authentication method.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct AuthAttribute<'a> {
-    #[serde(rename = "key")]
+    #[serde(borrow, rename = "key")]
     pub key: Cow<'a, str>,
 
     #[serde(borrow, rename = "type")]
@@ -1141,10 +1143,10 @@ mod tests {
     #[test]
     fn deserializes_apikey() {
         let fixture = get_fixture("api-key.postman.json");
-        let spec: Spec = serde_json::from_str(fixture.as_str()).unwrap();
+        let spec: Spec = serde_json::from_str(&fixture).unwrap();
         let apikey = spec.auth.unwrap().apikey.unwrap();
 
-        assert_eq!(apikey.key, Some("Authorization".to_string()));
+        assert_eq!(apikey.key, Some(Cow::Borrowed("Authorization")));
         assert_eq!(apikey.location, ApiKeyLocation::Header);
         assert_eq!(apikey.value, None);
     }
