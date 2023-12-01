@@ -8,10 +8,10 @@ pub mod formats;
 pub use anyhow::Result;
 
 use crate::backends::openapi3_0::OpenApi30Backend;
+use crate::core::VAR_REPLACE_CREDITS;
 use crate::core::{Backend, CreateOperationParams, Frontend, State, Variables};
 use crate::formats::openapi;
 use crate::formats::postman;
-use core::VAR_REPLACE_CREDITS;
 #[cfg(target_arch = "wasm32")]
 use serde::Deserialize;
 use std::borrow::Cow;
@@ -24,6 +24,7 @@ pub struct TranspileOptions {
     pub format: TargetFormat,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub fn from_path(filename: &str, options: TranspileOptions) -> Result<String> {
     let collection = std::fs::read_to_string(filename)?;
     from_str(&collection, options)
@@ -40,18 +41,6 @@ pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
     Ok(oas_definition)
 }
 
-#[cfg(target_arch = "wasm32")]
-pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
-    let postman_spec: postman::Spec = serde_json::from_str(collection)?;
-    let oas_spec = Transpiler::transpile(postman_spec);
-    match options.format {
-        TargetFormat::Json => openapi::to_json(&oas_spec).map_err(|err| err.into()),
-        TargetFormat::Yaml => Err(anyhow::anyhow!(
-            "YAML is not supported for WebAssembly. Please convert from YAML to JSON."
-        )),
-    }
-}
-
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
 #[cfg(feature = "wee_alloc")]
@@ -62,25 +51,14 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
 pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
-    // let s = if collection.is_undefined() {
-    //     String::from("null")
-    // } else {
-    //     js_sys::JSON::stringify(&collection)
-    //         .map(String::from)
-    //         .unwrap_throw()
-    // };
-    // let postman_spec: std::result::Result<postman::Spec, serde_json::Error> =
-    //     serde_json::from_str(&s);
     let postman_spec: std::result::Result<postman::Spec, _> =
         postman::Spec::deserialize(serde_wasm_bindgen::Deserializer::from(collection));
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);
-            let s = serde_json::to_string(&oas_spec);
-            //let s = serde_wasm_bindgen::to_value(&oas_spec);
+            let s = serde_wasm_bindgen::to_value(&oas_spec);
             match s {
-                Ok(s) => Ok(js_sys::JSON::parse(&s).unwrap_throw()),
-                //Ok(s) => Ok(s),
+                Ok(s) => Ok(s),
                 Err(err) => Err(JsValue::from_str(&err.to_string())),
             }
         }
