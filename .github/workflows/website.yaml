@@ -34,11 +34,21 @@ jobs:
         with:
           node-version: 20.x
 
-      - name: Install wasm-pack
-        run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+      - name: Install wasm-bindgen
+        run: cargo install wasm-bindgen-cli
 
-      - name: Build WebAssembly module
-        run: wasm-pack build --release --out-dir ./web/wasm --target bundler
+      - name: Install wasm-snip
+        run: cargo install wasm-snip
+
+      - name: Install binaryen
+        run: apt-ge update && apt-get -y install binaryen
+
+      - name: Build and optimize WebAssembly module
+        run: |
+          cargo build --target wasm32-unknown-unknown --release && \
+          wasm-bindgen --out-dir ./js ./target/wasm32-unknown-unknown/release/postman2openapi.wasm && \
+          wasm-snip --snip-rust-panicking-code -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm && \
+          wasm-opt -Oz -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
 
       - name: Install dependencies
         run: npm install --prefix ./web
