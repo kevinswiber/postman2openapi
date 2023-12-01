@@ -4,12 +4,6 @@ use crate::formats::postman;
 
 pub static VAR_REPLACE_CREDITS: usize = 20;
 
-lazy_static! {
-    pub static ref VARIABLE_RE: regex::Regex = regex::Regex::new(r"\{\{([^{}]*?)\}\}").unwrap();
-    pub static ref URI_TEMPLATE_VARIABLE_RE: regex::Regex =
-        regex::Regex::new(r"\{([^{}]*?)\}").unwrap();
-}
-
 enum CaptureState {
     Start,
     VariableOpen,
@@ -21,6 +15,42 @@ pub struct Capture<'a> {
     pub start: usize,
     pub end: usize,
     pub value: Cow<'a, str>,
+}
+
+pub fn capture_openapi_path_variables(s: &str) -> Option<Vec<Capture<'_>>> {
+    let mut captures = Vec::new();
+    let mut state = CaptureState::Start;
+    let mut state_start = 0;
+    s.chars().enumerate().for_each(|(i, c)| {
+        state = match state {
+            CaptureState::Start => match c {
+                '{' => {
+                    state_start = i + 1;
+                    CaptureState::Variable
+                }
+                _ => CaptureState::Start,
+            },
+            CaptureState::Variable => match c {
+                '}' => {
+                    captures.push(Capture {
+                        start: state_start,
+                        end: i - 1,
+                        value: Cow::Borrowed(&s[state_start..i]),
+                    });
+                    CaptureState::Start
+                }
+                '{' => CaptureState::VariableOpen,
+                _ => CaptureState::Variable,
+            },
+            _ => CaptureState::Start,
+        }
+    });
+
+    if !captures.is_empty() {
+        Some(captures)
+    } else {
+        None
+    }
 }
 
 pub fn capture_collection_variables(s: &str) -> Option<Vec<Capture<'_>>> {
@@ -171,7 +201,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_captures_one_variable() {
+    fn it_captures_one_collection_variable() {
         let captures = capture_collection_variables("{{foo}}").unwrap();
         assert_eq!(captures.len(), 1);
         assert_eq!(captures[0].start, 2);
@@ -180,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn it_captures_many_variables() {
+    fn it_captures_many_collection_variables() {
         let captures = capture_collection_variables("{{foo}}{{bar}}").unwrap();
         assert_eq!(captures.len(), 2);
 
@@ -194,7 +224,7 @@ mod tests {
     }
 
     #[test]
-    fn it_only_captures_nested_variables() {
+    fn it_only_captures_nested_collection_variables() {
         let captures = capture_collection_variables("{{foo{{bar}}}}{{{{bar}}foo}}").unwrap();
         assert_eq!(captures.len(), 2);
 
@@ -204,6 +234,28 @@ mod tests {
 
         assert_eq!(captures[1].start, 18);
         assert_eq!(captures[1].end, 20);
+        assert_eq!(captures[1].value, "bar");
+    }
+
+    #[test]
+    fn it_captures_one_openapi_path_variable() {
+        let captures = capture_openapi_path_variables("{foo}").unwrap();
+        assert_eq!(captures.len(), 1);
+        assert_eq!(captures[0].start, 1);
+        assert_eq!(captures[0].end, 3);
+        assert_eq!(captures[0].value, "foo");
+    }
+
+    #[test]
+    fn it_captures_multiple_openapi_path_variables() {
+        let captures = capture_openapi_path_variables("{foo}/{bar}").unwrap();
+        assert_eq!(captures.len(), 2);
+        assert_eq!(captures[0].start, 1);
+        assert_eq!(captures[0].end, 3);
+        assert_eq!(captures[0].value, "foo");
+
+        assert_eq!(captures[1].start, 7);
+        assert_eq!(captures[1].end, 9);
         assert_eq!(captures[1].value, "bar");
     }
 }

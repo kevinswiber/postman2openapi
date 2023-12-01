@@ -1,7 +1,3 @@
-#[macro_use]
-extern crate lazy_static;
-#[macro_use]
-
 mod backends;
 pub mod core;
 pub mod formats;

@@ -1,5 +1,6 @@
 use crate::core::{
-    capture_collection_variables, Backend, CreateOperationParams, State, URI_TEMPLATE_VARIABLE_RE,
+    capture_collection_variables, capture_openapi_path_variables, Backend, CreateOperationParams,
+    State,
 };
 use crate::formats::openapi::v3_0::{
     self as openapi3, ObjectOrReference, Parameter, SecurityRequirement,
@@ -47,39 +48,47 @@ impl<'a> OpenApi30Backend<'a> {
         let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = resolved_segments
             .iter()
             .flat_map(|segment| {
-                URI_TEMPLATE_VARIABLE_RE
-                    .captures_iter(segment.as_str())
-                    .map(|capture| {
-                        let var = capture.get(1).unwrap().as_str();
-                        let mut param = Parameter {
-                            name: var.to_owned(),
-                            location: "path".to_owned(),
-                            required: Some(true),
-                            ..Parameter::default()
-                        };
+                capture_openapi_path_variables(segment.as_str())
+                    .map(|captures| {
+                        captures
+                            .iter()
+                            .map(|capture| {
+                                let var = &capture.value;
+                                let mut param = Parameter {
+                                    name: var.to_string(),
+                                    location: "path".to_owned(),
+                                    required: Some(true),
+                                    ..Parameter::default()
+                                };
 
-                        let mut schema = openapi3::Schema {
-                            schema_type: Some("string".to_string()),
-                            ..Default::default()
-                        };
-                        if let Some(path_val) = &postman_variables {
-                            if let Some(p) = path_val.iter().find(|p| match &p.key {
-                                Some(k) => k == var,
-                                _ => false,
-                            }) {
-                                param.description = p.description.as_ref().map(|d| d.into());
-                                if let Some(pval) = &p.value {
-                                    if let Some(pval_val) = pval.as_str() {
-                                        schema.example = Some(serde_json::Value::String(
-                                            state.variables.resolve(Cow::Borrowed(pval_val)),
-                                        ));
+                                let mut schema = openapi3::Schema {
+                                    schema_type: Some("string".to_string()),
+                                    ..Default::default()
+                                };
+                                if let Some(path_val) = &postman_variables {
+                                    if let Some(p) = path_val.iter().find(|p| match &p.key {
+                                        Some(k) => k == var,
+                                        _ => false,
+                                    }) {
+                                        param.description =
+                                            p.description.as_ref().map(|d| d.into());
+                                        if let Some(pval) = &p.value {
+                                            if let Some(pval_val) = pval.as_str() {
+                                                schema.example = Some(serde_json::Value::String(
+                                                    state
+                                                        .variables
+                                                        .resolve(Cow::Borrowed(pval_val)),
+                                                ));
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        }
-                        param.schema = Some(schema);
-                        openapi3::ObjectOrReference::Object(param)
+                                param.schema = Some(schema);
+                                openapi3::ObjectOrReference::Object(param)
+                            })
+                            .collect()
                     })
+                    .unwrap_or(vec![])
             })
             .collect();
 
@@ -1234,7 +1243,7 @@ mod tests {
             description: None,
             ..postman::Variable::default()
         }]);
-        let path_params = ["/test/".to_string(), "{{test_value}}".to_string()];
+        let path_params = ["/test/".to_string(), "{test_value}".to_string()];
         let params =
             OpenApi30Backend::create_path_parameters(&mut state, &path_params, &postman_variables);
         assert_eq!(params.unwrap().len(), 1);
