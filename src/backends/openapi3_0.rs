@@ -1,4 +1,6 @@
-use crate::core::{Backend, CreateOperationParams, State, URI_TEMPLATE_VARIABLE_RE, VARIABLE_RE};
+use crate::core::{
+    capture_collection_variables, Backend, CreateOperationParams, State, URI_TEMPLATE_VARIABLE_RE,
+};
 use crate::formats::openapi::v3_0::{
     self as openapi3, ObjectOrReference, Parameter, SecurityRequirement,
 };
@@ -816,7 +818,20 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
                 seg = Cow::Owned(state.variables.resolve_with_credits_and_replace_fn(
                     seg,
                     state.variables.replace_credits,
-                    |s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
+                    //|s| VARIABLE_RE.replace_all(&s, "{$1}").to_string(),
+                    |s| {
+                        let captures = capture_collection_variables(&s);
+                        let mut newstr = s.clone();
+                        if let Some(captures) = captures {
+                            for capture in captures {
+                                newstr = newstr.replace(
+                                    format!("{{{{{value}}}}}", value = capture.value).as_str(),
+                                    format!("{{{value}}}", value = capture.value).as_str(),
+                                );
+                            }
+                        }
+                        newstr
+                    },
                 ));
                 if !seg.is_empty() {
                     match &seg[0..1] {
