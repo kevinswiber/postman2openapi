@@ -1,5 +1,9 @@
-/nodejs
 /target
+/js/postman2openapi_bg.js
+/js/postman2openapi_bg.wasm
+/js/postman2openapi_bg.wasm.d.ts
+/js/postman2openapi.js
+/js/postman2openapi.d.ts
 /web/dist
 /web/node_modules
 /web/wasm

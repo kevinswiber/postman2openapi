@@ -18,7 +18,10 @@ build-web:
   npm install --prefix ./web
   npm run build --prefix ./web
 build-nodejs:
-  wasm-pack build --release --out-dir ./nodejs --target nodejs
+  cargo build --target wasm32-unknown-unknown --release
+  wasm-bindgen --out-dir ./js ./target/wasm32-unknown-unknown/release/postman2openapi.wasm
+  wasm-snip --snip-rust-fmt-code --snip-rust-panicking-code -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
+  wasm-opt -Oz -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
 build-devcontainer-image:
   NEEDS_BUILDER=$(docker buildx ls | grep -q postman2openapi; echo $?); \
   if [[ "$NEEDS_BUILDER" = "1" ]]; then docker buildx create --name postman2openapi --bootstrap --use; \

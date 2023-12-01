@@ -1,0 +1,21 @@
+{
+  "name": "postman2openapi",
+  "collaborators": [
+    "Kevin Swiber <kswiber@gmail.com>"
+  ],
+  "description": "Convert a Postman collection to an OpenAPI definition. ",
+  "version": "1.2.0",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kevinswiber/postman2openapi"
+  },
+  "files": [
+    "postman2openapi_bg.wasm",
+    "postman2openapi.js",
+    "postman2openapi.d.ts"
+  ],
+  "main": "postman2openapi.js",
+  "homepage": "https://github.com/kevinswiber/postman2openapi",
+  "types": "postman2openapi.d.ts"
+}
