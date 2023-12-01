@@ -76,11 +76,11 @@ pub fn transpile(collection: JsValue) -> std::result::Result<JsValue, JsValue> {
     match postman_spec {
         Ok(s) => {
             let oas_spec = Transpiler::transpile(s);
-            //let s = serde_json::to_string(&oas_spec);
-            let s = serde_wasm_bindgen::to_value(&oas_spec);
+            let s = serde_json::to_string(&oas_spec);
+            //let s = serde_wasm_bindgen::to_value(&oas_spec);
             match s {
-                //Ok(s) => Ok(js_sys::JSON::parse(&s).unwrap_throw()),
-                Ok(s) => Ok(s),
+                Ok(s) => Ok(js_sys::JSON::parse(&s).unwrap_throw()),
+                //Ok(s) => Ok(s),
                 Err(err) => Err(JsValue::from_str(&err.to_string())),
             }
         }
