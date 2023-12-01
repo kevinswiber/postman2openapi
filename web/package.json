@@ -12,7 +12,7 @@
     "clean-webpack-plugin": "^4.0.0",
     "codemirror": "^5.57.0",
     "js-yaml": "^4.1.0",
-    "postman2openapi": "file:./wasm"
+    "postman2openapi": "file:../js"
   },
   "devDependencies": {
     "@types/codemirror": "0.0.97",

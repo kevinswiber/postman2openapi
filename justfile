@@ -1,4 +1,4 @@
-prepare: build-release build-nodejs build-web test
+prepare: test build-release build-web
 
 build: 
   cargo build --all
@@ -13,14 +13,13 @@ build-lib:
   cargo build
 build-cli:
   cargo build --package postman2openapi-cli
-build-web:
-  wasm-pack build --release --out-dir ./web/wasm --target bundler
+build-web: build-js
   npm install --prefix ./web
   npm run build --prefix ./web
-build-nodejs:
+build-js:
   cargo build --target wasm32-unknown-unknown --release
   wasm-bindgen --out-dir ./js ./target/wasm32-unknown-unknown/release/postman2openapi.wasm
-  wasm-snip --snip-rust-fmt-code --snip-rust-panicking-code -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
+  wasm-snip --snip-rust-panicking-code -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
   wasm-opt -Oz -o ./js/postman2openapi_bg.wasm ./js/postman2openapi_bg.wasm
 build-devcontainer-image:
   NEEDS_BUILDER=$(docker buildx ls | grep -q postman2openapi; echo $?); \
