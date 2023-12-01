@@ -15,7 +15,7 @@ mod wasm_browser {
                 JSON::stringify(&JSON::parse(openapi).unwrap()).unwrap(),
                 JSON::stringify(&oas).unwrap()
             ),
-            Err(_) => assert!(false),
+            Err(err) => panic!("Couldn't convert collection to OpenAPI: {:?}", err),
         };
     }
 }

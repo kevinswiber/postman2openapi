@@ -20,6 +20,7 @@ pub mod error;
 pub mod v3_0;
 
 pub use error::Error;
+use serde::{Deserialize, Serialize};
 
 const MINIMUM_OPENAPI30_VERSION: &str = ">= 3.0";
 
@@ -84,7 +85,7 @@ mod tests {
         println!("    Saving string to {:?}...", path);
         std::fs::create_dir_all(&path).unwrap();
         let full_filename = path.as_ref().to_path_buf().join(filename);
-        let mut f = File::create(&full_filename).unwrap();
+        let mut f = File::create(full_filename).unwrap();
         f.write_all(data.as_bytes()).unwrap();
     }
 
@@ -114,7 +115,7 @@ mod tests {
         //     File -> `String` -> `serde_yaml::Value` -> `serde_json::Value` -> `String`
 
         // Read the original file to string
-        let spec_yaml_str = read_to_string(&input_file)
+        let spec_yaml_str = read_to_string(input_file)
             .unwrap_or_else(|e| panic!("failed to read contents of {:?}: {}", input_file, e));
         // Convert YAML string to JSON string
         let spec_json_str = convert_yaml_str_to_json(&spec_yaml_str);
@@ -123,7 +124,7 @@ mod tests {
         //     File -> `Spec` -> `serde_json::Value` -> `String`
 
         // Parse the input file
-        let parsed_spec = from_path(&input_file).unwrap();
+        let parsed_spec = from_path(input_file).unwrap();
         // Convert to serde_json::Value
         let parsed_spec_json = serde_json::to_value(parsed_spec).unwrap();
         // Convert to a JSON string
@@ -152,7 +153,7 @@ mod tests {
     // Just tests if the deserialization does not blow up. But does not test correctness
     #[test]
     fn can_deserialize() {
-        for entry in fs::read_dir("src/openapi/data/v3.0").unwrap() {
+        for entry in fs::read_dir("src/formats/openapi/data/v3.0").unwrap() {
             let path = entry.unwrap().path();
             // cargo test -- --nocapture to see this message
             println!("Testing if {:?} is deserializable", path);
@@ -167,7 +168,7 @@ mod tests {
                 .iter()
                 .collect();
 
-        for entry in fs::read_dir("src/openapi/data/v3.0").unwrap() {
+        for entry in fs::read_dir("src/formats/openapi/data/v3.0").unwrap() {
             let entry = entry.unwrap();
             let path = entry.path();
 
@@ -187,7 +188,7 @@ mod tests {
 
     #[test]
     fn can_deserialize_one_of_v3() {
-        let openapi = from_path("src/openapi/data/v3.0/petstore-expanded.yaml").unwrap();
+        let openapi = from_path("src/formats/openapi/data/v3.0/petstore-expanded.yaml").unwrap();
         let OpenApi::V3_0(spec) = openapi;
         let components = spec.components.unwrap();
         let schemas = components.schemas.unwrap();

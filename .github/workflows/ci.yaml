@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '00 00 * * *'
+    - cron: "00 00 * * *"
 
 jobs:
   test:
@@ -43,7 +43,7 @@ jobs:
             rust: nightly
           - build: msrv
             os: ubuntu-latest
-            rust: 1.64.0
+            rust: 1.65.0
           - build: stable
             os: ubuntu-latest
             rust: stable

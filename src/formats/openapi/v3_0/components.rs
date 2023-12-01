@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::schema::{
     Callback, Example, Header, Link, Parameter, RequestBody, Response, Schema, SecurityScheme,
 };
