@@ -32,18 +32,7 @@ const update = () => {
   try {
     const openapi = postman2openapi.transpile(JSON.parse(postman));
     console.log(openapi);
-    const output = dump(
-      openapi instanceof Map ? Object.fromEntries(openapi) : openapi,
-      {
-        replacer: (_key, value) => {
-          if (value instanceof Map) {
-            return Object.fromEntries(value);
-          }
-
-          return value;
-        },
-      },
-    );
+    const output = dump(openapi);
     openapiElement.setValue(output);
   } catch (e) {
     openapiElement.setValue(e);
