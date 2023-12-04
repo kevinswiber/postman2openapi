@@ -1,22 +1,27 @@
 use crate::core::{
     capture_collection_variables, capture_openapi_path_variables, Backend, CreateOperationParams,
-    State,
+    JsonValue, State,
 };
 use crate::formats::openapi::v3_0::{
     self as openapi3, ObjectOrReference, Parameter, SecurityRequirement,
 };
-use crate::formats::postman::{self, AuthType};
+use crate::formats::postman::{
+    self, ApiKeyAttributeUnion, ApiKeyAttributes, ApiKeyLocation, AuthType, Oauth2AttributeUnion,
+    Oauth2Attributes,
+};
 use convert_case::{Case, Casing};
 use indexmap::{IndexMap, IndexSet};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
+use std::marker::PhantomData;
 
-pub(crate) struct OpenApi30Backend<'a> {
+pub(crate) struct OpenApi30Backend<'a, T: JsonValue> {
     pub(crate) oas: &'a mut openapi3::Spec,
     pub(crate) operation_ids: BTreeMap<String, usize>,
+    pub(crate) phantom_data: PhantomData<T>,
 }
 
-impl<'a> OpenApi30Backend<'a> {
+impl<'a, T: JsonValue> OpenApi30Backend<'a, T> {
     pub(crate) fn generate(
         name: Cow<'a, str>,
         description: Option<Cow<'a, str>>,
@@ -41,9 +46,9 @@ impl<'a> OpenApi30Backend<'a> {
     }
 
     pub(crate) fn create_path_parameters(
-        state: &mut State,
+        state: &mut State<T>,
         resolved_segments: &[String],
-        postman_variables: &Option<Vec<postman::Variable>>,
+        postman_variables: &Option<Vec<postman::Variable<T>>>,
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
         let params: Vec<openapi3::ObjectOrReference<openapi3::Parameter>> = resolved_segments
             .iter()
@@ -100,8 +105,8 @@ impl<'a> OpenApi30Backend<'a> {
     }
 
     pub(crate) fn create_query_parameters(
-        state: &mut State,
-        query_params: &[postman::QueryParam],
+        state: &mut State<T>,
+        query_params: &[postman::QueryParam<T>],
     ) -> Option<Vec<openapi3::ObjectOrReference<openapi3::Parameter>>> {
         let mut keys = vec![];
         let params = query_params
@@ -141,8 +146,8 @@ impl<'a> OpenApi30Backend<'a> {
     }
 
     pub(crate) fn create_request_body(
-        state: &mut State,
-        body: &postman::Body,
+        state: &mut State<T>,
+        body: &postman::Body<T>,
         op: &mut openapi3::Operation,
         name: Cow<'a, str>,
         ct: Option<String>,
@@ -564,16 +569,16 @@ impl<'a> OpenApi30Backend<'a> {
 
     fn create_operation_security(
         &mut self,
-        state: &mut State,
-        auth: &postman::Auth,
+        state: &mut State<T>,
+        auth: &postman::Auth<T>,
     ) -> Option<Option<(String, Vec<String>)>> {
         self.create_security_items(state, auth, false)
     }
 
     fn create_security_items(
         &mut self,
-        state: &mut State,
-        auth: &postman::Auth,
+        state: &mut State<T>,
+        auth: &postman::Auth<T>,
         add_to_root: bool,
     ) -> Option<Option<(String, Vec<String>)>> {
         if self.oas.components.is_none() {
@@ -637,14 +642,25 @@ impl<'a> OpenApi30Backend<'a> {
             }
             AuthType::Apikey => {
                 let name = "apiKey".to_string();
-                if let Some(apikey) = &auth.apikey {
+                if let Some(ApiKeyAttributeUnion::ApiKeyAttributes21(apikey)) = &auth.apikey {
+                    let mut key = None;
+                    let mut location = None;
+                    let mut value = None;
+                    apikey.iter().for_each(|a| match a {
+                        ApiKeyAttributes::Key(k) => key = Some(k.clone()),
+                        ApiKeyAttributes::Location(l) => location = Some(l.clone()),
+                        ApiKeyAttributes::Value(v) => value = Some(v.clone()),
+                    });
                     let scheme = openapi3::SecurityScheme::ApiKey {
                         name: state
                             .variables
-                            .resolve(apikey.key.clone().unwrap_or(Cow::Borrowed("Authorization"))),
-                        location: match apikey.location {
-                            postman::ApiKeyLocation::Header => "header".to_string(),
-                            postman::ApiKeyLocation::Query => "query".to_string(),
+                            .resolve(key.unwrap_or(Cow::Borrowed("Authorization"))),
+                        location: match location {
+                            Some(l) => match l {
+                                ApiKeyLocation::Header => "header".to_string(),
+                                ApiKeyLocation::Query => "query".to_string(),
+                            },
+                            None => "header".to_string(),
                         },
                     };
                     security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
@@ -659,28 +675,40 @@ impl<'a> OpenApi30Backend<'a> {
             }
             AuthType::Oauth2 => {
                 let name = "oauth2".to_string();
-                if let Some(oauth2) = &auth.oauth2 {
+                if let Some(Oauth2AttributeUnion::Oauth2Attributes21(oauth2)) = &auth.oauth2 {
+                    let mut grant_type = None;
+                    let mut authorization_url = None;
+                    let mut access_token_url = None;
+                    let mut refresh_token_url = None;
+                    let mut scope = None;
+
+                    oauth2.iter().for_each(|a| match a {
+                        Oauth2Attributes::GrantType(g) => grant_type = Some(g.clone()),
+                        Oauth2Attributes::AuthUrl(u) => authorization_url = Some(u.clone()),
+                        Oauth2Attributes::AccessTokenUrl(u) => access_token_url = Some(u.clone()),
+                        Oauth2Attributes::RefreshTokenUrl(u) => refresh_token_url = Some(u.clone()),
+                        Oauth2Attributes::Scope(s) => scope = Some(s.clone()),
+                        _ => {}
+                    });
                     let mut flows: openapi3::Flows = Default::default();
                     let scopes = BTreeMap::from_iter(
-                        oauth2
-                            .scope
+                        scope
                             .clone()
                             .unwrap_or_default()
                             .iter()
                             .map(|s| state.variables.resolve(Cow::Borrowed(s)))
                             .map(|s| (s.to_string(), s.to_string())),
                     );
-                    let authorization_url = state.variables.resolve(Cow::Borrowed(
-                        oauth2.auth_url.as_ref().unwrap_or(&"".to_string()),
-                    ));
-                    let token_url = state.variables.resolve(Cow::Borrowed(
-                        oauth2.access_token_url.as_ref().unwrap_or(&"".to_string()),
-                    ));
-                    let refresh_url = oauth2
-                        .refresh_token_url
+                    let authorization_url = state
+                        .variables
+                        .resolve(authorization_url.unwrap_or(Cow::Owned("".to_string())));
+                    let token_url = state
+                        .variables
+                        .resolve(access_token_url.unwrap_or(Cow::Owned("".to_string())));
+                    let refresh_url = refresh_token_url
                         .as_ref()
                         .map(|url| state.variables.resolve(Cow::Borrowed(url)));
-                    match oauth2.grant_type {
+                    match grant_type.unwrap_or(postman::Oauth2GrantType::AuthorizationCode) {
                         postman::Oauth2GrantType::AuthorizationCode
                         | postman::Oauth2GrantType::AuthorizationCodeWithPkce => {
                             flows.authorization_code = Some(openapi3::AuthorizationCodeFlow {
@@ -716,7 +744,13 @@ impl<'a> OpenApi30Backend<'a> {
                         flows: Box::new(flows),
                     };
                     security_schemes.insert(name.clone(), ObjectOrReference::Object(scheme));
-                    Some(Some((name, oauth2.scope.clone().unwrap_or_default())))
+                    Some(Some((
+                        name,
+                        scope
+                            .clone()
+                            .map(|scopes| scopes.iter().map(|s| s.to_string()).collect())
+                            .unwrap_or_default(),
+                    )))
                 } else {
                     let scheme = openapi3::SecurityScheme::OAuth2 {
                         flows: Default::default(),
@@ -754,8 +788,13 @@ impl<'a> OpenApi30Backend<'a> {
     }
 }
 
-impl<'a> Backend<'a> for OpenApi30Backend<'a> {
-    fn create_server(&mut self, state: &mut State, url: &postman::UrlClass, parts: &[Cow<str>]) {
+impl<'a, T: JsonValue> Backend<'a, T> for OpenApi30Backend<'a, T> {
+    fn create_server(
+        &mut self,
+        state: &mut State<T>,
+        url: &postman::UrlClass<T>,
+        parts: &[Cow<str>],
+    ) {
         let host = parts.join(".");
         let mut proto = "".to_string();
         if let Some(protocol) = &url.protocol {
@@ -775,7 +814,7 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
         }
     }
 
-    fn create_tag(&mut self, _state: &mut State, name: Cow<str>, description: Option<Cow<str>>) {
+    fn create_tag(&mut self, _state: &mut State<T>, name: Cow<str>, description: Option<Cow<str>>) {
         if let Some(t) = &mut self.oas.tags {
             let mut tag = openapi3::Tag {
                 name: name.to_string(),
@@ -792,7 +831,11 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
         };
     }
 
-    fn create_operation<'cp: 'a>(&mut self, state: &mut State, params: CreateOperationParams<'cp>) {
+    fn create_operation<'cp: 'a>(
+        &mut self,
+        state: &mut State<T>,
+        params: CreateOperationParams<'cp, T>,
+    ) {
         let CreateOperationParams {
             auth,
             item,
@@ -806,7 +849,10 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
             let security = self.create_operation_security(state, auth);
             match security {
                 Some(Some((name, scopes))) => Some(SecurityRequirement {
-                    requirement: Some(BTreeMap::from([(name, scopes)])),
+                    requirement: Some(BTreeMap::from([(
+                        name,
+                        scopes.iter().map(|s| s.to_string()).collect(),
+                    )])),
                 }),
                 Some(None) => Some(SecurityRequirement { requirement: None }),
                 _ => None,
@@ -1224,7 +1270,7 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
         }
     }
 
-    fn create_security(&mut self, state: &mut State, auth: &postman::Auth) {
+    fn create_security(&mut self, state: &mut State<T>, auth: &postman::Auth<T>) {
         self.create_security_items(state, auth, true);
     }
 }
@@ -1232,14 +1278,16 @@ impl<'a> Backend<'a> for OpenApi30Backend<'a> {
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
+    use crate::core::WrappedJson;
+
     use super::*;
 
     #[test]
     fn test_generate_path_parameters() {
-        let mut state = State::default();
+        let mut state = State::<WrappedJson>::default();
         let postman_variables = Some(vec![postman::Variable {
             key: Some(Cow::Borrowed("test")),
-            value: Some(serde_json::Value::String("test_value".to_string())),
+            value: Some(WrappedJson::from_str("test_value")),
             description: None,
             ..postman::Variable::default()
         }]);
@@ -1251,7 +1299,7 @@ mod tests {
 
     #[test]
     fn test_generate_query_parameters() {
-        let mut state = State::default();
+        let mut state = State::<WrappedJson>::default();
         let query_params = vec![postman::QueryParam {
             key: Some(Cow::Borrowed("test")),
             value: Some(Cow::Borrowed("{{test}}")),

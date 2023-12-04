@@ -2,207 +2,152 @@ use std::borrow::Cow;
 
 use serde::{Deserialize, Deserializer, Serialize};
 
+use crate::core::JsonValue;
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::JsValue;
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
-pub struct Spec<'a> {
+pub struct Spec<'a, T: JsonValue> {
     #[serde(borrow, rename = "auth")]
-    pub auth: Option<Auth<'a>>,
+    pub auth: Option<Auth<'a, T>>,
 
     #[serde(borrow, rename = "event")]
-    pub event: Option<Vec<Event<'a>>>,
+    pub event: Option<Vec<Event<'a, T>>>,
 
     #[serde(borrow, rename = "info")]
-    pub info: Information<'a>,
+    pub info: Information<'a, T>,
 
     /// Items are the basic unit for a Postman collection. You can think of them as corresponding
     /// to a single API endpoint. Each Item has one request and may have multiple API responses
     /// associated with it.
     #[serde(borrow, rename = "item")]
-    pub item: Vec<Items<'a>>,
+    pub item: Vec<Items<'a, T>>,
 
     #[serde(borrow, rename = "variable")]
-    pub variable: Option<Vec<Variable<'a>>>,
+    pub variable: Option<Vec<Variable<'a, T>>>,
 }
 
 /// Represents authentication helpers provided by Postman
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Auth<'a> {
+pub struct Auth<'a, T: JsonValue> {
     /// The attributes for [AWS
     /// Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html).
     #[serde(borrow, rename = "awsv4")]
-    pub awsv4: Option<AuthAttributeUnion<'a>>,
+    pub awsv4: Option<AuthAttributeUnion<'a, T>>,
 
     /// The attributes for [Basic
     /// Authentication](https://en.wikipedia.org/wiki/Basic_access_authentication).
     #[serde(borrow, rename = "basic")]
-    pub basic: Option<AuthAttributeUnion<'a>>,
+    pub basic: Option<AuthAttributeUnion<'a, T>>,
 
     /// The helper attributes for [Bearer Token
     /// Authentication](https://tools.ietf.org/html/rfc6750)
     #[serde(borrow, rename = "bearer")]
-    pub bearer: Option<AuthAttributeUnion<'a>>,
+    pub bearer: Option<AuthAttributeUnion<'a, T>>,
 
     #[serde(borrow, rename = "jwt")]
-    pub jwt: Option<AuthAttributeUnion<'a>>,
+    pub jwt: Option<AuthAttributeUnion<'a, T>>,
 
     /// The attributes for [Digest
     /// Authentication](https://en.wikipedia.org/wiki/Digest_access_authentication).
     #[serde(borrow, rename = "digest")]
-    pub digest: Option<AuthAttributeUnion<'a>>,
+    pub digest: Option<AuthAttributeUnion<'a, T>>,
 
     /// The attributes for [Hawk Authentication](https://github.com/hueniverse/hawk)
     #[serde(borrow, rename = "hawk")]
-    pub hawk: Option<AuthAttributeUnion<'a>>,
+    pub hawk: Option<AuthAttributeUnion<'a, T>>,
 
     #[serde(rename = "noauth")]
-    pub noauth: Option<serde_json::Value>,
+    pub noauth: Option<T>,
 
     /// The attributes for [NTLM
     /// Authentication](https://msdn.microsoft.com/en-us/library/cc237488.aspx)
     #[serde(borrow, rename = "ntlm")]
-    pub ntlm: Option<AuthAttributeUnion<'a>>,
+    pub ntlm: Option<AuthAttributeUnion<'a, T>>,
 
     /// The attributes for [Oauth2](https://oauth.net/1/)
     #[serde(borrow, rename = "oauth1")]
-    pub oauth1: Option<AuthAttributeUnion<'a>>,
+    pub oauth1: Option<AuthAttributeUnion<'a, T>>,
 
     /// Helper attributes for [Oauth2](https://oauth.net/2/)
     #[serde(rename = "oauth2")]
-    pub oauth2: Option<Oauth2>,
+    pub oauth2: Option<Oauth2AttributeUnion<'a, T>>,
 
     #[serde(borrow, rename = "apikey")]
-    pub apikey: Option<ApiKey<'a>>,
+    pub apikey: Option<ApiKeyAttributeUnion<'a, T>>,
 
     #[serde(rename = "type")]
     pub auth_type: AuthType,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct ApiKey<'a> {
-    #[serde(borrow)]
-    pub key: Option<Cow<'a, str>>,
-    pub location: ApiKeyLocation,
-    #[serde(borrow)]
-    pub value: Option<Cow<'a, str>>,
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum ApiKeyAttributeUnion<'a, T: JsonValue> {
+    ApiKeyAttributes21(#[serde(borrow)] Vec<ApiKeyAttributes<'a>>),
+    ApiKeyAttributes20(Option<T>),
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "key", content = "value")]
+pub enum ApiKeyAttributes<'a> {
+    #[serde(borrow, rename = "key")]
+    Key(Cow<'a, str>),
+    #[serde(rename = "in")]
+    Location(ApiKeyLocation),
+    #[serde(borrow, rename = "value")]
+    Value(Cow<'a, str>),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub enum ApiKeyLocation {
+    #[serde(rename = "header")]
     Header,
+    #[serde(rename = "query")]
     Query,
 }
 
-impl<'de: 'a, 'a> Deserialize<'de> for ApiKey<'a> {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let mut key = None;
-        let mut location = ApiKeyLocation::Header;
-        let mut value = None;
-
-        let deserialized = AuthAttributeUnion::deserialize(deserializer)?;
-        if let AuthAttributeUnion::AuthAttribute21(v) = deserialized {
-            for item in v {
-                if let Some(serde_json::Value::String(str)) = item.value {
-                    match item.key {
-                        Cow::Borrowed("key") => key = Some(Cow::Owned(str)),
-                        Cow::Borrowed("in") => {
-                            location = match str.as_str() {
-                                "query" => ApiKeyLocation::Query,
-                                "header" => ApiKeyLocation::Header,
-                                _ => ApiKeyLocation::Header,
-                            }
-                        }
-                        Cow::Borrowed("value") => value = Some(Cow::Owned(str)),
-                        _ => {}
-                    }
-                }
-            }
-        }
-        Ok(ApiKey {
-            key,
-            location,
-            value,
-        })
-    }
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(untagged)]
+pub enum Oauth2AttributeUnion<'a, T: JsonValue> {
+    Oauth2Attributes21(#[serde(borrow)] Vec<Oauth2Attributes<'a>>),
+    Oauth2Attributes20(Option<T>),
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
-pub struct Oauth2 {
-    pub grant_type: Oauth2GrantType,
-    pub access_token_url: Option<String>,
-    pub add_token_to: Option<String>,
-    pub auth_url: Option<String>,
-    pub client_id: Option<String>,
-    pub client_secret: Option<String>,
-    pub refresh_token_url: Option<String>,
-    pub scope: Option<Vec<String>>,
-    pub state: Option<String>,
-    pub token_name: Option<String>,
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(tag = "key", content = "value")]
+pub enum Oauth2Attributes<'a> {
+    #[serde(rename = "grantType")]
+    GrantType(Oauth2GrantType),
+    #[serde(borrow, rename = "accessTokenUrl")]
+    AccessTokenUrl(Cow<'a, str>),
+    #[serde(borrow, rename = "addTokenTo")]
+    AddTokenTo(Cow<'a, str>),
+    #[serde(borrow, rename = "authUrl")]
+    AuthUrl(Cow<'a, str>),
+    #[serde(borrow, rename = "clientId")]
+    ClientId(Cow<'a, str>),
+    #[serde(borrow, rename = "clientSecret")]
+    ClientSecret(Cow<'a, str>),
+    #[serde(borrow, rename = "refreshTokenUrl")]
+    RefreshTokenUrl(Cow<'a, str>),
+    #[serde(borrow, rename = "scope", deserialize_with = "deserialize_scopes")]
+    Scope(Vec<Cow<'a, str>>),
+    #[serde(borrow, rename = "state")]
+    State(Cow<'a, str>),
+    #[serde(borrow, rename = "tokenName")]
+    TokenName(Cow<'a, str>),
 }
 
-impl<'de> Deserialize<'de> for Oauth2 {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let mut grant_type = Oauth2GrantType::AuthorizationCode;
-        let mut access_token_url = None;
-        let mut add_token_to = None;
-        let mut auth_url = None;
-        let mut client_id = None;
-        let mut client_secret = None;
-        let mut refresh_token_url = None;
-        let mut scope = None;
-        let mut state = None;
-        let mut token_name = None;
-
-        let deserialized = AuthAttributeUnion::deserialize(deserializer)?;
-        if let AuthAttributeUnion::AuthAttribute21(v) = deserialized {
-            for item in v {
-                if let Some(serde_json::Value::String(str)) = item.value {
-                    match item.key {
-                        Cow::Borrowed("grantType") => {
-                            grant_type = match str.as_str() {
-                                "authorization_code" => Oauth2GrantType::AuthorizationCode,
-                                "authorization_code_with_pkce" => {
-                                    Oauth2GrantType::AuthorizationCodeWithPkce
-                                }
-                                "client_credentials" => Oauth2GrantType::ClientCredentials,
-                                "implicit" => Oauth2GrantType::Implicit,
-                                "password_credentials" => Oauth2GrantType::PasswordCredentials,
-                                _ => Oauth2GrantType::AuthorizationCode,
-                            }
-                        }
-                        Cow::Borrowed("accessTokenUrl") => access_token_url = Some(str),
-                        Cow::Borrowed("addTokenTo") => add_token_to = Some(str),
-                        Cow::Borrowed("authUrl") => auth_url = Some(str),
-                        Cow::Borrowed("clientId") => client_id = Some(str),
-                        Cow::Borrowed("clientSecret") => client_secret = Some(str),
-                        Cow::Borrowed("refreshTokenUrl") => refresh_token_url = Some(str),
-                        Cow::Borrowed("scope") => {
-                            scope = Some(str.split(' ').map(|s| s.to_string()).collect())
-                        }
-                        Cow::Borrowed("state") => state = Some(str),
-                        Cow::Borrowed("tokenName") => token_name = Some(str),
-                        _ => {}
-                    }
-                }
-            }
-        }
-        Ok(Oauth2 {
-            grant_type,
-            access_token_url,
-            add_token_to,
-            auth_url,
-            client_id,
-            client_secret,
-            refresh_token_url,
-            scope,
-            state,
-            token_name,
-        })
-    }
+fn deserialize_scopes<'de, D>(deserializer: D) -> Result<Vec<Cow<'de, str>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let deserialized = Cow::<str>::deserialize(deserializer)?;
+    let scopes: Vec<_> = deserialized
+        .split(' ')
+        .map(|s| Cow::Owned(s.to_string()))
+        .collect();
+    Ok(scopes)
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -217,7 +162,7 @@ pub enum Oauth2GrantType {
 /// Represents an attribute for any authorization method provided by Postman. For example
 /// `username` and `password` are set as auth attributes for Basic Authentication method.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct AuthAttribute<'a> {
+pub struct AuthAttribute<'a, T: JsonValue> {
     #[serde(borrow, rename = "key")]
     pub key: Cow<'a, str>,
 
@@ -225,14 +170,14 @@ pub struct AuthAttribute<'a> {
     pub auth_type: Option<Cow<'a, str>>,
 
     #[serde(rename = "value")]
-    pub value: Option<serde_json::Value>,
+    pub value: Option<T>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum AuthAttributeUnion<'a> {
-    AuthAttribute21(#[serde(borrow)] Vec<AuthAttribute<'a>>),
-    AuthAttribute20(Option<serde_json::Value>),
+pub enum AuthAttributeUnion<'a, T: JsonValue> {
+    AuthAttribute21(#[serde(borrow)] Vec<AuthAttribute<'a, T>>),
+    AuthAttribute20(Option<T>),
 }
 
 /// Postman allows you to configure scripts to run when specific events occur. These scripts
@@ -240,7 +185,7 @@ pub enum AuthAttributeUnion<'a> {
 ///
 /// Defines a script associated with an associated event name
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Event<'a> {
+pub struct Event<'a, T: JsonValue> {
     /// Indicates whether the event is disabled. If absent, the event is assumed to be enabled.
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
@@ -254,13 +199,13 @@ pub struct Event<'a> {
     pub listen: Cow<'a, str>,
 
     #[serde(borrow, rename = "script")]
-    pub script: Option<Script<'a>>,
+    pub script: Option<Script<'a, T>>,
 }
 
 /// A script is a snippet of Javascript code that can be used to to perform setup or teardown
 /// operations on a particular response.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Script<'a> {
+pub struct Script<'a, T: JsonValue> {
     #[serde(borrow, rename = "exec")]
     pub exec: Option<ScriptExec<'a>>,
 
@@ -273,7 +218,7 @@ pub struct Script<'a> {
     pub name: Option<Cow<'a, str>>,
 
     #[serde(borrow, rename = "src")]
-    pub src: Option<Url<'a>>,
+    pub src: Option<Url<'a, T>>,
 
     /// Type of the script. E.g: 'text/javascript'
     #[serde(borrow, rename = "type")]
@@ -281,7 +226,7 @@ pub struct Script<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct UrlClass<'a> {
+pub struct UrlClass<'a, T: JsonValue> {
     /// Contains the URL fragment (if any). Usually this is not transmitted over the network, but
     /// it could be useful to store this in some cases.
     #[serde(borrow, rename = "hash")]
@@ -307,7 +252,7 @@ pub struct UrlClass<'a> {
     /// An array of QueryParams, which is basically the query string part of the URL, parsed into
     /// separate variables
     #[serde(borrow, rename = "query")]
-    pub query: Option<Vec<QueryParam<'a>>>,
+    pub query: Option<Vec<QueryParam<'a, T>>>,
 
     /// The string representation of the request URL, including the protocol, host, path, hash,
     /// query parameter(s) and path variable(s).
@@ -317,7 +262,7 @@ pub struct UrlClass<'a> {
     /// Postman supports path variables with the syntax `/path/:variableName/to/somewhere`. These
     /// variables are stored in this field.
     #[serde(borrow, rename = "variable")]
-    pub variable: Option<Vec<Variable<'a>>>,
+    pub variable: Option<Vec<Variable<'a, T>>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -339,9 +284,9 @@ pub struct GraphQlBodyClass<'a> {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct QueryParam<'a> {
+pub struct QueryParam<'a, T: JsonValue> {
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     /// If set to true, the current query parameter will not be sent with the request.
     #[serde(rename = "disabled")]
@@ -355,7 +300,7 @@ pub struct QueryParam<'a> {
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Description<'a> {
+pub struct Description<'a, T: JsonValue> {
     /// The content of the description goes here, as a raw string.
     #[serde(borrow, rename = "content")]
     pub content: Option<Cow<'a, str>>,
@@ -368,7 +313,7 @@ pub struct Description<'a> {
 
     /// Description can have versions associated with it, which should be put in this property.
     #[serde(rename = "version")]
-    pub version: Option<serde_json::Value>,
+    pub version: Option<T>,
 }
 
 /// Collection variables allow you to define a set of variables, that are a *part of the
@@ -379,9 +324,9 @@ pub struct Description<'a> {
 /// can save a lot of time. Variables can be defined, and referenced to from any part of a
 /// request.
 #[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Variable<'a> {
+pub struct Variable<'a, T: JsonValue> {
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
@@ -411,12 +356,12 @@ pub struct Variable<'a> {
     /// The value that a variable holds in this collection. Ultimately, the variables will be
     /// replaced by this value, when say running a set of requests from a collection
     #[serde(rename = "value")]
-    pub value: Option<serde_json::Value>,
+    pub value: Option<T>,
 }
 
 /// Detailed description of the info block
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
-pub struct Information<'a> {
+pub struct Information<'a, T: JsonValue> {
     /// Every collection is identified by the unique value of this field. The value of this field
     /// is usually easiest to generate using a UID generator function. If you already have a
     /// collection, it is recommended that you maintain the same id since changing the id usually
@@ -429,7 +374,7 @@ pub struct Information<'a> {
     pub exporter_id: Option<Cow<'a, str>>,
 
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     /// A collection's friendly name is defined by this field. You would want to set this field
     /// to a value that would allow you to easily identify this collection among a bunch of other
@@ -443,11 +388,11 @@ pub struct Information<'a> {
     pub schema: Cow<'a, str>,
 
     #[serde(borrow, rename = "version")]
-    pub version: Option<CollectionVersion<'a>>,
+    pub version: Option<CollectionVersion<'a, T>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct CollectionVersionClass<'a> {
+pub struct CollectionVersionClass<'a, T: JsonValue> {
     /// A human friendly identifier to make sense of the version numbers. E.g: 'beta-3'
     #[serde(borrow, rename = "identifier")]
     pub identifier: Option<Cow<'a, str>>,
@@ -458,7 +403,7 @@ pub struct CollectionVersionClass<'a> {
     pub major: i64,
 
     #[serde(rename = "meta")]
-    pub meta: Option<serde_json::Value>,
+    pub meta: Option<T>,
 
     /// You should increment this number if you make changes that will not break anything that
     /// uses the collection. E.g: removing a folder.
@@ -477,12 +422,12 @@ pub struct CollectionVersionClass<'a> {
 /// it is necessary to be able to group requests together. This can be achived using
 /// 'Folders'. A folder just is an ordered set of requests.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Items<'a> {
+pub struct Items<'a, T: JsonValue> {
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     #[serde(borrow, rename = "event")]
-    pub event: Option<Vec<Event<'a>>>,
+    pub event: Option<Vec<Event<'a, T>>>,
 
     /// A unique ID that is used to identify collections internally
     #[serde(borrow, rename = "id")]
@@ -500,21 +445,21 @@ pub struct Items<'a> {
     pub protocol_profile_behavior: Option<ProtocolProfileBehavior>,
 
     #[serde(borrow, rename = "request")]
-    pub request: Option<RequestUnion<'a>>,
+    pub request: Option<RequestUnion<'a, T>>,
 
     #[serde(borrow, rename = "response")]
-    pub response: Option<Vec<Option<ResponseClass<'a>>>>,
+    pub response: Option<Vec<Option<ResponseClass<'a, T>>>>,
 
     #[serde(borrow, rename = "variable")]
-    pub variable: Option<Vec<Variable<'a>>>,
+    pub variable: Option<Vec<Variable<'a, T>>>,
 
     #[serde(borrow, rename = "auth")]
-    pub auth: Option<Auth<'a>>,
+    pub auth: Option<Auth<'a, T>>,
 
     /// Items are entities which contain an actual HTTP request, and sample responses attached to
     /// it. Folders may contain many items.
     #[serde(borrow, rename = "item")]
-    pub item: Option<Vec<Items<'a>>>,
+    pub item: Option<Vec<Items<'a, T>>>,
 }
 
 /// Set of configurations used to alter the usual behavior of sending the request
@@ -526,21 +471,21 @@ pub struct ProtocolProfileBehavior {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct RequestClass<'a> {
+pub struct RequestClass<'a, T: JsonValue> {
     #[serde(borrow, rename = "auth")]
-    pub auth: Option<Auth<'a>>,
+    pub auth: Option<Auth<'a, T>>,
 
     #[serde(borrow, rename = "body")]
-    pub body: Option<Body<'a>>,
+    pub body: Option<Body<'a, T>>,
 
     #[serde(borrow, rename = "certificate")]
-    pub certificate: Option<Certificate<'a>>,
+    pub certificate: Option<Certificate<'a, T>>,
 
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     #[serde(borrow, rename = "header")]
-    pub header: Option<HeaderUnion<'a>>,
+    pub header: Option<HeaderUnion<'a, T>>,
 
     #[serde(borrow, rename = "method")]
     pub method: Option<Cow<'a, str>>,
@@ -549,12 +494,12 @@ pub struct RequestClass<'a> {
     pub proxy: Option<ProxyConfig<'a>>,
 
     #[serde(borrow, rename = "url")]
-    pub url: Option<Url<'a>>,
+    pub url: Option<Url<'a, T>>,
 }
 
 /// This field contains the data usually contained in the request body.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Body<'a> {
+pub struct Body<'a, T: JsonValue> {
     /// When set to true, prevents request body from being sent.
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
@@ -563,7 +508,7 @@ pub struct Body<'a> {
     pub file: Option<File<'a>>,
 
     #[serde(borrow, rename = "formdata")]
-    pub formdata: Option<Vec<FormParameter<'a>>>,
+    pub formdata: Option<Vec<FormParameter<'a, T>>>,
 
     /// Postman stores the type of data associated with this request in this field.
     #[serde(rename = "mode")]
@@ -576,7 +521,7 @@ pub struct Body<'a> {
     pub options: Option<BodyOptions<'a>>,
 
     #[serde(borrow, rename = "urlencoded")]
-    pub urlencoded: Option<Vec<UrlEncodedParameter<'a>>>,
+    pub urlencoded: Option<Vec<UrlEncodedParameter<'a, T>>>,
 
     #[serde(borrow, rename = "graphql")]
     pub graphql: Option<GraphQlBody<'a>>,
@@ -604,13 +549,13 @@ pub struct File<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct FormParameter<'a> {
+pub struct FormParameter<'a, T: JsonValue> {
     /// Override Content-Type header of this form data entity.
     #[serde(borrow, rename = "contentType")]
     pub content_type: Option<Cow<'a, str>>,
 
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     /// When set to true, prevents this form data entity from being sent.
     #[serde(rename = "disabled")]
@@ -627,9 +572,9 @@ pub struct FormParameter<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct UrlEncodedParameter<'a> {
+pub struct UrlEncodedParameter<'a, T: JsonValue> {
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     #[serde(rename = "disabled")]
     pub disabled: Option<bool>,
@@ -643,18 +588,18 @@ pub struct UrlEncodedParameter<'a> {
 
 /// A representation of an ssl certificate
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Certificate<'a> {
+pub struct Certificate<'a, T: JsonValue> {
     /// An object containing path to file certificate, on the file system
     #[serde(rename = "cert")]
-    pub cert: Option<Cert>,
+    pub cert: Option<Cert<T>>,
 
     /// An object containing path to file containing private key, on the file system
     #[serde(rename = "key")]
-    pub key: Option<Key>,
+    pub key: Option<Key<T>>,
 
     /// A list of Url match pattern strings, to identify Urls this certificate can be used for.
     #[serde(rename = "matches")]
-    pub matches: Option<Vec<Option<serde_json::Value>>>,
+    pub matches: Option<Vec<Option<T>>>,
 
     /// A name for the certificate for user reference
     #[serde(borrow, rename = "name")]
@@ -667,27 +612,27 @@ pub struct Certificate<'a> {
 
 /// An object containing path to file certificate, on the file system
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Cert {
+pub struct Cert<T: JsonValue> {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
-    pub src: Option<serde_json::Value>,
+    pub src: Option<T>,
 }
 
 /// An object containing path to file containing private key, on the file system
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Key {
+pub struct Key<T: JsonValue> {
     /// The path to file containing key for certificate, on the file system
     #[serde(rename = "src")]
-    pub src: Option<serde_json::Value>,
+    pub src: Option<T>,
 }
 
 /// A representation for a list of headers
 ///
 /// Represents a single HTTP Header
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Header<'a> {
+pub struct Header<'a, T: JsonValue> {
     #[serde(borrow, rename = "description")]
-    pub description: Option<DescriptionUnion<'a>>,
+    pub description: Option<DescriptionUnion<'a, T>>,
 
     /// If set to true, the current header will not be sent with requests.
     #[serde(rename = "disabled")]
@@ -772,7 +717,7 @@ pub struct ProxyConfig<'a> {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct ResponseClass<'a> {
+pub struct ResponseClass<'a, T: JsonValue> {
     /// The name of the response.
     #[serde(borrow, rename = "name")]
     pub name: Option<Cow<'a, str>>,
@@ -786,10 +731,10 @@ pub struct ResponseClass<'a> {
     pub code: Option<i64>,
 
     #[serde(borrow, rename = "cookie")]
-    pub cookie: Option<Vec<Cookie<'a>>>,
+    pub cookie: Option<Vec<Cookie<'a, T>>>,
 
     #[serde(borrow, rename = "header")]
-    pub header: Option<Headers<'a>>,
+    pub header: Option<Headers<'a, T>>,
 
     /// A unique, user defined identifier that can  be used to refer to this response from
     /// requests.
@@ -797,7 +742,7 @@ pub struct ResponseClass<'a> {
     pub id: Option<Cow<'a, str>>,
 
     #[serde(borrow, rename = "originalRequest")]
-    pub original_request: Option<RequestClass<'a>>,
+    pub original_request: Option<RequestClass<'a, T>>,
 
     /// The time taken by the request to complete. If a number, the unit is milliseconds. If the
     /// response is manually created, this can be set to `null`.
@@ -812,7 +757,7 @@ pub struct ResponseClass<'a> {
 /// A Cookie, that follows the [Google Chrome
 /// format](https://developer.chrome.com/extensions/cookies)
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub struct Cookie<'a> {
+pub struct Cookie<'a, T: JsonValue> {
     /// The domain for which this cookie is valid.
     #[serde(borrow, rename = "domain")]
     pub domain: Option<Cow<'a, str>>,
@@ -824,7 +769,7 @@ pub struct Cookie<'a> {
     /// Custom attributes for a cookie go here, such as the [Priority
     /// Field](https://code.google.com/p/chromium/issues/detail?id=232693)
     #[serde(rename = "extensions")]
-    pub extensions: Option<Vec<Option<serde_json::Value>>>,
+    pub extensions: Option<Vec<Option<T>>>,
 
     /// True if the cookie is a host-only cookie. (i.e. a request's URL domain must exactly match
     /// the domain of the cookie).
@@ -883,10 +828,10 @@ pub enum ScriptExec<'a> {
 /// the literal request URL.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Url<'a> {
+pub enum Url<'a, T: JsonValue> {
     String(#[serde(borrow)] Cow<'a, str>),
 
-    UrlClass(#[serde(borrow)] UrlClass<'a>),
+    UrlClass(#[serde(borrow)] Box<UrlClass<'a, T>>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -911,13 +856,13 @@ pub enum PathElement<'a> {
 /// its format.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum DescriptionUnion<'a> {
+pub enum DescriptionUnion<'a, T: JsonValue> {
     String(#[serde(borrow)] Cow<'a, str>),
-    Description(#[serde(borrow)] Description<'a>),
+    Description(#[serde(borrow)] Description<'a, T>),
 }
 
-impl<'a> From<&'a DescriptionUnion<'a>> for Cow<'a, str> {
-    fn from(description: &'a DescriptionUnion) -> Self {
+impl<'a, T: JsonValue> From<&'a DescriptionUnion<'a, T>> for Cow<'a, str> {
+    fn from(description: &'a DescriptionUnion<'a, T>) -> Self {
         match description {
             DescriptionUnion::Description(desc) => {
                 desc.content.as_ref().unwrap_or(&Cow::Borrowed("")).clone()
@@ -927,8 +872,8 @@ impl<'a> From<&'a DescriptionUnion<'a>> for Cow<'a, str> {
     }
 }
 
-impl<'a> From<&'a DescriptionUnion<'a>> for String {
-    fn from(description: &'a DescriptionUnion) -> Self {
+impl<'a, T: JsonValue> From<&'a DescriptionUnion<'a, T>> for String {
+    fn from(description: &'a DescriptionUnion<'a, T>) -> Self {
         match description {
             DescriptionUnion::Description(desc) => desc
                 .content
@@ -945,8 +890,8 @@ impl<'a> From<&'a DescriptionUnion<'a>> for String {
 /// extent!
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum CollectionVersion<'a> {
-    CollectionVersionClass(#[serde(borrow)] CollectionVersionClass<'a>),
+pub enum CollectionVersion<'a, T: JsonValue> {
+    CollectionVersionClass(#[serde(borrow)] CollectionVersionClass<'a, T>),
 
     String(#[serde(borrow)] Cow<'a, str>),
 }
@@ -955,16 +900,16 @@ pub enum CollectionVersion<'a> {
 /// request URL and the method is assumed to be 'GET'.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum RequestUnion<'a> {
-    RequestClass(#[serde(borrow)] Box<RequestClass<'a>>),
+pub enum RequestUnion<'a, T: JsonValue> {
+    RequestClass(#[serde(borrow)] Box<RequestClass<'a, T>>),
 
     String(#[serde(borrow)] Cow<'a, str>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum HeaderUnion<'a> {
-    HeaderArray(#[serde(borrow)] Vec<Header<'a>>),
+pub enum HeaderUnion<'a, T: JsonValue> {
+    HeaderArray(#[serde(borrow)] Vec<Header<'a, T>>),
 
     String(#[serde(borrow)] Cow<'a, str>),
 }
@@ -972,7 +917,7 @@ pub enum HeaderUnion<'a> {
 /// A response represents an HTTP response.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Response<'a> {
+pub enum Response<'a, T: JsonValue> {
     //AnythingArray(Vec<Option<serde_json::Value>>),
 
     //Bool(bool),
@@ -980,25 +925,25 @@ pub enum Response<'a> {
     //Double(f64),
 
     //Integer(i64),
-    ResponseClass(#[serde(borrow)] Box<ResponseClass<'a>>),
+    ResponseClass(#[serde(borrow)] Box<ResponseClass<'a, T>>),
 
     String(#[serde(borrow)] Cow<'a, str>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum Headers<'a> {
+pub enum Headers<'a, T: JsonValue> {
     String(#[serde(borrow)] Cow<'a, str>),
 
-    UnionArray(#[serde(borrow)] Vec<HeaderElement<'a>>),
+    UnionArray(#[serde(borrow)] Vec<HeaderElement<'a, T>>),
 }
 
 /// No HTTP request is complete without its headers, and the same is true for a Postman
 /// request. This field is an array containing all the headers.
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(untagged)]
-pub enum HeaderElement<'a> {
-    Header(#[serde(borrow)] Header<'a>),
+pub enum HeaderElement<'a, T: JsonValue> {
+    Header(#[serde(borrow)] Header<'a, T>),
 
     String(#[serde(borrow)] Cow<'a, str>),
 }
@@ -1099,56 +1044,65 @@ pub enum Mode {
     GraphQl,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
-pub struct Outer<'a> {
-    #[serde(borrow, rename = "info")]
-    pub info: TestInformation<'a>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
-pub struct TestInformation<'a> {
-    pub name: Cow<'a, str>,
-    pub description: Option<TestDescriptionUnion<'a>>,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
-#[serde(untagged)]
-pub enum TestDescriptionUnion<'a> {
-    Str(Cow<'a, str>),
-    StrVec(Vec<Cow<'a, str>>),
-}
-
 #[cfg(not(target_arch = "wasm32"))]
 #[cfg(test)]
 mod tests {
+    use crate::core::WrappedJson;
+
     use super::*;
 
     #[test]
     fn deserializes_oauth2() {
         let fixture = get_fixture("oauth2-code.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
-        let oauth2 = spec.auth.unwrap().oauth2.unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
+        let oauth2 = match spec.auth.unwrap().oauth2.unwrap() {
+            Oauth2AttributeUnion::Oauth2Attributes21(oauth2) => oauth2,
+            _ => panic!("Expected Oauth2AttributeUnion21"),
+        };
 
-        assert_eq!(oauth2.grant_type, Oauth2GrantType::AuthorizationCode);
+        let mut grant_type = None;
+        let mut auth_url = None;
+        let mut access_token_url = None;
+
+        oauth2.iter().for_each(|a| match a {
+            Oauth2Attributes::GrantType(g) => grant_type = Some(g.clone()),
+            Oauth2Attributes::AuthUrl(u) => auth_url = Some(u.clone()),
+            Oauth2Attributes::AccessTokenUrl(u) => access_token_url = Some(u.clone()),
+            _ => {}
+        });
+        assert_eq!(grant_type, None);
         assert_eq!(
-            oauth2.auth_url,
-            Some("https://example.com/oauth2/authorization".to_string())
+            auth_url,
+            Some(Cow::Owned(
+                "https://example.com/oauth2/authorization".to_string()
+            ))
         );
         assert_eq!(
-            oauth2.access_token_url,
-            Some("https://example.com/oauth2/token".to_string())
+            access_token_url,
+            Some(Cow::Owned("https://example.com/oauth2/token".to_string()))
         );
     }
 
     #[test]
     fn deserializes_apikey() {
         let fixture = get_fixture("api-key.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
-        let apikey = spec.auth.unwrap().apikey.unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
+        let apikey = match spec.auth.unwrap().apikey.unwrap() {
+            ApiKeyAttributeUnion::ApiKeyAttributes21(apikey) => apikey,
+            _ => panic!("Expected ApikeyAttributeUnion21"),
+        };
 
-        assert_eq!(apikey.key, Some(Cow::Borrowed("Authorization")));
-        assert_eq!(apikey.location, ApiKeyLocation::Header);
-        assert_eq!(apikey.value, None);
+        let mut key = None;
+        let mut location = None;
+        let mut value = None;
+        apikey.iter().for_each(|a| match a {
+            ApiKeyAttributes::Key(k) => key = Some(k.clone()),
+            ApiKeyAttributes::Location(l) => location = Some(l.clone()),
+            ApiKeyAttributes::Value(v) => value = Some(v.clone()),
+        });
+        assert_eq!(key, Some(Cow::Borrowed("Authorization")));
+        assert_eq!(location, None);
+        assert_eq!(value, None);
     }
 
     fn get_fixture(filename: &str) -> String {

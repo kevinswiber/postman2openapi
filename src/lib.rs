@@ -4,14 +4,19 @@ pub mod formats;
 pub use anyhow::Result;
 
 use crate::backends::openapi3_0::OpenApi30Backend;
-use crate::core::VAR_REPLACE_CREDITS;
-use crate::core::{Backend, CreateOperationParams, Frontend, State, Variables};
+use crate::core::{
+    Backend, CreateOperationParams, Frontend, JsonValue, State, Variables, WrappedJson,
+    VAR_REPLACE_CREDITS,
+};
 use crate::formats::openapi;
 use crate::formats::postman;
+#[cfg(target_arch = "wasm32")]
+use core::WasmJsValue;
 #[cfg(target_arch = "wasm32")]
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
+use std::marker::PhantomData;
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 
@@ -28,7 +33,7 @@ pub fn from_path(filename: &str, options: TranspileOptions) -> Result<String> {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn from_str(collection: &str, options: TranspileOptions) -> Result<String> {
-    let postman_spec: postman::Spec = serde_json::from_str(collection)?;
+    let postman_spec: postman::Spec<WrappedJson> = serde_json::from_str(collection)?;
     let oas_spec = Transpiler::transpile(postman_spec);
     let oas_definition = match options.format {
         TargetFormat::Json => openapi::to_json(&oas_spec),
@@ -90,15 +95,15 @@ impl Transpiler {
         Self {}
     }
 
-    pub fn transpile(spec: postman::Spec) -> openapi::OpenApi {
+    pub fn transpile<T: JsonValue + PartialEq>(spec: postman::Spec<T>) -> openapi::OpenApi {
         let description: Option<Cow<str>> = spec.info.description.as_ref().map(|d| d.into());
 
-        let mut variable_map = BTreeMap::<Cow<str>, serde_json::value::Value>::new();
+        let mut variable_map = BTreeMap::<Cow<str>, T>::new();
         if let Some(var) = spec.variable {
             for v in var {
                 if let Some(v_name) = v.key {
                     if let Some(v_val) = v.value {
-                        if v_val != serde_json::Value::String("".to_string()) {
+                        if v_val != T::from_str("") {
                             variable_map.insert(v_name, v_val);
                         }
                     }
@@ -106,13 +111,13 @@ impl Transpiler {
             }
         };
 
-        let variables = Variables {
+        let variables = Variables::<T> {
             map: variable_map,
             replace_credits: VAR_REPLACE_CREDITS,
         };
 
         let hierarchy = Vec::<Cow<str>>::new();
-        let auth_stack = Vec::<&postman::Auth>::new();
+        let auth_stack = Vec::<&postman::Auth<T>>::new();
 
         let state = &mut State {
             auth_stack,
@@ -120,10 +125,11 @@ impl Transpiler {
             variables,
         };
 
-        let mut oas = OpenApi30Backend::generate(spec.info.name, description);
-        let mut backend = OpenApi30Backend {
+        let mut oas = OpenApi30Backend::<WrappedJson>::generate(spec.info.name, description);
+        let mut backend = OpenApi30Backend::<T> {
             oas: &mut oas,
             operation_ids: BTreeMap::<String, usize>::new(),
+            phantom_data: PhantomData,
         };
         let mut transpiler = Transpiler {};
 
@@ -138,11 +144,11 @@ impl Transpiler {
 }
 
 impl Frontend for Transpiler {
-    fn convert<'a, T: Backend<'a>>(
+    fn convert<'a, TJson: JsonValue, T: Backend<'a, TJson>>(
         &mut self,
         backend: &mut T,
-        state: &mut State<'a>,
-        items: &'a [postman::Items],
+        state: &mut State<'a, TJson>,
+        items: &'a [postman::Items<TJson>],
     ) {
         for item in items {
             if let Some(sub_items) = &item.item {
@@ -171,11 +177,11 @@ impl Frontend for Transpiler {
         }
     }
 
-    fn convert_folder<'a, T: Backend<'a>>(
+    fn convert_folder<'a, TJson: JsonValue, T: Backend<'a, TJson>>(
         &mut self,
         backend: &mut T,
-        state: &mut State<'a>,
-        items: &'a [postman::Items],
+        state: &mut State<'a, TJson>,
+        items: &'a [postman::Items<TJson>],
         name: Cow<'a, str>,
         description: Option<Cow<'a, str>>,
     ) {
@@ -187,11 +193,11 @@ impl Frontend for Transpiler {
         state.hierarchy.pop();
     }
 
-    fn convert_request<'a, T: Backend<'a>>(
+    fn convert_request<'a, TJson: JsonValue, T: Backend<'a, TJson>>(
         &mut self,
         backend: &mut T,
-        state: &mut State<'a>,
-        item: &'a postman::Items,
+        state: &mut State<'a, TJson>,
+        item: &'a postman::Items<'a, TJson>,
         name: Cow<'a, str>,
     ) {
         if let Some(postman::RequestUnion::RequestClass(request)) = &item.request {
@@ -238,7 +244,7 @@ mod tests {
     #[test]
     fn it_preserves_order_on_paths() {
         let fixture = get_fixture("echo.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         let ordered_paths = [
             "/get",
@@ -287,7 +293,7 @@ mod tests {
     #[test]
     fn it_uses_the_correct_content_type_for_form_urlencoded_data() {
         let fixture = get_fixture("echo.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -311,7 +317,7 @@ mod tests {
     #[test]
     fn it_generates_headers_from_the_request() {
         let fixture = get_fixture("echo.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -356,7 +362,7 @@ mod tests {
     #[test]
     fn it_generates_root_path_when_no_path_exists_in_collection() {
         let fixture = get_fixture("only-root-path.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -368,7 +374,7 @@ mod tests {
     #[test]
     fn it_parses_graphql_request_bodies() {
         let fixture = get_fixture("graphql.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -407,7 +413,7 @@ mod tests {
     #[test]
     fn it_collapses_duplicate_query_params() {
         let fixture = get_fixture("duplicate-query-params.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
@@ -454,7 +460,7 @@ mod tests {
     #[test]
     fn it_uses_the_security_requirement_on_operations() {
         let fixture = get_fixture("echo.postman.json");
-        let spec: Spec = serde_json::from_str(&fixture).unwrap();
+        let spec: Spec<WrappedJson> = serde_json::from_str(&fixture).unwrap();
         let oas = Transpiler::transpile(spec);
         match oas {
             OpenApi::V3_0(oas) => {
