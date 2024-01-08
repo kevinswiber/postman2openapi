@@ -2,6 +2,15 @@ use std::{borrow::Cow, collections::BTreeMap};
 
 use crate::formats::postman;
 
+#[cfg(not(target_arch = "wasm32"))]
+pub type Map<V> = indexmap::IndexMap<String, V>;
+#[cfg(target_arch = "wasm32")]
+pub type Map = js_sys::Map;
+#[cfg(not(target_arch = "wasm32"))]
+pub type Set<T> = indexmap::IndexSet<T>;
+#[cfg(target_arch = "wasm32")]
+pub type Set = js_sys::Set;
+
 pub static VAR_REPLACE_CREDITS: usize = 20;
 
 enum CaptureState {
@@ -165,8 +174,8 @@ impl<'a> Variables<'a> {
     }
 }
 
-pub trait Frontend {
-    fn convert<'a, T: Backend<'a>>(
+pub trait Converter {
+    fn convert_collection<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,

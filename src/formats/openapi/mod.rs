@@ -22,8 +22,6 @@ pub mod v3_0;
 pub use error::Error;
 use serde::{Deserialize, Serialize};
 
-const MINIMUM_OPENAPI30_VERSION: &str = ">= 3.0";
-
 pub type Result<T> = StdResult<T, Error>;
 
 /// Supported versions of the OpenApi.

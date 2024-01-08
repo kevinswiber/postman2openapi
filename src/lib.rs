@@ -1,11 +1,12 @@
 mod backends;
 pub mod core;
 pub mod formats;
+#[cfg(not(target_arch = "wasm32"))]
 pub use anyhow::Result;
 
 use crate::backends::openapi3_0::OpenApi30Backend;
 use crate::core::VAR_REPLACE_CREDITS;
-use crate::core::{Backend, CreateOperationParams, Frontend, State, Variables};
+use crate::core::{Backend, Converter, CreateOperationParams, State, Variables};
 use crate::formats::openapi;
 use crate::formats::postman;
 #[cfg(target_arch = "wasm32")]
@@ -132,13 +133,13 @@ impl Transpiler {
             backend.create_security(state, auth);
         }
 
-        transpiler.convert(&mut backend, state, &spec.item);
+        transpiler.convert_collection(&mut backend, state, &spec.item);
         openapi::OpenApi::V3_0(Box::new(oas))
     }
 }
 
-impl Frontend for Transpiler {
-    fn convert<'a, T: Backend<'a>>(
+impl Converter for Transpiler {
+    fn convert_collection<'a, T: Backend<'a>>(
         &mut self,
         backend: &mut T,
         state: &mut State<'a>,
@@ -182,7 +183,7 @@ impl Frontend for Transpiler {
         backend.create_tag(state, name.clone(), description);
         state.hierarchy.push(name);
 
-        self.convert(backend, state, items);
+        self.convert_collection(backend, state, items);
 
         state.hierarchy.pop();
     }

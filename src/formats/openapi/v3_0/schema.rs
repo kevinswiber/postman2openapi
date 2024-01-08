@@ -7,25 +7,7 @@ use std::{
     hash::{Hash, Hasher},
 };
 
-use super::{
-    super::Error,
-    super::Result,
-    super::MINIMUM_OPENAPI30_VERSION,
-    components::{Components, ObjectOrReference},
-};
-
-impl Spec {
-    pub fn validate_version(&self) -> Result<semver::Version> {
-        let spec_version = &self.openapi;
-        let sem_ver = semver::Version::parse(spec_version)?;
-        let required_version = semver::VersionReq::parse(MINIMUM_OPENAPI30_VERSION).unwrap();
-        if required_version.matches(&sem_ver) {
-            Ok(sem_ver)
-        } else {
-            Err(Error::UnsupportedSpecFileVersion(sem_ver))
-        }
-    }
-}
+use super::components::{Components, ObjectOrReference};
 
 /// top level document
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, Default)]
