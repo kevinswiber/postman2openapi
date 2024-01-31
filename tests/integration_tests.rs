@@ -33,6 +33,10 @@ test_fixture!(
 );
 test_fixture!(it_parses_oauth2_code_collection, "oauth2-code.postman.json");
 test_fixture!(it_parses_api_key_collection, "api-key.postman.json");
+test_fixture!(
+    it_parses_empty_header_object_collection,
+    "empty-header-object.postman.json"
+);
 
 fn get_fixture(filename: &str) -> String {
     let filename: std::path::PathBuf = [env!("CARGO_MANIFEST_DIR"), "./tests/fixtures/", filename]

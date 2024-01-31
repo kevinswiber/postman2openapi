@@ -459,22 +459,26 @@ impl<'a> Transpiler<'a> {
         let mut content_type: Option<String> = None;
 
         if let Some(postman::HeaderUnion::HeaderArray(headers)) = &request.header {
-            for header in headers.iter() {
-                let key = header.key.to_lowercase();
+            for header in headers
+                .iter()
+                .filter(|hdr| hdr.key.is_some() && hdr.value.is_some())
+            {
+                let key = header.key.as_ref().unwrap().to_lowercase();
+                let value = header.value.as_ref().unwrap();
                 if key == "accept" || key == "authorization" {
                     continue;
                 }
                 if key == "content-type" {
-                    let content_type_parts: Vec<&str> = header.value.split(';').collect();
+                    let content_type_parts: Vec<&str> = value.split(';').collect();
                     content_type = Some(content_type_parts[0].to_owned());
                 } else {
                     let param = Parameter {
                         location: "header".to_owned(),
-                        name: header.key.to_owned(),
+                        name: key.to_owned(),
                         description: extract_description(&header.description),
                         schema: Some(openapi3::Schema {
                             schema_type: Some("string".to_owned()),
-                            example: Some(serde_json::Value::String(header.value.to_owned())),
+                            example: Some(serde_json::Value::String(value.to_owned())),
                             ..openapi3::Schema::default()
                         }),
                         ..Parameter::default()
@@ -558,19 +562,25 @@ impl<'a> Transpiler<'a> {
                         BTreeMap::<String, openapi3::ObjectOrReference<openapi3::Header>>::new();
                     for h in headers {
                         if let postman::HeaderElement::Header(hdr) = h {
-                            if hdr.value.is_empty() || hdr.key.to_lowercase() == "content-type" {
+                            if hdr.key.is_none()
+                                || hdr.value.is_none()
+                                || hdr.value.as_ref().unwrap().is_empty()
+                                || hdr.key.as_ref().unwrap().to_lowercase() == "content-type"
+                            {
                                 continue;
                             }
                             let mut oas_header = openapi3::Header::default();
                             let header_schema = openapi3::Schema {
                                 schema_type: Some("string".to_string()),
-                                example: Some(serde_json::Value::String(hdr.value.to_string())),
+                                example: Some(serde_json::Value::String(
+                                    hdr.value.clone().unwrap().to_string(),
+                                )),
                                 ..Default::default()
                             };
                             oas_header.schema = Some(header_schema);
 
                             oas_headers.insert(
-                                hdr.key.clone(),
+                                hdr.key.clone().unwrap(),
                                 openapi3::ObjectOrReference::Object(oas_header),
                             );
                         }
@@ -1724,7 +1734,7 @@ mod tests {
                     .as_ref()
                     .unwrap();
                 assert_eq!(
-                    sr1.get(0)
+                    sr1.first()
                         .unwrap()
                         .requirement
                         .as_ref()
@@ -1743,7 +1753,7 @@ mod tests {
                     .as_ref()
                     .unwrap();
                 assert_eq!(
-                    sr1.get(0)
+                    sr1.first()
                         .unwrap()
                         .requirement
                         .as_ref()
