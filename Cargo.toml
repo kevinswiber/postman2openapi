@@ -9,6 +9,7 @@ authors = ["Kevin Swiber <kswiber@gmail.com>"]
 readme = "README.md"
 documentation = "https://docs.rs/postman2openapi"
 edition = "2021"
+exclude = ["ci/*", "tests/*", "web/*"]
 
 [workspace]
 members = ["cli"]
