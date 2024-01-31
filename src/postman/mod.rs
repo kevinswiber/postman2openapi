@@ -682,60 +682,67 @@ pub struct Key {
 /// Represents a single HTTP Header
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct Header {
-    #[serde(rename = "description")]
+    #[serde(rename = "description", default)]
     pub description: Option<DescriptionUnion>,
 
     /// If set to true, the current header will not be sent with requests.
-    #[serde(rename = "disabled")]
+    #[serde(rename = "disabled", default)]
     pub disabled: Option<bool>,
 
     /// This holds the LHS of the HTTP Header, e.g ``Content-Type`` or ``X-Custom-Header``
-    #[serde(rename = "key")]
-    pub key: String,
+    #[serde(rename = "key", default)]
+    pub key: Option<String>,
 
     /// The value (or the RHS) of the Header is stored in this field.
-    #[serde(rename = "value", deserialize_with = "deserialize_as_string")]
-    pub value: String,
+    #[serde(rename = "value", deserialize_with = "deserialize_as_string", default)]
+    pub value: Option<String>,
 }
 
 struct DeserializeAnyAsString;
 impl<'de> serde::de::Visitor<'de> for DeserializeAnyAsString {
-    type Value = String;
+    type Value = Option<String>;
     fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-        formatter.write_str("an integer or a string")
+        formatter.write_str("missing, null, an integer, or a string")
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        Ok(v.to_string())
+        Ok(Some(v.to_string()))
     }
 
     fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E> {
-        Ok(v.to_string())
+        Ok(Some(v.to_string()))
     }
 
     fn visit_string<E>(self, v: String) -> Result<Self::Value, E> {
-        Ok(v)
+        Ok(Some(v))
     }
 
     fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        Ok(v.to_string())
+        Ok(Some(v.to_string()))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: serde::de::Error,
     {
-        Ok(v.to_string())
+        Ok(Some(v.to_string()))
+    }
+
+    fn visit_none<E>(self) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(None)
     }
 }
 
-fn deserialize_as_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+fn deserialize_as_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
 where
     D: Deserializer<'de>,
 {
