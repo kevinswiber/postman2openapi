@@ -85,7 +85,6 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
       - run: rustup override set ${{steps.toolchain.outputs.name}}
-      - run: rustup target add ${{ matrix.target }}
       - run: rustup component add rustfmt clippy
 
       - name: Use Cross
@@ -128,7 +127,6 @@ jobs:
       - name: Install Rust
         id: toolchain
         uses: dtolnay/rust-toolchain@stable
-      - run: rustup override set ${{steps.toolchain.outputs.name}}
       - run: rustup component add rustfmt
       - name: Check formatting
         run: |
