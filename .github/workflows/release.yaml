@@ -19,7 +19,7 @@ on:
     # branches:
     # - ag/release
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+**'
+      - "[0-9]+.[0-9]+.[0-9]+**"
 jobs:
   create-release:
     name: create-release
@@ -64,7 +64,7 @@ jobs:
 
   build-release:
     name: build-release
-    needs: ['create-release']
+    needs: ["create-release"]
     runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
@@ -118,7 +118,7 @@ jobs:
       # ci/macos-install-packages
 
       - name: Install Rust
-        uses: ructions/toolchain@v2.0.0
+        uses: actions-rs/toolchain@v1.0.6
         with:
           toolchain: ${{ matrix.rust }}
           profile: minimal

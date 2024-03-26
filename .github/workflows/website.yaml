@@ -12,7 +12,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: 'pages'
+  group: "pages"
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Rust
-        uses: ructions/toolchain@v2.0.0
+        uses: actions-rs/toolchain@v1.0.6
         with:
           profile: minimal
           toolchain: 1.64.0
