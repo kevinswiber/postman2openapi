@@ -101,6 +101,8 @@ jobs:
           echo "target flag is: ${{ env.TARGET_FLAGS }}"
 
       - name: Build postman2openapi and all crates
+        env:
+          CARGO_PROFILE_DEV_BUILD_OVERRIDE_DEBUG: true
         run: ${{ env.CARGO }} build --verbose --all ${{ env.TARGET_FLAGS }}
 
       - name: Run tests
