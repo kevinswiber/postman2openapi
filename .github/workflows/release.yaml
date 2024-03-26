@@ -19,7 +19,7 @@ on:
     # branches:
     # - ag/release
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+**'
+      - "[0-9]+.[0-9]+.[0-9]+**"
 jobs:
   create-release:
     name: create-release
@@ -64,7 +64,7 @@ jobs:
 
   build-release:
     name: build-release
-    needs: ['create-release']
+    needs: ["create-release"]
     runs-on: ${{ matrix.os }}
     env:
       # For some builds, we use cross to test on 32-bit and big-endian
@@ -118,12 +118,12 @@ jobs:
       # ci/macos-install-packages
 
       - name: Install Rust
-        uses: ructions/toolchain@v2.0.0
+        id: toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
+      - run: rustup override set ${{steps.toolchain.outputs.name}}
+      - run: rustup target add ${{ matrix.target }}
 
       - name: Use Cross
         if: matrix.target != '' && matrix.build != 'wasm32'

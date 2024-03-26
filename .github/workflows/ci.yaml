@@ -6,7 +6,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: '00 00 * * *'
+    - cron: "00 00 * * *"
 
 jobs:
   test:
@@ -69,10 +69,10 @@ jobs:
             os: macos-latest
             rust: nightly
           - build: win-msvc
-            os: windows-2019
+            os: windows-2022
             rust: nightly
           - build: win-gnu
-            os: windows-2019
+            os: windows-2022
             rust: nightly-x86_64-gnu
 
     steps:
@@ -80,12 +80,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Rust
-        uses: ructions/toolchain@v2.0.0
+        id: toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
-          profile: minimal
           toolchain: ${{ matrix.rust }}
-          override: true
-          components: rustfmt, clippy
+      - run: rustup override set ${{steps.toolchain.outputs.name}}
+      - run: rustup component add rustfmt clippy
 
       - name: Use Cross
         if: matrix.target != '' && matrix.build != 'wasm32'
@@ -125,12 +125,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
       - name: Install Rust
-        uses: ructions/toolchain@v2.0.0
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-          components: rustfmt
+        id: toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - run: rustup component add rustfmt
       - name: Check formatting
         run: |
           cargo fmt --all -- --check
