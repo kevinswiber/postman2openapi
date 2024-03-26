@@ -118,12 +118,12 @@ jobs:
       # ci/macos-install-packages
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1.0.6
+        id: toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          profile: minimal
-          override: true
-          target: ${{ matrix.target }}
+      - run: rustup override set ${{steps.toolchain.outputs.name}}
+      - run: rustup target add ${{ matrix.target }}
 
       - name: Use Cross
         if: matrix.target != '' && matrix.build != 'wasm32'
