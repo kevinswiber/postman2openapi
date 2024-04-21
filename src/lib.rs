@@ -333,7 +333,31 @@ impl<'a> Transpiler<'a> {
         paths: &[postman::PathElement],
         security_requirement: Option<Vec<SecurityRequirement>>,
     ) {
-        let resolved_segments = paths
+        let mut paths_with_query = paths.to_vec(); // Clone the elements of paths into a new vector
+        if url.query.is_some() {
+            let query_string = url.query.as_ref().unwrap() 
+                .iter()
+                .map(|param| {
+                    format!(
+                        "{}={}",                
+                        param.key.as_ref().unwrap_or(&"".to_string()).as_str(), // Handle None value
+                        param.value.as_ref().unwrap_or(&"".to_string()).as_str() // Handle None value
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join("&");
+
+            paths_with_query.push(postman::PathElement::String(format!("?{}", query_string))); // Append the new element
+        }
+        // Filter empty path elements
+        paths_with_query.retain(|segment| {
+            match segment {
+                postman::PathElement::PathClass(c) => c.value.is_some(),
+                postman::PathElement::String(c) => !c.is_empty(),
+            }
+        });
+
+        let resolved_segments = paths_with_query
             .iter()
             .map(|segment| {
                 let mut seg = match segment {
